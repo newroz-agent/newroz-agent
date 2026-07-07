@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from hermes_cli.plugins import (
+from newroz_cli.plugins import (
     PluginContext,
     PluginManager,
     PluginManifest,
@@ -43,7 +43,7 @@ def patched_manager(monkeypatch):
 
     Restored automatically after the test by monkeypatch.
     """
-    from hermes_cli import plugins as plugins_mod
+    from newroz_cli import plugins as plugins_mod
 
     fresh = PluginManager()
     fresh._discovered = True
@@ -202,7 +202,7 @@ def test_get_plugin_auxiliary_tasks_empty_when_none_registered(patched_manager):
 
 
 def test_all_aux_tasks_includes_plugin_registered(patched_manager):
-    from hermes_cli.main import _AUX_TASKS, _all_aux_tasks
+    from newroz_cli.main import _AUX_TASKS, _all_aux_tasks
 
     manifest = PluginManifest(name="hindsight")
     ctx = PluginContext(manifest, patched_manager)
@@ -229,13 +229,13 @@ def test_all_aux_tasks_includes_plugin_registered(patched_manager):
 
 def test_all_aux_tasks_swallows_plugin_discovery_failure(monkeypatch):
     """Plugin discovery failure must not break the aux config UI."""
-    from hermes_cli import main as main_mod
+    from newroz_cli import main as main_mod
 
     def _broken():
         raise RuntimeError("plugin scan exploded")
 
     monkeypatch.setattr(
-        "hermes_cli.plugins.get_plugin_auxiliary_tasks", _broken
+        "newroz_cli.plugins.get_plugin_auxiliary_tasks", _broken
     )
 
     merged = main_mod._all_aux_tasks()
@@ -249,12 +249,12 @@ def test_all_aux_tasks_swallows_plugin_discovery_failure(monkeypatch):
 def test_reset_aux_to_auto_resets_plugin_tasks(tmp_path, monkeypatch, patched_manager):
     """Plugin task with non-auto config gets reset alongside built-ins."""
     from pathlib import Path
-    from hermes_cli.config import load_config, save_config
-    from hermes_cli.main import _reset_aux_to_auto
+    from newroz_cli.config import load_config, save_config
+    from newroz_cli.main import _reset_aux_to_auto
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / ".newroz"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    (tmp_path / ".hermes").mkdir(exist_ok=True)
+    (tmp_path / ".newroz").mkdir(exist_ok=True)
 
     manifest = PluginManifest(name="plug")
     ctx = PluginContext(manifest, patched_manager)
@@ -288,9 +288,9 @@ def test_get_auxiliary_task_config_layers_plugin_defaults(
     from pathlib import Path
     from agent.auxiliary_client import _get_auxiliary_task_config
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / ".newroz"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    (tmp_path / ".hermes").mkdir(exist_ok=True)
+    (tmp_path / ".newroz").mkdir(exist_ok=True)
 
     manifest = PluginManifest(name="plug")
     ctx = PluginContext(manifest, patched_manager)
@@ -313,12 +313,12 @@ def test_get_auxiliary_task_config_user_config_wins_over_plugin_defaults(
 ):
     """User's config.yaml entry overrides plugin-declared defaults."""
     from pathlib import Path
-    from hermes_cli.config import load_config, save_config
+    from newroz_cli.config import load_config, save_config
     from agent.auxiliary_client import _get_auxiliary_task_config
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / ".newroz"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    (tmp_path / ".hermes").mkdir(exist_ok=True)
+    (tmp_path / ".newroz").mkdir(exist_ok=True)
 
     manifest = PluginManifest(name="plug")
     ctx = PluginContext(manifest, patched_manager)
@@ -346,8 +346,8 @@ def test_get_auxiliary_task_config_unknown_task_returns_empty(
     from pathlib import Path
     from agent.auxiliary_client import _get_auxiliary_task_config
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / ".newroz"))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    (tmp_path / ".hermes").mkdir(exist_ok=True)
+    (tmp_path / ".newroz").mkdir(exist_ok=True)
 
     assert _get_auxiliary_task_config("nonexistent") == {}

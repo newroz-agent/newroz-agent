@@ -167,7 +167,7 @@ class TestRaftWakeHttp:
                     "agentId": "agent-1",
                     "profile": "dev",
                     "coreSessionId": "default",
-                    "adapterInstance": "hermes",
+                    "adapterInstance": "newroz",
                     "occurredAt": "2026-06-11T08:00:00Z",
                 },
                 headers={BRIDGE_TOKEN_HEADER: "bridge-secret"},
@@ -492,7 +492,7 @@ class TestRaftConfig:
         assert _is_connected(PlatformConfig(enabled=True, extra={})) is False
 
     def test_interactive_setup_saves_raft_profile(self, monkeypatch, tmp_path, capsys):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         monkeypatch.delenv("RAFT_PROFILE", raising=False)
         monkeypatch.setattr("builtins.input", lambda _prompt: "dev-profile")
 
@@ -502,14 +502,14 @@ class TestRaftConfig:
         assert os.environ["RAFT_PROFILE"] == "dev-profile"
         out = capsys.readouterr().out
         assert "Raft configuration saved" in out
-        assert "hermes gateway restart" in out
+        assert "newroz gateway restart" in out
 
     def test_interactive_setup_keeps_existing_profile_when_not_reconfigured(
         self, monkeypatch, tmp_path, capsys
     ):
         env_path = tmp_path / ".env"
         env_path.write_text("RAFT_PROFILE=existing\n", encoding="utf-8")
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         monkeypatch.setenv("RAFT_PROFILE", "existing")
         monkeypatch.setattr("builtins.input", lambda _prompt: "n")
 

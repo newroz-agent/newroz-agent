@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.profile_distribution — git-based profile installs.
+"""Tests for newroz_cli.profile_distribution — git-based profile installs.
 
 Covers manifest parsing, version requirement checks, install / update / describe
 on local-directory sources, and guards on what can and can't be installed.
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from hermes_cli.profile_distribution import (
+from newroz_cli.profile_distribution import (
     DEFAULT_DIST_OWNED,
     DistributionError,
     DistributionManifest,
@@ -24,7 +24,7 @@ from hermes_cli.profile_distribution import (
     _env_template_from_manifest,
     _looks_like_git_url,
     _parse_semver,
-    check_hermes_requires,
+    check_newroz_requires,
     describe_distribution,
     install_distribution,
     plan_install,
@@ -35,16 +35,16 @@ from hermes_cli.profile_distribution import (
 
 
 # ---------------------------------------------------------------------------
-# Isolated profile env (matches tests/hermes_cli/test_profiles.py)
+# Isolated profile env (matches tests/newroz_cli/test_profiles.py)
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture()
 def profile_env(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    default_home = tmp_path / ".hermes"
+    default_home = tmp_path / ".newroz"
     default_home.mkdir(exist_ok=True)
-    monkeypatch.setenv("HERMES_HOME", str(default_home))
+    monkeypatch.setenv("NEWROZ_HOME", str(default_home))
     return tmp_path
 
 
@@ -100,7 +100,7 @@ class TestManifestParsing:
             "name: telem\n"
             "version: 1.2.3\n"
             "description: Telem monitor\n"
-            "hermes_requires: '>=0.12.0'\n"
+            "newroz_requires: '>=0.12.0'\n"
             "author: Kyle\n"
             "license: MIT\n"
             "env_requires:\n"
@@ -185,10 +185,10 @@ class TestVersionRequires:
     ])
     def test_check_matrix(self, spec, cur, ok):
         if ok:
-            check_hermes_requires(spec, cur)
+            check_newroz_requires(spec, cur)
         else:
-            with pytest.raises(DistributionError, match="requires Hermes"):
-                check_hermes_requires(spec, cur)
+            with pytest.raises(DistributionError, match="requires Newroz"):
+                check_newroz_requires(spec, cur)
 
     def test_parse_semver_handles_prerelease(self):
         assert _parse_semver("0.12.0-rc1") == (0, 12, 0)
@@ -234,7 +234,7 @@ class TestEnvTemplate:
     def test_empty_env_requires_is_header_only(self):
         m = DistributionManifest(name="x")
         out = _env_template_from_manifest(m)
-        assert "Hermes distribution" in out
+        assert "Newroz distribution" in out
         assert "FOO" not in out
 
 
@@ -334,18 +334,18 @@ class TestInstall:
         assert example.is_file()
         assert "OPENAI_API_KEY" in example.read_text()
 
-    def test_install_enforces_hermes_requires(self, profile_env, monkeypatch):
-        # Pin current Hermes version to something well below the requirement
-        import hermes_cli
-        monkeypatch.setattr(hermes_cli, "__version__", "0.1.0", raising=False)
+    def test_install_enforces_newroz_requires(self, profile_env, monkeypatch):
+        # Pin current Newroz version to something well below the requirement
+        import newroz_cli
+        monkeypatch.setattr(newroz_cli, "__version__", "0.1.0", raising=False)
 
         mf = DistributionManifest(
             name="future",
             version="1.0.0",
-            hermes_requires=">=99.0.0",
+            newroz_requires=">=99.0.0",
         )
         staged = _make_staging_dir(profile_env, "future", manifest=mf)
-        with pytest.raises(DistributionError, match="requires Hermes"):
+        with pytest.raises(DistributionError, match="requires Newroz"):
             install_distribution(str(staged), name="future")
 
 
@@ -413,7 +413,7 @@ class TestUpdate:
 
     def test_update_missing_manifest_errors(self, profile_env):
         # Make a profile without a manifest; update must refuse
-        from hermes_cli.profiles import create_profile
+        from newroz_cli.profiles import create_profile
         create_profile(name="plain", no_alias=True)
         with pytest.raises(DistributionError, match="not a distribution"):
             update_distribution("plain")
@@ -441,7 +441,7 @@ class TestDescribe:
         assert data["env_requires"][0]["name"] == "API"
 
     def test_describe_non_distribution_returns_empty(self, profile_env):
-        from hermes_cli.profiles import create_profile
+        from newroz_cli.profiles import create_profile
         create_profile(name="plain", no_alias=True)
         assert describe_distribution("plain") == {}
 
@@ -492,7 +492,7 @@ class TestSecurity:
         with pytest.raises(DistributionError, match="symlink"):
             install_distribution(str(staged), name="clean")
 
-        from hermes_cli.profiles import get_profile_dir
+        from newroz_cli.profiles import get_profile_dir
         target = get_profile_dir("clean")
         assert not (target / "skills" / "demo" / "leak.txt").exists()
 
@@ -588,7 +588,7 @@ class TestInstalledAtStamp:
     def test_update_refreshes_installed_at(self, profile_env, monkeypatch):
         staged = _make_staging_dir(profile_env, "src")
         install_distribution(str(staged), name="demo")
-        from hermes_cli.profiles import get_profile_dir
+        from newroz_cli.profiles import get_profile_dir
         first = read_manifest(get_profile_dir("demo")).installed_at
 
         # Freeze `datetime.now()` to a fixed future time so we can observe that
@@ -600,10 +600,10 @@ class TestInstalledAtStamp:
             def now(cls, tz=None):
                 return _dt.datetime(2099, 1, 1, 0, 0, 0, tzinfo=tz or _dt.timezone.utc)
         monkeypatch.setattr(
-            "hermes_cli.profile_distribution.datetime", _FakeDT, raising=True
+            "newroz_cli.profile_distribution.datetime", _FakeDT, raising=True
         )
 
-        from hermes_cli.profile_distribution import update_distribution
+        from newroz_cli.profile_distribution import update_distribution
         update_distribution("demo")
         refreshed = read_manifest(get_profile_dir("demo")).installed_at
         assert refreshed != first, "installed_at should change on update"
@@ -624,7 +624,7 @@ class TestProfileInfoDistribution:
         )
         install_distribution(str(staged), name="telem")
 
-        from hermes_cli.profiles import list_profiles
+        from newroz_cli.profiles import list_profiles
         rows = {p.name: p for p in list_profiles()}
         assert "telem" in rows
         row = rows["telem"]
@@ -633,14 +633,14 @@ class TestProfileInfoDistribution:
         assert row.distribution_source  # path populated, exact value depends on fixture
 
     def test_plain_profile_has_no_distribution_fields(self, profile_env):
-        from hermes_cli.profiles import create_profile, list_profiles
+        from newroz_cli.profiles import create_profile, list_profiles
         create_profile(name="plain", no_alias=True)
         rows = {p.name: p for p in list_profiles()}
         assert rows["plain"].distribution_name is None
         assert rows["plain"].distribution_version is None
 
     def test_malformed_manifest_does_not_break_list(self, profile_env):
-        from hermes_cli.profiles import create_profile, list_profiles, get_profile_dir
+        from newroz_cli.profiles import create_profile, list_profiles, get_profile_dir
         create_profile(name="brokenmeta", no_alias=True)
         # Write a distribution.yaml that isn't a valid mapping
         (get_profile_dir("brokenmeta") / "distribution.yaml").write_text(

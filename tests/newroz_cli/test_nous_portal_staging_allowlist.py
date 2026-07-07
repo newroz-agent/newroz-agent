@@ -4,7 +4,7 @@ _ALLOWED_NOUS_INFERENCE_HOSTS treatment.
 
 Real incident (2026-07): a hosted agent provisioned by nous-account-service
 on the `staging` Vercel environment is stamped with
-``HERMES_PORTAL_BASE_URL=https://portal.staging-nousresearch.com`` in its
+``NEWROZ_PORTAL_BASE_URL=https://portal.staging-nousresearch.com`` in its
 container env (the documented dev/staging override), while its bootstrap
 ``auth.json`` ALSO persists ``portal_base_url`` to the same staging host.
 
@@ -31,7 +31,7 @@ from __future__ import annotations
 import json
 import logging
 
-from hermes_cli.auth import (
+from newroz_cli.auth import (
     DEFAULT_NOUS_PORTAL_URL,
     _NOUS_PORTAL_ALLOWED_HOSTS,
     _nous_portal_env_override,
@@ -40,13 +40,13 @@ from hermes_cli.auth import (
 
 class TestPortalEnvOverrideHelper:
     def test_none_when_unset(self, monkeypatch):
-        monkeypatch.delenv("HERMES_PORTAL_BASE_URL", raising=False)
+        monkeypatch.delenv("NEWROZ_PORTAL_BASE_URL", raising=False)
         monkeypatch.delenv("NOUS_PORTAL_BASE_URL", raising=False)
         assert _nous_portal_env_override() is None
 
-    def test_hermes_portal_base_url_wins(self, monkeypatch):
+    def test_newroz_portal_base_url_wins(self, monkeypatch):
         monkeypatch.setenv(
-            "HERMES_PORTAL_BASE_URL", "https://portal.staging-nousresearch.com/"
+            "NEWROZ_PORTAL_BASE_URL", "https://portal.staging-nousresearch.com/"
         )
         monkeypatch.delenv("NOUS_PORTAL_BASE_URL", raising=False)
         assert (
@@ -54,7 +54,7 @@ class TestPortalEnvOverrideHelper:
         )
 
     def test_nous_portal_base_url_used_as_fallback(self, monkeypatch):
-        monkeypatch.delenv("HERMES_PORTAL_BASE_URL", raising=False)
+        monkeypatch.delenv("NEWROZ_PORTAL_BASE_URL", raising=False)
         monkeypatch.setenv(
             "NOUS_PORTAL_BASE_URL", "https://portal.staging-nousresearch.com"
         )
@@ -67,7 +67,7 @@ class TestPortalEnvOverrideHelper:
         _NOUS_PORTAL_ALLOWED_HOSTS, and the helper must return it anyway —
         gating happens only for network-provenance values."""
         monkeypatch.setenv(
-            "HERMES_PORTAL_BASE_URL", "https://portal.staging-nousresearch.com"
+            "NEWROZ_PORTAL_BASE_URL", "https://portal.staging-nousresearch.com"
         )
         assert "portal.staging-nousresearch.com" not in _NOUS_PORTAL_ALLOWED_HOSTS
         assert (
@@ -92,7 +92,7 @@ class TestResolveAccessTokenEnvOverrideWins:
                             "portal_base_url": stored_portal_url,
                             "access_token": "expired-access",
                             "refresh_token": "staging-refresh",
-                            "client_id": "hermes-cli-vps",
+                            "client_id": "newroz-cli-vps",
                             "expires_at": "2000-01-01T00:00:00+00:00",
                         }
                     },
@@ -115,7 +115,7 @@ class TestResolveAccessTokenEnvOverrideWins:
         monkeypatch.setattr(auth, "_refresh_access_token", _fake_refresh)
 
         caplog_records = []
-        logger = logging.getLogger("hermes_cli.auth")
+        logger = logging.getLogger("newroz_cli.auth")
         handler = logging.Handler()
         handler.emit = lambda record: caplog_records.append(record.getMessage())
         logger.addHandler(handler)
@@ -129,14 +129,14 @@ class TestResolveAccessTokenEnvOverrideWins:
         self, monkeypatch, tmp_path
     ):
         """The real incident: state ALSO has the staging host stored (from
-        a prior HERMES_AUTH_JSON_BOOTSTRAP seed), and the env var is set to
+        a prior NEWROZ_AUTH_JSON_BOOTSTRAP seed), and the env var is set to
         the same staging host. Both must resolve to staging, and the
         allowlist-rejection warning must never fire."""
-        import hermes_cli.auth as auth
+        import newroz_cli.auth as auth
 
         staging_portal = "https://portal.staging-nousresearch.com"
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-        monkeypatch.setenv("HERMES_PORTAL_BASE_URL", staging_portal)
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_PORTAL_BASE_URL", staging_portal)
         self._write_auth_file(tmp_path, stored_portal_url=staging_portal)
 
         seen_portal_urls, records = self._run_and_capture(monkeypatch, auth)
@@ -150,11 +150,11 @@ class TestResolveAccessTokenEnvOverrideWins:
         """Even when the STORED state is the prod host (e.g. a stale/healed
         value from before the env var was set), the env override must still
         win for the actual refresh call."""
-        import hermes_cli.auth as auth
+        import newroz_cli.auth as auth
 
         staging_portal = "https://portal.staging-nousresearch.com"
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-        monkeypatch.setenv("HERMES_PORTAL_BASE_URL", staging_portal)
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_PORTAL_BASE_URL", staging_portal)
         self._write_auth_file(tmp_path, stored_portal_url=DEFAULT_NOUS_PORTAL_URL)
 
         seen_portal_urls, _records = self._run_and_capture(monkeypatch, auth)
@@ -167,11 +167,11 @@ class TestResolveAccessTokenEnvOverrideWins:
         """Without the env override set, a stored staging host is untrusted
         network provenance and correctly heals to prod (this is the
         allowlist's actual job — preserved, not regressed, by this fix)."""
-        import hermes_cli.auth as auth
+        import newroz_cli.auth as auth
 
         staging_portal = "https://portal.staging-nousresearch.com"
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-        monkeypatch.delenv("HERMES_PORTAL_BASE_URL", raising=False)
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+        monkeypatch.delenv("NEWROZ_PORTAL_BASE_URL", raising=False)
         monkeypatch.delenv("NOUS_PORTAL_BASE_URL", raising=False)
         self._write_auth_file(tmp_path, stored_portal_url=staging_portal)
 
@@ -185,10 +185,10 @@ class TestResolveAccessTokenEnvOverrideWins:
     ):
         """Baseline: no override, no staging state — prod is used and the
         allowlist never even logs a warning (nothing was rejected)."""
-        import hermes_cli.auth as auth
+        import newroz_cli.auth as auth
 
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-        monkeypatch.delenv("HERMES_PORTAL_BASE_URL", raising=False)
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+        monkeypatch.delenv("NEWROZ_PORTAL_BASE_URL", raising=False)
         monkeypatch.delenv("NOUS_PORTAL_BASE_URL", raising=False)
         self._write_auth_file(tmp_path, stored_portal_url=DEFAULT_NOUS_PORTAL_URL)
 

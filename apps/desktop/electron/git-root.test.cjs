@@ -10,7 +10,7 @@ const { pathToFileURL } = require('node:url')
 const { gitRootForIpc } = require('./git-root.cjs')
 
 function mkTmpDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-git-root-'))
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-git-root-'))
 }
 
 test('gitRootForIpc returns null for invalid and device paths', async () => {

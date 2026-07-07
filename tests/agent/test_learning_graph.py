@@ -9,7 +9,7 @@ change-detector.
 from __future__ import annotations
 
 from agent import learning_graph
-from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+from newroz_constants import reset_newroz_home_override, set_newroz_home_override
 
 
 def _node(name: str, category: str, related=None):
@@ -67,17 +67,17 @@ def test_skill_node_timestamp_uses_iso_usage_activity(tmp_path, monkeypatch):
 
 
 def test_memory_is_cards_split_on_separator(tmp_path):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     (home / "memories").mkdir(parents=True)
     (home / "memories" / "MEMORY.md").write_text(
         "Project uses pytest with xdist\n§\nUser prefers concise responses",
         encoding="utf-8",
     )
-    token = set_hermes_home_override(home)
+    token = set_newroz_home_override(home)
     try:
         graph = learning_graph.build_learning_graph()
     finally:
-        reset_hermes_home_override(token)
+        reset_newroz_home_override(token)
 
     titles = [c["title"] for c in graph["memory"]]
     assert "Project uses pytest with xdist" in titles
@@ -106,20 +106,20 @@ def test_malformed_frontmatter_metadata_does_not_crash(tmp_path):
     assert node.related == []
 
 
-def test_hermes_meta_tolerates_non_dict():
-    assert learning_graph._hermes_meta({"metadata": "junk"}) == {}
-    assert learning_graph._hermes_meta({"metadata": {"hermes": "junk"}}) == {}
-    assert learning_graph._hermes_meta({"metadata": {"hermes": {"category": "x"}}}) == {"category": "x"}
+def test_newroz_meta_tolerates_non_dict():
+    assert learning_graph._newroz_meta({"metadata": "junk"}) == {}
+    assert learning_graph._newroz_meta({"metadata": {"newroz": "junk"}}) == {}
+    assert learning_graph._newroz_meta({"metadata": {"newroz": {"category": "x"}}}) == {"category": "x"}
 
 
 def test_full_payload_shape_and_edge_integrity(tmp_path):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    token = set_hermes_home_override(home)
+    token = set_newroz_home_override(home)
     try:
         graph = learning_graph.build_learning_graph()
     finally:
-        reset_hermes_home_override(token)
+        reset_newroz_home_override(token)
 
     ids = {n["id"] for n in graph["nodes"]}
     assert all(e["source"] in ids and e["target"] in ids for e in graph["edges"])

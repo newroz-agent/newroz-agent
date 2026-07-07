@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from hermes_cli.web_server import _save_anthropic_oauth_creds
+from newroz_cli.web_server import _save_anthropic_oauth_creds
 
 
 class _DummyPool:
@@ -19,7 +19,7 @@ class _DummyPool:
 @pytest.fixture
 def oauth_file(monkeypatch, tmp_path):
     target = tmp_path / '.anthropic_oauth.json'
-    monkeypatch.setattr('agent.anthropic_adapter._HERMES_OAUTH_FILE', target)
+    monkeypatch.setattr('agent.anthropic_adapter._NEWROZ_OAUTH_FILE', target)
     monkeypatch.setattr('agent.credential_pool.load_pool', lambda _provider: _DummyPool())
     return target
 
@@ -43,7 +43,7 @@ def test_dashboard_oauth_write_uses_atomic_replace_and_cleans_temp_files(oauth_f
         replace_calls.append((src, dst))
         raise OSError('simulated replace failure')
 
-    monkeypatch.setattr('hermes_cli.web_server.os.replace', flaky_replace)
+    monkeypatch.setattr('newroz_cli.web_server.os.replace', flaky_replace)
 
     with pytest.raises(OSError, match='simulated replace failure'):
         _save_anthropic_oauth_creds('access-token', 'refresh-token', 123456)

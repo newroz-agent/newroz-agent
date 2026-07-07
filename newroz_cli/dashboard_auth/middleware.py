@@ -22,16 +22,16 @@ from typing import Awaitable, Callable
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 
-from hermes_cli.dashboard_auth import list_session_providers
-from hermes_cli.dashboard_auth.audit import AuditEvent, audit_log
-from hermes_cli.dashboard_auth.base import ProviderError, RefreshExpiredError
-from hermes_cli.dashboard_auth.cookies import (
+from newroz_cli.dashboard_auth import list_session_providers
+from newroz_cli.dashboard_auth.audit import AuditEvent, audit_log
+from newroz_cli.dashboard_auth.base import ProviderError, RefreshExpiredError
+from newroz_cli.dashboard_auth.cookies import (
     clear_sso_attempt_cookie,
     read_session_cookies,
     read_sso_attempt_cookie,
     set_sso_attempt_cookie,
 )
-from hermes_cli.dashboard_auth.public_paths import PUBLIC_API_PATHS
+from newroz_cli.dashboard_auth.public_paths import PUBLIC_API_PATHS
 
 _log = logging.getLogger(__name__)
 
@@ -99,13 +99,13 @@ def _unauth_response(request: Request, *, reason: str) -> Response:
     navigation to ``/sessions`` (etc.) without a cookie comes back to
     ``/sessions`` after login.
 
-    Under a reverse proxy with ``X-Forwarded-Prefix: /hermes``, the
-    ``login_url`` is prefixed (``/hermes/login?next=...``) so the
+    Under a reverse proxy with ``X-Forwarded-Prefix: /newroz``, the
+    ``login_url`` is prefixed (``/newroz/login?next=...``) so the
     browser's window.location.assign / Location: follow lands on the
     proxied login page rather than the bare ``/login`` (which the
     proxy doesn't route to the dashboard).
     """
-    from hermes_cli.dashboard_auth.prefix import prefix_from_request
+    from newroz_cli.dashboard_auth.prefix import prefix_from_request
 
     path = request.url.path
     next_param = _safe_next_target(request)
@@ -170,7 +170,7 @@ def _auto_sso_response(request: Request) -> Response | None:
     # Already bounced once and still no session → portal has no session for
     # this user. Stop here, clear the marker, let /login render.
     if read_sso_attempt_cookie(request):
-        from hermes_cli.dashboard_auth.prefix import prefix_from_request
+        from newroz_cli.dashboard_auth.prefix import prefix_from_request
         resp = _unauth_response(request, reason="no_cookie")
         clear_sso_attempt_cookie(resp, prefix=prefix_from_request(request))
         return resp
@@ -182,7 +182,7 @@ def _auto_sso_response(request: Request) -> Response | None:
         # Zero → nothing to redirect to. Two+ → user must choose at /login.
         return None
 
-    from hermes_cli.dashboard_auth.prefix import prefix_from_request
+    from newroz_cli.dashboard_auth.prefix import prefix_from_request
 
     provider = providers[0]
     prefix = prefix_from_request(request)
@@ -197,7 +197,7 @@ def _auto_sso_response(request: Request) -> Response | None:
     # (portal had no session) trips the guard above next time instead of
     # looping. Detect HTTPS for the Secure flag the same way the auth routes
     # do; bind Path via the active prefix.
-    from hermes_cli.dashboard_auth.cookies import detect_https
+    from newroz_cli.dashboard_auth.cookies import detect_https
     set_sso_attempt_cookie(
         resp, use_https=detect_https(request), prefix=prefix,
     )
@@ -235,7 +235,7 @@ def _safe_next_target(request: Request) -> str:
     # navigates to ``login_url``. After the OAuth round trip the user
     # would land on the API URL and see raw JSON instead of the
     # dashboard. SPA routes survive (they don't start with ``/api/``);
-    # the SPA's own ``sessionStorage["hermes.lastLocation"]`` fallback
+    # the SPA's own ``sessionStorage["newroz.lastLocation"]`` fallback
     # in ``web/src/lib/api.ts`` covers the deep-link case.
     if path == "/api" or path.startswith("/api/"):
         return ""
@@ -295,7 +295,7 @@ async def gated_auth_middleware(
     # cookie is set with ``Max-Age = access_token_expires_in`` (~15 min), so
     # the browser EVICTS it the moment the token lapses, while the
     # refresh-token cookie lives for 30 days. From that point the browser
-    # sends only ``hermes_session_rt``. If we bailed on ``not at`` here we'd
+    # sends only ``newroz_session_rt``. If we bailed on ``not at`` here we'd
     # bounce the user to /login on every expiry despite holding a perfectly
     # good refresh token — defeating the whole transparent-refresh feature.
     session = None
@@ -360,11 +360,11 @@ async def gated_auth_middleware(
             # back is mandatory: a stale RT cookie would replay a rotated
             # token on the next refresh and (outside Portal's grace) revoke
             # the whole session. Bind cookie Secure/Path to the request shape.
-            from hermes_cli.dashboard_auth.cookies import (
+            from newroz_cli.dashboard_auth.cookies import (
                 detect_https,
                 set_session_cookies,
             )
-            from hermes_cli.dashboard_auth.prefix import prefix_from_request
+            from newroz_cli.dashboard_auth.prefix import prefix_from_request
 
             set_session_cookies(
                 response,
@@ -394,8 +394,8 @@ async def gated_auth_middleware(
         # cycle with cookies → middleware at module load. Pass the active
         # prefix so the deletion's Path matches the set-Path (otherwise
         # the browser ignores it).
-        from hermes_cli.dashboard_auth.cookies import clear_session_cookies
-        from hermes_cli.dashboard_auth.prefix import prefix_from_request
+        from newroz_cli.dashboard_auth.cookies import clear_session_cookies
+        from newroz_cli.dashboard_auth.prefix import prefix_from_request
         clear_session_cookies(response, prefix=prefix_from_request(request))
         return response
 

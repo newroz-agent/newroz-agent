@@ -2,18 +2,18 @@
 
 Status: design proposal (not yet implemented)
 Author: drafted for Teknium
-Supersedes: PR #31781 (prompt_toolkit `hermes profile wizard`)
+Supersedes: PR #31781 (prompt_toolkit `newroz profile wizard`)
 
 ## Why this, not the CLI wizard
 
-PR #31781 added a keyboard-driven `hermes profile wizard` in the terminal.
+PR #31781 added a keyboard-driven `newroz profile wizard` in the terminal.
 The decision is to **not** build the profile-creation experience in the CLI.
 The dashboard already owns mature, separate pages for every element a profile
-needs, and a profile is just a HERMES_HOME directory — so the dashboard is the
+needs, and a profile is just a NEWROZ_HOME directory — so the dashboard is the
 right home for a full-featured builder, and it can reuse everything that
 already exists.
 
-A profile = a full `~/.hermes/profiles/<name>/` directory with its own:
+A profile = a full `~/.newroz/profiles/<name>/` directory with its own:
 - `config.yaml` — holds `model`/`provider`, `mcp_servers`, enabled skills
 - `skills/` — physical SKILL.md files (built-in seed + optional + hub installs)
 - `.env` — secrets
@@ -30,8 +30,8 @@ them.
 | Element | Existing page | Existing API | Profile-scopable? |
 |---|---|---|---|
 | Name / Description | ProfilesPage create modal | `POST /api/profiles` (`create_profile`) | yes (args) |
-| Model + Provider | ModelsPage | `_write_profile_model(profile_dir, …)` | yes — HERMES_HOME override, already wired into create endpoint |
-| MCPs | McpPage | `mcp_config._save_mcp_server` + `/api/mcp/catalog` | yes — wrap with HERMES_HOME override |
+| Model + Provider | ModelsPage | `_write_profile_model(profile_dir, …)` | yes — NEWROZ_HOME override, already wired into create endpoint |
+| MCPs | McpPage | `mcp_config._save_mcp_server` + `/api/mcp/catalog` | yes — wrap with NEWROZ_HOME override |
 | Skills (built-in/optional) | SkillsPage | `GET /api/skills`, `/api/skills/toggle` | yes — config write |
 | Skills (hub) | SkillsPage | `/api/skills/hub/search`, `/api/skills/hub/install` | **only via subprocess** — see seam #1 |
 
@@ -39,24 +39,24 @@ them.
 
 These are load-bearing — they change the implementation, not just the polish.
 
-### Seam #1 — hub-skill install cannot use the HERMES_HOME override
+### Seam #1 — hub-skill install cannot use the NEWROZ_HOME override
 
-`tools/skills_hub.py` binds `SKILLS_DIR = HERMES_HOME / "skills"` at **module
-import time**. The context-local `set_hermes_home_override()` swap (which makes
+`tools/skills_hub.py` binds `SKILLS_DIR = NEWROZ_HOME / "skills"` at **module
+import time**. The context-local `set_newroz_home_override()` swap (which makes
 `_write_profile_model` and the MCP write land in the target profile) does NOT
 retroactively rebind that already-imported module global. So a data-layer wrap
 of hub install would write into the dashboard's *own* active profile, not the
 new one.
 
-The correct mechanism is the existing subprocess path: `_spawn_hermes_action`
-runs `python -m hermes_cli.main <subcommand>`, and `_apply_profile_override()`
+The correct mechanism is the existing subprocess path: `_spawn_newroz_action`
+runs `python -m newroz_cli.main <subcommand>`, and `_apply_profile_override()`
 re-reads `sys.argv` at import in the fresh child. Prepend `-p <profile>`:
 
 ```python
-_spawn_hermes_action(["-p", profile, "skills", "install", identifier], "skills-install")
+_spawn_newroz_action(["-p", profile, "skills", "install", identifier], "skills-install")
 ```
 
-A fresh subprocess re-imports `skills_hub` with the profile's HERMES_HOME bound
+A fresh subprocess re-imports `skills_hub` with the profile's NEWROZ_HOME bound
 from the start, so `SKILLS_DIR` resolves to `<profile>/skills/`. Correct by
 construction.
 
@@ -64,14 +64,14 @@ construction.
 
 Built-in/optional skill enabling and MCP writes are **synchronous config ops**
 and can be part of the create call. Hub installs are long-running git fetches
-spawned detached (`_spawn_hermes_action` returns a PID immediately). So the
+spawned detached (`_spawn_newroz_action` returns a PID immediately). So the
 create flow is:
 
 1. `create_profile()` — make the dir (synchronous)
-2. write model (synchronous, HERMES_HOME override)
-3. write selected MCP servers (synchronous, HERMES_HOME override)
+2. write model (synchronous, NEWROZ_HOME override)
+3. write selected MCP servers (synchronous, NEWROZ_HOME override)
 4. seed/enable selected built-in + optional skills (synchronous)
-5. spawn `hermes -p <profile> skills install <id>` per hub skill (async, returns PIDs)
+5. spawn `newroz -p <profile> skills install <id>` per hub skill (async, returns PIDs)
 
 Steps 1–4 commit before the response; step 5 returns a list of action PIDs the
 UI polls (same pattern as today's SkillsPage hub install). The builder's
@@ -94,7 +94,7 @@ class ProfileCreate(BaseModel):
     provider: Optional[str] = None
     model: Optional[str] = None
     # NEW — all optional, all best-effort post-create (profile already exists)
-    mcp_servers: List[MCPServerCreate] = []      # synchronous, HERMES_HOME override
+    mcp_servers: List[MCPServerCreate] = []      # synchronous, NEWROZ_HOME override
     builtin_skills: List[str] = []               # synchronous enable/seed
     hub_skills: List[str] = []                   # async spawn, returns PIDs
 ```
@@ -103,7 +103,7 @@ The endpoint already does best-effort post-create steps (`seed_profile_skills`,
 `_write_profile_model`). Add two more best-effort blocks (MCP write, hub-skill
 spawn) in the same style — a failure in any of them must not 500 the create,
 since the profile dir already exists and the user can fix it from the relevant
-page afterward. Mirror `_write_profile_model`'s HERMES_HOME-override helper for
+page afterward. Mirror `_write_profile_model`'s NEWROZ_HOME-override helper for
 the MCP write (`_write_profile_mcp_servers(profile_dir, servers)`).
 
 ## Proposed frontend — dedicated builder page `/profiles/new`
@@ -137,7 +137,7 @@ Nothing writes to disk until ⑤.
 
 ## Verification plan (when built)
 
-- Backend E2E with isolated HERMES_HOME: POST a full create body
+- Backend E2E with isolated NEWROZ_HOME: POST a full create body
   (name + model + 2 MCPs + 3 builtin skills + 1 hub skill), assert the new
   profile dir has the model in config.yaml, both MCP servers in config.yaml,
   the builtin skills enabled, and a spawned PID for the hub skill. Negative:

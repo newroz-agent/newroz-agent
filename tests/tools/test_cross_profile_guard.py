@@ -19,30 +19,30 @@ import pytest
 
 
 @pytest.fixture
-def fake_hermes(tmp_path, monkeypatch):
-    """Build a two-profile Hermes layout and point HERMES_HOME at
-    the hermes-security profile (matching the original-incident shape).
+def fake_newroz(tmp_path, monkeypatch):
+    """Build a two-profile Newroz layout and point NEWROZ_HOME at
+    the newroz-security profile (matching the original-incident shape).
     """
-    root = tmp_path / "fake-hermes"
+    root = tmp_path / "fake-newroz"
     (root / "skills" / "shared-skill").mkdir(parents=True)
     (root / "skills" / "shared-skill" / "SKILL.md").write_text(
         "---\nname: shared-skill\ndescription: default copy.\n---\n"
     )
 
-    sec_home = root / "profiles" / "hermes-security"
+    sec_home = root / "profiles" / "newroz-security"
     (sec_home / "skills").mkdir(parents=True)
 
     coder_home = root / "profiles" / "coder"
     (coder_home / "skills").mkdir(parents=True)
 
-    monkeypatch.setenv("HERMES_HOME", str(sec_home))
+    monkeypatch.setenv("NEWROZ_HOME", str(sec_home))
 
-    import hermes_constants
-    monkeypatch.setattr(hermes_constants, "get_default_hermes_root", lambda: root)
+    import newroz_constants
+    monkeypatch.setattr(newroz_constants, "get_default_newroz_root", lambda: root)
 
     import agent.file_safety as fs
-    monkeypatch.setattr(fs, "_hermes_home_path", lambda: sec_home)
-    monkeypatch.setattr(fs, "_hermes_root_path", lambda: root)
+    monkeypatch.setattr(fs, "_newroz_home_path", lambda: sec_home)
+    monkeypatch.setattr(fs, "_newroz_root_path", lambda: root)
 
     return {
         "root": root,
@@ -57,9 +57,9 @@ def fake_hermes(tmp_path, monkeypatch):
 
 
 class TestWriteFileCrossProfileGuard:
-    def test_in_profile_write_allowed(self, fake_hermes):
+    def test_in_profile_write_allowed(self, fake_newroz):
         from tools.file_tools import write_file_tool
-        target = fake_hermes["sec_home"] / "skills" / "new-skill" / "SKILL.md"
+        target = fake_newroz["sec_home"] / "skills" / "new-skill" / "SKILL.md"
         target.parent.mkdir(parents=True)
         result_json = write_file_tool(str(target), "in-profile content")
         result = json.loads(result_json)
@@ -67,25 +67,25 @@ class TestWriteFileCrossProfileGuard:
         assert target.exists()
         assert target.read_text() == "in-profile content"
 
-    def test_cross_profile_write_blocked_by_default(self, fake_hermes):
+    def test_cross_profile_write_blocked_by_default(self, fake_newroz):
         """The May 2026 incident — security-profile session edits default
         profile's skill. Must be blocked."""
         from tools.file_tools import write_file_tool
-        target = fake_hermes["root"] / "skills" / "shared-skill" / "SKILL.md"
+        target = fake_newroz["root"] / "skills" / "shared-skill" / "SKILL.md"
         original = target.read_text()
         result_json = write_file_tool(str(target), "OVERWRITTEN")
         result = json.loads(result_json)
         assert result.get("error"), "Cross-profile write should be refused"
         assert "cross-profile" in result["error"].lower()
         assert "default" in result["error"]
-        assert "hermes-security" in result["error"]
+        assert "newroz-security" in result["error"]
         # File untouched.
         assert target.read_text() == original
 
-    def test_cross_profile_True_bypass(self, fake_hermes):
+    def test_cross_profile_True_bypass(self, fake_newroz):
         """Explicit override after user direction must succeed."""
         from tools.file_tools import write_file_tool
-        target = fake_hermes["root"] / "skills" / "shared-skill" / "SKILL.md"
+        target = fake_newroz["root"] / "skills" / "shared-skill" / "SKILL.md"
         result_json = write_file_tool(
             str(target), "user-directed override", cross_profile=True
         )
@@ -93,7 +93,7 @@ class TestWriteFileCrossProfileGuard:
         assert not result.get("error"), f"cross_profile=True must succeed: {result}"
         assert target.read_text() == "user-directed override"
 
-    def test_non_hermes_path_unaffected(self, fake_hermes, tmp_path):
+    def test_non_newroz_path_unaffected(self, fake_newroz, tmp_path):
         from tools.file_tools import write_file_tool
         target = tmp_path / "outside" / "main.py"
         target.parent.mkdir()
@@ -109,9 +109,9 @@ class TestWriteFileCrossProfileGuard:
 
 
 class TestPatchCrossProfileGuard:
-    def test_cross_profile_patch_blocked(self, fake_hermes):
+    def test_cross_profile_patch_blocked(self, fake_newroz):
         from tools.file_tools import patch_tool
-        target = fake_hermes["root"] / "skills" / "shared-skill" / "SKILL.md"
+        target = fake_newroz["root"] / "skills" / "shared-skill" / "SKILL.md"
         original = target.read_text()
         result_json = patch_tool(
             mode="replace",
@@ -124,9 +124,9 @@ class TestPatchCrossProfileGuard:
         assert "cross-profile" in result["error"].lower()
         assert target.read_text() == original
 
-    def test_cross_profile_patch_bypass(self, fake_hermes):
+    def test_cross_profile_patch_bypass(self, fake_newroz):
         from tools.file_tools import patch_tool
-        target = fake_hermes["root"] / "skills" / "shared-skill" / "SKILL.md"
+        target = fake_newroz["root"] / "skills" / "shared-skill" / "SKILL.md"
         result_json = patch_tool(
             mode="replace",
             path=str(target),
@@ -138,11 +138,11 @@ class TestPatchCrossProfileGuard:
         assert not result.get("error"), f"cross_profile=True bypass: {result}"
         assert "user-directed update." in target.read_text()
 
-    def test_v4a_patch_extracts_path_for_guard(self, fake_hermes):
+    def test_v4a_patch_extracts_path_for_guard(self, fake_newroz):
         """V4A patches embed the target paths in the patch body, not in
         a ``path`` kwarg. The guard must still apply."""
         from tools.file_tools import patch_tool
-        target = fake_hermes["root"] / "skills" / "shared-skill" / "SKILL.md"
+        target = fake_newroz["root"] / "skills" / "shared-skill" / "SKILL.md"
         original = target.read_text()
         v4a = (
             "*** Begin Patch\n"
@@ -173,13 +173,13 @@ class TestSkillManageCrossProfileErrorUX:
         )
 
     def test_error_names_other_profile_when_skill_lives_there(
-        self, fake_hermes, monkeypatch
+        self, fake_newroz, monkeypatch
     ):
         """The original incident shape — model expects 'foo' in active
         profile, but 'foo' lives in default. Error must point at default."""
-        self._make_skill_in_profile(fake_hermes["root"], "default-only-skill")
+        self._make_skill_in_profile(fake_newroz["root"], "default-only-skill")
 
-        # Re-import the module so SKILLS_DIR picks up HERMES_HOME (set in
+        # Re-import the module so SKILLS_DIR picks up NEWROZ_HOME (set in
         # the fixture). Skill_manager_tool computes SKILLS_DIR at import.
         import importlib
         import tools.skill_manager_tool
@@ -187,14 +187,14 @@ class TestSkillManageCrossProfileErrorUX:
         from tools.skill_manager_tool import _skill_not_found_error
 
         err = _skill_not_found_error("default-only-skill")
-        assert "not found in active profile 'hermes-security'" in err
+        assert "not found in active profile 'newroz-security'" in err
         assert "default" in err
         assert "cross_profile=True" in err
 
-    def test_error_names_multiple_profiles(self, fake_hermes, monkeypatch):
+    def test_error_names_multiple_profiles(self, fake_newroz, monkeypatch):
         """When the skill exists in TWO other profiles, both should be named."""
-        self._make_skill_in_profile(fake_hermes["root"], "everywhere-skill")
-        self._make_skill_in_profile(fake_hermes["coder_home"], "everywhere-skill")
+        self._make_skill_in_profile(fake_newroz["root"], "everywhere-skill")
+        self._make_skill_in_profile(fake_newroz["coder_home"], "everywhere-skill")
 
         import importlib
         import tools.skill_manager_tool
@@ -205,10 +205,10 @@ class TestSkillManageCrossProfileErrorUX:
         assert "default" in err
         assert "coder" in err
         # Switch-profiles hint
-        assert "hermes -p" in err
+        assert "newroz -p" in err
 
     def test_genuinely_missing_skill_keeps_helpful_hint(
-        self, fake_hermes, monkeypatch
+        self, fake_newroz, monkeypatch
     ):
         """When no profile has the skill, error falls back to skills_list hint."""
         import importlib
@@ -217,7 +217,7 @@ class TestSkillManageCrossProfileErrorUX:
         from tools.skill_manager_tool import _skill_not_found_error
 
         err = _skill_not_found_error("totally-imaginary-skill")
-        assert "not found in active profile 'hermes-security'" in err
+        assert "not found in active profile 'newroz-security'" in err
         assert "skills_list" in err
 
 
@@ -229,11 +229,11 @@ class TestSkillManageCrossProfileErrorUX:
 class TestSystemPromptActiveProfile:
     def test_default_profile_line_in_prompt(self, tmp_path, monkeypatch):
         """When active profile is 'default', the prompt names it and warns
-        about ~/.hermes/profiles/<name>/."""
-        # Don't set HERMES_HOME — falls back to default.
+        about ~/.newroz/profiles/<name>/."""
+        # Don't set NEWROZ_HOME — falls back to default.
         import agent.file_safety as fs
-        monkeypatch.setattr(fs, "_hermes_home_path", lambda: tmp_path / "fake")
-        monkeypatch.setattr(fs, "_hermes_root_path", lambda: tmp_path / "fake")
+        monkeypatch.setattr(fs, "_newroz_home_path", lambda: tmp_path / "fake")
+        monkeypatch.setattr(fs, "_newroz_root_path", lambda: tmp_path / "fake")
 
         from agent.file_safety import _resolve_active_profile_name
         assert _resolve_active_profile_name() == "default"
@@ -241,8 +241,8 @@ class TestSystemPromptActiveProfile:
         # is too heavy to instantiate end-to-end in a unit test.
         # See agent/system_prompt.py for the exact wording.
 
-    def test_named_profile_line_in_prompt_text(self, fake_hermes):
-        """When active profile is 'hermes-security', the prompt warns
+    def test_named_profile_line_in_prompt_text(self, fake_newroz):
+        """When active profile is 'newroz-security', the prompt warns
         explicitly about NOT modifying default's skills/plugins/cron/memories."""
         # Spot-check by reading the source — the contract is:
         # (1) names the active profile, (2) names the default-profile
@@ -250,9 +250,9 @@ class TestSystemPromptActiveProfile:
         # explicit user direction.
         from pathlib import Path
         src = Path("agent/system_prompt.py").read_text()
-        assert "Active Hermes profile" in src
+        assert "Active Newroz profile" in src
         assert "cross_profile=True" in src
-        assert "~/.hermes/profiles/" in src
+        assert "~/.newroz/profiles/" in src
         # Both branches present (default and named profile).
-        assert "Active Hermes profile: default" in src
-        assert "Active Hermes profile: {active_profile}" in src
+        assert "Active Newroz profile: default" in src
+        assert "Active Newroz profile: {active_profile}" in src

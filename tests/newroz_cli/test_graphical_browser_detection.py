@@ -1,6 +1,6 @@
-"""Tests for `_can_open_graphical_browser()` in hermes_cli.auth.
+"""Tests for `_can_open_graphical_browser()` in newroz_cli.auth.
 
-Guards the fix for the May 2026 report where `hermes auth add xai-oauth`
+Guards the fix for the May 2026 report where `newroz auth add xai-oauth`
 launched a text-mode browser (w3m) INSIDE the terminal on a headless Linux
 box — `_is_remote_session()` only checked SSH/cloud-shell env vars, so a plain
 local box with no GUI browser still called `webbrowser.open()`, which resolved
@@ -17,7 +17,7 @@ import webbrowser
 
 import pytest
 
-from hermes_cli.auth import _can_open_graphical_browser
+from newroz_cli.auth import _can_open_graphical_browser
 
 
 class _FakeController:
@@ -37,7 +37,7 @@ def _clean_browser_env(monkeypatch):
 
 
 def _force_platform_linux(monkeypatch):
-    monkeypatch.setattr("hermes_cli.auth.sys.platform", "linux")
+    monkeypatch.setattr("newroz_cli.auth.sys.platform", "linux")
 
 
 def _force_resolved_browser(monkeypatch, name: str):
@@ -91,6 +91,6 @@ def test_webbrowser_get_raises_refuses(monkeypatch):
 
 def test_non_linux_with_gui_allows(monkeypatch):
     """macOS / Windows always have a usable default GUI browser."""
-    monkeypatch.setattr("hermes_cli.auth.sys.platform", "darwin")
+    monkeypatch.setattr("newroz_cli.auth.sys.platform", "darwin")
     _force_resolved_browser(monkeypatch, "MacOSX")
     assert _can_open_graphical_browser() is True

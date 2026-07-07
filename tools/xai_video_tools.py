@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Optional
 
-from hermes_cli.config import load_config
+from newroz_cli.config import load_config
 from plugins.video_gen.xai import (
     has_xai_video_credentials,
     run_xai_video_edit,
@@ -50,7 +50,7 @@ def _provider_not_configured_error() -> str:
         "success": False,
         "error": (
             "xAI video edit/extend tools require `video_gen.provider` to be "
-            "configured as `xai` via `hermes tools` -> Video Generation."
+            "configured as `xai` via `newroz tools` -> Video Generation."
         ),
         "error_type": "provider_not_configured",
         "provider": "xai",

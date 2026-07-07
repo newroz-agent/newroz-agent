@@ -1,12 +1,12 @@
 ---
 sidebar_position: 9
 title: "Secret Source Plugins"
-description: "How to build a secret-manager backend plugin for Hermes Agent"
+description: "How to build a secret-manager backend plugin for Newroz Agent"
 ---
 
 # Building a Secret Source Plugin
 
-Secret sources resolve provider credentials from an external secret manager (a vault, a password manager, an OS keystore, a custom script) into environment variables at process startup — after `~/.hermes/.env` loads, before Hermes reads credentials. Bitwarden and 1Password ship in-tree; **every other backend is a plugin**. This guide covers building one.
+Secret sources resolve provider credentials from an external secret manager (a vault, a password manager, an OS keystore, a custom script) into environment variables at process startup — after `~/.newroz/.env` loads, before Newroz reads credentials. Bitwarden and 1Password ship in-tree; **every other backend is a plugin**. This guide covers building one.
 
 :::tip
 The bundled set is deliberately closed, same policy as [memory providers](/developer-guide/memory-provider-plugin): PRs adding new vault backends under `agent/secret_sources/` are closed with a pointer to this guide. Publish your backend as a standalone plugin repo and share it in the Nous Research Discord (`#plugins-skills-and-skins`).
@@ -29,7 +29,7 @@ The orchestrator (`agent.secret_sources.registry.apply_all`) owns everything sec
 ## Directory structure
 
 ```
-~/.hermes/plugins/my-vault/
+~/.newroz/plugins/my-vault/
 ├── plugin.yaml      # name, description
 └── __init__.py      # SecretSource subclass + register(ctx)
 ```
@@ -113,7 +113,7 @@ class MyVaultSource(SecretSource):
 
 ## Subprocess safety: use `run_secret_cli()`
 
-If your backend shells out to a CLI, use the shared helper instead of `subprocess.run` directly. It gives you the audited posture for free: argv-only (no `shell=True`), a **minimal allowlisted child environment** (by the time sources run, `os.environ` holds every credential Hermes knows — never hand that to a child process), `NO_COLOR` + ANSI-scrubbed stderr, stdin closed, timeout → clean `RuntimeError`. Pass user-supplied reference strings after a `--` terminator in your argv so they can never parse as flags.
+If your backend shells out to a CLI, use the shared helper instead of `subprocess.run` directly. It gives you the audited posture for free: argv-only (no `shell=True`), a **minimal allowlisted child environment** (by the time sources run, `os.environ` holds every credential Newroz knows — never hand that to a child process), `NO_COLOR` + ANSI-scrubbed stderr, stdin closed, timeout → clean `RuntimeError`. Pass user-supplied reference strings after a `--` terminator in your argv so they can never parse as flags.
 
 ## Registering
 
@@ -126,7 +126,7 @@ def register(ctx):
 Registration is rejected (with a log warning, never a crash) for: non-`SecretSource` instances, invalid/duplicate names, a `scheme` another source owns, wrong `api_version`, or a `shape` outside `mapped`/`bulk`.
 
 :::note Timing
-Plugin discovery runs later in startup than the first `load_hermes_dotenv()` call, so a plugin source is not consulted by the very first env load of the process that discovers it. It IS consulted by every subsequently spawned Hermes process (gateway children, cron sessions, subagents). Bundled sources cover first-process bootstrap.
+Plugin discovery runs later in startup than the first `load_newroz_dotenv()` call, so a plugin source is not consulted by the very first env load of the process that discovers it. It IS consulted by every subsequently spawned Newroz process (gateway children, cron sessions, subagents). Bundled sources cover first-process bootstrap.
 :::
 
 ## Users configure it like any other source
@@ -143,7 +143,7 @@ Multi-source precedence, conflict warnings, and `(from My Vault)` provenance lab
 
 ## Validate with the conformance kit
 
-Subclass the kit from the Hermes repo (`tests/secret_sources/conformance.py`) in your plugin's tests:
+Subclass the kit from the Newroz repo (`tests/secret_sources/conformance.py`) in your plugin's tests:
 
 ```python
 import pytest

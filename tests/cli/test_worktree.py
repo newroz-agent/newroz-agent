@@ -118,8 +118,8 @@ def _setup_worktree(repo_root):
     """Test version of _setup_worktree — creates a worktree."""
     import uuid
     short_id = uuid.uuid4().hex[:8]
-    wt_name = f"hermes-{short_id}"
-    branch_name = f"hermes/{wt_name}"
+    wt_name = f"newroz-{short_id}"
+    branch_name = f"newroz/{wt_name}"
 
     worktrees_dir = Path(repo_root) / ".worktrees"
     worktrees_dir.mkdir(parents=True, exist_ok=True)
@@ -223,7 +223,7 @@ class TestWorktreeCreation:
         info = _setup_worktree(str(git_repo))
         assert info is not None
         assert Path(info["path"]).exists()
-        assert info["branch"].startswith("hermes/hermes-")
+        assert info["branch"].startswith("newroz/newroz-")
         assert info["repo_root"] == str(git_repo)
 
         # Verify it's a valid git worktree
@@ -364,7 +364,7 @@ class TestWorktreeCleanup:
         """Cleanup should handle already-removed worktrees gracefully."""
         info = {
             "path": str(git_repo / ".worktrees" / "nonexistent"),
-            "branch": "hermes/nonexistent",
+            "branch": "newroz/nonexistent",
             "repo_root": str(git_repo),
         }
         # Should not raise
@@ -563,7 +563,7 @@ class TestStaleWorktreePruning:
         cutoff = time.time() - (24 * 3600)
 
         for entry in worktrees_dir.iterdir():
-            if not entry.is_dir() or not entry.name.startswith("hermes-"):
+            if not entry.is_dir() or not entry.name.startswith("newroz-"):
                 continue
             try:
                 mtime = entry.stat().st_mtime
@@ -609,7 +609,7 @@ class TestStaleWorktreePruning:
 
         pruned = False
         for entry in worktrees_dir.iterdir():
-            if not entry.is_dir() or not entry.name.startswith("hermes-"):
+            if not entry.is_dir() or not entry.name.startswith("newroz-"):
                 continue
             mtime = entry.stat().st_mtime
             if mtime > cutoff:
@@ -658,7 +658,7 @@ class TestStaleWorktreePruning:
         cutoff = time.time() - (24 * 3600)
 
         for entry in worktrees_dir.iterdir():
-            if not entry.is_dir() or not entry.name.startswith("hermes-"):
+            if not entry.is_dir() or not entry.name.startswith("newroz-"):
                 continue
             mtime = entry.stat().st_mtime
             if mtime > cutoff:
@@ -700,7 +700,7 @@ class TestStaleWorktreePruning:
         cutoff = time.time() - (24 * 3600)
 
         for entry in worktrees_dir.iterdir():
-            if not entry.is_dir() or not entry.name.startswith("hermes-"):
+            if not entry.is_dir() or not entry.name.startswith("newroz-"):
                 continue
             mtime = entry.stat().st_mtime
             if mtime > cutoff:
@@ -863,22 +863,22 @@ class TestTerminalCWDIntegration:
 
 
 class TestOrphanedBranchPruning:
-    """Test cleanup of orphaned hermes/* and pr-* branches."""
+    """Test cleanup of orphaned newroz/* and pr-* branches."""
 
-    def test_prunes_orphaned_hermes_branch(self, git_repo):
-        """hermes/hermes-* branches with no worktree should be deleted."""
+    def test_prunes_orphaned_newroz_branch(self, git_repo):
+        """newroz/newroz-* branches with no worktree should be deleted."""
         # Create a branch that looks like a worktree branch but has no worktree
         subprocess.run(
-            ["git", "branch", "hermes/hermes-deadbeef", "HEAD"],
+            ["git", "branch", "newroz/newroz-deadbeef", "HEAD"],
             cwd=str(git_repo), capture_output=True,
         )
 
         # Verify it exists
         result = subprocess.run(
-            ["git", "branch", "--list", "hermes/hermes-deadbeef"],
+            ["git", "branch", "--list", "newroz/newroz-deadbeef"],
             capture_output=True, text=True, cwd=str(git_repo),
         )
-        assert "hermes/hermes-deadbeef" in result.stdout
+        assert "newroz/newroz-deadbeef" in result.stdout
 
         # Simulate _prune_orphaned_branches logic
         result = subprocess.run(
@@ -899,9 +899,9 @@ class TestOrphanedBranchPruning:
         orphaned = [
             b for b in all_branches
             if b not in active_branches
-            and (b.startswith("hermes/hermes-") or b.startswith("pr-"))
+            and (b.startswith("newroz/newroz-") or b.startswith("pr-"))
         ]
-        assert "hermes/hermes-deadbeef" in orphaned
+        assert "newroz/newroz-deadbeef" in orphaned
 
         # Delete them
         if orphaned:
@@ -912,10 +912,10 @@ class TestOrphanedBranchPruning:
 
         # Verify gone
         result = subprocess.run(
-            ["git", "branch", "--list", "hermes/hermes-deadbeef"],
+            ["git", "branch", "--list", "newroz/newroz-deadbeef"],
             capture_output=True, text=True, cwd=str(git_repo),
         )
-        assert "hermes/hermes-deadbeef" not in result.stdout
+        assert "newroz/newroz-deadbeef" not in result.stdout
 
     def test_prunes_orphaned_pr_branch(self, git_repo):
         """pr-* branches should be deleted during pruning."""
@@ -984,7 +984,7 @@ class TestOrphanedBranchPruning:
         orphaned = [
             b for b in all_branches
             if b not in active_branches
-            and (b.startswith("hermes/hermes-") or b.startswith("pr-"))
+            and (b.startswith("newroz/newroz-") or b.startswith("pr-"))
         ]
         assert "main" not in orphaned
 
@@ -1039,12 +1039,12 @@ class TestWorktreeLockReaping:
         p = repo / ".worktrees" / name
         (repo / ".worktrees").mkdir(exist_ok=True)
         subprocess.run(
-            ["git", "worktree", "add", str(p), "-b", f"hermes/{name}", "HEAD"],
+            ["git", "worktree", "add", str(p), "-b", f"newroz/{name}", "HEAD"],
             cwd=repo, capture_output=True,
         )
         if pid is not None:
             subprocess.run(
-                ["git", "worktree", "lock", "--reason", f"hermes pid={pid}", str(p)],
+                ["git", "worktree", "lock", "--reason", f"newroz pid={pid}", str(p)],
                 cwd=repo, capture_output=True,
             )
         if unpushed:
@@ -1058,13 +1058,13 @@ class TestWorktreeLockReaping:
 
     def test_live_locked_survives_at_any_age(self, git_repo):
         import cli
-        wt = self._mk(cli, git_repo, "hermes-live", pid=os.getpid())
+        wt = self._mk(cli, git_repo, "newroz-live", pid=os.getpid())
         cli._prune_stale_worktrees(str(git_repo))
         assert wt.exists(), "live-locked worktree (this pid) must never be reaped"
 
     def test_dead_locked_clean_is_reaped(self, git_repo):
         import cli
-        wt = self._mk(cli, git_repo, "hermes-dead", pid=999999)
+        wt = self._mk(cli, git_repo, "newroz-dead", pid=999999)
         # sanity: this is the accumulation bug — remove --force alone can't do it
         assert cli._worktree_lock_is_live(str(git_repo), str(wt)) == "dead"
         cli._prune_stale_worktrees(str(git_repo))
@@ -1072,31 +1072,31 @@ class TestWorktreeLockReaping:
 
     def test_dead_locked_dirty_survives(self, git_repo):
         import cli
-        wt = self._mk(cli, git_repo, "hermes-deaddirty", pid=999999, dirty=True)
+        wt = self._mk(cli, git_repo, "newroz-deaddirty", pid=999999, dirty=True)
         cli._prune_stale_worktrees(str(git_repo))
         assert wt.exists(), "dead-locked worktree with uncommitted work must survive"
 
     def test_dead_locked_unpushed_survives(self, git_repo):
         import cli
-        wt = self._mk(cli, git_repo, "hermes-deadunp", pid=999999, unpushed=True)
+        wt = self._mk(cli, git_repo, "newroz-deadunp", pid=999999, unpushed=True)
         cli._prune_stale_worktrees(str(git_repo))
         assert wt.exists(), "dead-locked worktree with unpushed commits must survive"
 
     def test_unlocked_clean_stale_is_reaped(self, git_repo):
         import cli
-        wt = self._mk(cli, git_repo, "hermes-nolock", pid=None)
+        wt = self._mk(cli, git_repo, "newroz-nolock", pid=None)
         cli._prune_stale_worktrees(str(git_repo))
         assert not wt.exists(), "clean unlocked stale worktree should be reaped"
 
     def test_dirty_survives_over_72h(self, git_repo):
         import cli
-        wt = self._mk(cli, git_repo, "hermes-dirty72", pid=None, dirty=True, age_h=100)
+        wt = self._mk(cli, git_repo, "newroz-dirty72", pid=None, dirty=True, age_h=100)
         cli._prune_stale_worktrees(str(git_repo))
         assert wt.exists(), "dirty worktree must survive even past the 72h tier"
 
     def test_recent_worktree_untouched(self, git_repo):
         import cli
-        wt = self._mk(cli, git_repo, "hermes-fresh", pid=None, age_h=1)
+        wt = self._mk(cli, git_repo, "newroz-fresh", pid=None, age_h=1)
         cli._prune_stale_worktrees(str(git_repo))
         assert wt.exists(), "worktree under 24h must never be pruned"
 
@@ -1108,7 +1108,7 @@ class TestWorktreeLockPredicate:
         p = repo / ".worktrees" / name
         (repo / ".worktrees").mkdir(exist_ok=True)
         subprocess.run(
-            ["git", "worktree", "add", str(p), "-b", f"hermes/{name}", "HEAD"],
+            ["git", "worktree", "add", str(p), "-b", f"newroz/{name}", "HEAD"],
             cwd=repo, capture_output=True,
         )
         subprocess.run(
@@ -1119,27 +1119,27 @@ class TestWorktreeLockPredicate:
 
     def test_unlocked_returns_none(self, git_repo):
         import cli
-        p = git_repo / ".worktrees" / "hermes-x"
+        p = git_repo / ".worktrees" / "newroz-x"
         (git_repo / ".worktrees").mkdir(exist_ok=True)
         subprocess.run(
-            ["git", "worktree", "add", str(p), "-b", "hermes/hermes-x", "HEAD"],
+            ["git", "worktree", "add", str(p), "-b", "newroz/newroz-x", "HEAD"],
             cwd=git_repo, capture_output=True,
         )
         assert cli._worktree_lock_is_live(str(git_repo), str(p)) is None
 
     def test_live_pid_returns_live(self, git_repo):
         import cli
-        p = self._mk_locked(git_repo, "hermes-live", f"hermes pid={os.getpid()}")
+        p = self._mk_locked(git_repo, "newroz-live", f"newroz pid={os.getpid()}")
         assert cli._worktree_lock_is_live(str(git_repo), str(p)) == "live"
 
     def test_dead_pid_returns_dead(self, git_repo):
         import cli
-        p = self._mk_locked(git_repo, "hermes-dead", "hermes pid=999999")
+        p = self._mk_locked(git_repo, "newroz-dead", "newroz pid=999999")
         assert cli._worktree_lock_is_live(str(git_repo), str(p)) == "dead"
 
     def test_foreign_lock_reason_returns_dead(self, git_repo):
         import cli
-        p = self._mk_locked(git_repo, "hermes-foreign", "some other tool")
+        p = self._mk_locked(git_repo, "newroz-foreign", "some other tool")
         assert cli._worktree_lock_is_live(str(git_repo), str(p)) == "dead"
 
     def test_bad_repo_root_fails_safe_to_live(self, tmp_path):

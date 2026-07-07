@@ -1,8 +1,8 @@
 """Auto-installation of LSP server binaries.
 
 Tries to install missing servers using whatever package manager is
-appropriate.  All installs go to a Hermes-owned bin staging dir,
-``<HERMES_HOME>/lsp/bin/``, so we don't pollute the user's global
+appropriate.  All installs go to a Newroz-owned bin staging dir,
+``<NEWROZ_HOME>/lsp/bin/``, so we don't pollute the user's global
 toolchain.
 
 Strategies:
@@ -10,7 +10,7 @@ Strategies:
 - ``auto`` — attempt to install with the best available package
   manager.  This is the default.
 - ``manual`` — never install; if a binary is missing, the server is
-  silently skipped and the user is told about it via ``hermes lsp
+  silently skipped and the user is told about it via ``newroz lsp
   status``.
 - ``off`` — same as ``manual`` for now (kept distinct so we can
   evolve behavior later, e.g. logging differently).
@@ -40,7 +40,7 @@ logger = logging.getLogger("agent.lsp.install")
 # Package-name → install-strategy hint registry.  Each entry is a
 # tuple of strategy name + package name + executable name.  When the
 # install completes, we look for the executable in
-# ``<HERMES_HOME>/lsp/bin/`` first, then on PATH.
+# ``<NEWROZ_HOME>/lsp/bin/`` first, then on PATH.
 #
 # Optional fields:
 #   - ``extra_pkgs``: list of sibling packages to install alongside
@@ -105,7 +105,7 @@ INSTALL_RECIPES: Dict[str, Dict[str, Any]] = {
     # PowerShell — PowerShellEditorServices ships as a GitHub release
     # zip driven by a pwsh bootstrap script, not a single binary.  We
     # require a manual bundle install and probe for the pwsh host so
-    # `hermes lsp status` reports the host's presence.
+    # `newroz lsp status` reports the host's presence.
     "powershell": {"strategy": "manual", "pkg": "", "bin": "pwsh"},
 }
 
@@ -120,11 +120,11 @@ def _is_windows() -> bool:
     return os.name == "nt"
 
 
-def hermes_lsp_bin_dir() -> Path:
-    """Return the Hermes-owned bin staging dir for LSP servers."""
-    home = os.environ.get("HERMES_HOME")
+def newroz_lsp_bin_dir() -> Path:
+    """Return the Newroz-owned bin staging dir for LSP servers."""
+    home = os.environ.get("NEWROZ_HOME")
     if home is None:
-        home = os.path.join(os.path.expanduser("~"), ".hermes")
+        home = os.path.join(os.path.expanduser("~"), ".newroz")
     p = Path(home) / "lsp" / "bin"
     p.mkdir(parents=True, exist_ok=True)
     return p
@@ -146,7 +146,7 @@ def _native_binary_candidates(base: Path) -> list[Path]:
 
 def _existing_binary(name: str) -> Optional[str]:
     """Probe the staging dir + PATH for a binary named ``name``."""
-    for staged in _native_binary_candidates(hermes_lsp_bin_dir() / name):
+    for staged in _native_binary_candidates(newroz_lsp_bin_dir() / name):
         if staged.exists() and os.access(staged, os.X_OK):
             return str(staged)
     on_path = shutil.which(name)
@@ -253,7 +253,7 @@ def _install_npm(
     if npm is None:
         logger.info("[install] cannot install %s: npm not on PATH", pkg)
         return None
-    staging = hermes_lsp_bin_dir().parent  # <HERMES_HOME>/lsp/
+    staging = newroz_lsp_bin_dir().parent  # <NEWROZ_HOME>/lsp/
     install_targets = [pkg] + list(extra_pkgs or [])
     try:
         logger.info(
@@ -283,7 +283,7 @@ def _install_npm(
     for c in _native_binary_candidates(nm_bin):
         if c.exists():
             # Symlink into our `lsp/bin/` for stable PATH access.
-            link = hermes_lsp_bin_dir() / c.name
+            link = newroz_lsp_bin_dir() / c.name
             if not link.exists():
                 try:
                     link.symlink_to(c)
@@ -304,7 +304,7 @@ def _install_go(pkg: str, bin_name: str) -> Optional[str]:
     if go is None:
         logger.info("[install] cannot install %s: go not on PATH", pkg)
         return None
-    staging = hermes_lsp_bin_dir()
+    staging = newroz_lsp_bin_dir()
     env = dict(os.environ)
     env["GOBIN"] = str(staging)
     try:
@@ -336,7 +336,7 @@ def _install_go(pkg: str, bin_name: str) -> Optional[str]:
 
 
 def _install_pip(pkg: str, bin_name: str) -> Optional[str]:
-    """Install a Python package into a hermes-owned target dir.
+    """Install a Python package into a newroz-owned target dir.
 
     We avoid polluting the user's site-packages by using
     ``pip install --target``.  Bins go into
@@ -344,7 +344,7 @@ def _install_pip(pkg: str, bin_name: str) -> Optional[str]:
     ``<staging>/bin``.  Note: this only works for packages that ship a
     console script.
     """
-    pip_target = hermes_lsp_bin_dir().parent / "python-packages"
+    pip_target = newroz_lsp_bin_dir().parent / "python-packages"
     pip_target.mkdir(parents=True, exist_ok=True)
     try:
         logger.info("[install] pip install --target %s %s", pip_target, pkg)
@@ -372,7 +372,7 @@ def _install_pip(pkg: str, bin_name: str) -> Optional[str]:
     for script_dir in script_dirs:
         for bin_path in _native_binary_candidates(script_dir / bin_name):
             if bin_path.exists():
-                link = hermes_lsp_bin_dir() / bin_path.name
+                link = newroz_lsp_bin_dir() / bin_path.name
                 if not link.exists():
                     try:
                         link.symlink_to(bin_path)
@@ -388,7 +388,7 @@ def _install_pip(pkg: str, bin_name: str) -> Optional[str]:
 def detect_status(pkg: str) -> str:
     """Return ``installed``, ``missing``, or ``manual-only`` for a package.
 
-    Used by the ``hermes lsp status`` CLI to give users a quick
+    Used by the ``newroz lsp status`` CLI to give users a quick
     overview of what's available without spawning anything.
     """
     recipe = INSTALL_RECIPES.get(pkg)
@@ -404,5 +404,5 @@ __all__ = [
     "INSTALL_RECIPES",
     "try_install",
     "detect_status",
-    "hermes_lsp_bin_dir",
+    "newroz_lsp_bin_dir",
 ]

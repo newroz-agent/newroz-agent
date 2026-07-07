@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-from hermes_constants import get_hermes_home
+from newroz_constants import get_newroz_home
 
 logger = logging.getLogger(__name__)
 
@@ -72,13 +72,13 @@ def resolve_max_concurrent_sessions(config: Any) -> Optional[int]:
 
 def active_session_limit_message(active_count: int, max_sessions: int) -> str:
     return (
-        f"Hermes is at the active session limit ({active_count}/{max_sessions}). "
+        f"Newroz is at the active session limit ({active_count}/{max_sessions}). "
         "Try again when another session finishes."
     )
 
 
 def _state_dir() -> Path:
-    return Path(get_hermes_home()) / "runtime"
+    return Path(get_newroz_home()) / "runtime"
 
 
 def _state_path() -> Path:

@@ -88,7 +88,7 @@ def test_check_website_access_supports_wildcard_subdomains_only(tmp_path):
 
 
 def test_default_config_exposes_website_blocklist_shape():
-    from hermes_cli.config import DEFAULT_CONFIG
+    from newroz_cli.config import DEFAULT_CONFIG
 
     website_blocklist = DEFAULT_CONFIG["security"]["website_blocklist"]
     assert website_blocklist["enabled"] is False
@@ -241,10 +241,10 @@ def test_load_website_blocklist_wraps_shared_file_read_errors(tmp_path, monkeypa
     assert result["rules"] == []  # shared file rules skipped
 
 
-def test_check_website_access_uses_dynamic_hermes_home(monkeypatch, tmp_path):
-    hermes_home = tmp_path / "hermes-home"
-    hermes_home.mkdir()
-    (hermes_home / "config.yaml").write_text(
+def test_check_website_access_uses_dynamic_newroz_home(monkeypatch, tmp_path):
+    newroz_home = tmp_path / "newroz-home"
+    newroz_home.mkdir()
+    (newroz_home / "config.yaml").write_text(
         yaml.safe_dump(
             {
                 "security": {
@@ -259,11 +259,11 @@ def test_check_website_access_uses_dynamic_hermes_home(monkeypatch, tmp_path):
         encoding="utf-8",
     )
 
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
 
-    # Invalidate the module-level cache so the new HERMES_HOME is picked up.
+    # Invalidate the module-level cache so the new NEWROZ_HOME is picked up.
     # A prior test may have cached a default policy (enabled=False) under the
-    # old HERMES_HOME set by the autouse _isolate_hermes_home fixture.
+    # old NEWROZ_HOME set by the autouse _isolate_newroz_home fixture.
     from tools.website_policy import invalidate_cache
     invalidate_cache()
 
@@ -505,8 +505,8 @@ def test_check_website_access_fails_open_on_malformed_config(tmp_path, monkeypat
     with pytest.raises(WebsitePolicyError):
         check_website_access("https://example.com", config_path=config_path)
 
-    # Simulate default path by pointing HERMES_HOME to tmp_path
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    # Simulate default path by pointing NEWROZ_HOME to tmp_path
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     from tools import website_policy
     website_policy.invalidate_cache()
 

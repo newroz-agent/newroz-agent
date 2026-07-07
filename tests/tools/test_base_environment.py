@@ -31,11 +31,11 @@ class TestWrapCommand:
         assert "source" in wrapped
         assert "cd -- /tmp" in wrapped or "cd -- '/tmp'" in wrapped
         assert "eval 'echo hello'" in wrapped
-        assert "__hermes_ec=$?" in wrapped
+        assert "__newroz_ec=$?" in wrapped
         assert "export -p >" in wrapped
         assert "pwd -P >" in wrapped
         assert env._cwd_marker in wrapped
-        assert "exit $__hermes_ec" in wrapped
+        assert "exit $__newroz_ec" in wrapped
 
     def test_no_snapshot_skips_source(self):
         env = _TestableEnv()
@@ -134,14 +134,14 @@ class TestAtomicSnapshotWrite:
         so it still expands."""
         env = _TestableEnv()
         env._snapshot_ready = True
-        env._snapshot_path = "/tmp/has space/hermes-snap-x.sh"
+        env._snapshot_path = "/tmp/has space/newroz-snap-x.sh"
         wrapped = env._wrap_command("echo hi", "/tmp")
         # The static path (with its space) is shlex-quoted as a single word, with
         # $BASHPID appended OUTSIDE the quotes so it still expands at runtime.
-        assert "'/tmp/has space/hermes-snap-x.sh.tmp.'$BASHPID" in wrapped
+        assert "'/tmp/has space/newroz-snap-x.sh.tmp.'$BASHPID" in wrapped
         # The space must never appear bare/unquoted in the temp token (that would
         # word-split into two args and break the redirect/mv).
-        assert " space/hermes-snap-x.sh.tmp.$BASHPID" not in wrapped
+        assert " space/newroz-snap-x.sh.tmp.$BASHPID" not in wrapped
 
     def test_wrap_command_mv_chained_on_export_success(self):
         """A failed/partial ``export -p`` must NOT mv a torn temp over a good
@@ -197,7 +197,7 @@ class TestAtomicSnapshotConcurrencyBehavioral:
             import pytest
             pytest.skip("bash required")
         import shlex
-        snap = str(tmp_path / "hermes-snap-x.sh")
+        snap = str(tmp_path / "newroz-snap-x.sh")
         _q = shlex.quote
         _snap_tmp = _q(snap + ".tmp.") + "$BASHPID"
         # One writer iteration = the exact atomic sequence _wrap_command emits.
@@ -299,7 +299,7 @@ class TestEmbedStdinHeredoc:
 
         assert result.startswith("cat << '")
         assert "hello world" in result
-        assert "HERMES_STDIN_" in result
+        assert "NEWROZ_STDIN_" in result
 
     def test_unique_delimiter_each_call(self):
         r1 = BaseEnvironment._embed_stdin_heredoc("cat", "data")

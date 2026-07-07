@@ -438,7 +438,7 @@ def build_tree(
     ``git_branch``, ``git_repo_root``, ``started_at``, ``last_active``).
     ``discovered_repos`` are ``{"root", "label", "sessions", "last_active"}``.
     ``is_junk_root`` flags roots that must never become an AUTO project (the
-    bare home dir, the HERMES_HOME subtree) — their sessions fall through to the
+    bare home dir, the NEWROZ_HOME subtree) — their sessions fall through to the
     flat Recents list. User-created projects are honored regardless.
 
     Returns ``{"projects": [...], "scoped_session_ids": [...]}``. When
@@ -502,7 +502,7 @@ def build_tree(
 
     seen: set[str] = set()
     for repo_root, repo_sessions in by_repo.items():
-        # The home dir / HERMES_HOME subtree is config + state, never a project;
+        # The home dir / NEWROZ_HOME subtree is config + state, never a project;
         # its sessions stay loose in Recents (not scoped to a phantom project).
         if _junk(repo_root):
             continue

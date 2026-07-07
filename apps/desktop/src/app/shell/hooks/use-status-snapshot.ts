@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import { getStatus } from '@/hermes'
+import { getStatus } from '@/newroz'
 import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
-import type { StatusResponse } from '@/types/hermes'
+import type { StatusResponse } from '@/types/newroz'
 
 const REFRESH_MS = 15_000
 

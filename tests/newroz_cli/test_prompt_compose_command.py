@@ -13,8 +13,8 @@ import tempfile
 
 import pytest
 
-from hermes_cli.cli_commands_mixin import CLICommandsMixin
-from hermes_cli.commands import resolve_command
+from newroz_cli.cli_commands_mixin import CLICommandsMixin
+from newroz_cli.commands import resolve_command
 
 
 class _Stub(CLICommandsMixin):

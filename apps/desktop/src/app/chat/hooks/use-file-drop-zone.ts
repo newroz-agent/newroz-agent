@@ -7,7 +7,7 @@ import {
   type SessionDragPayload
 } from '@/app/chat/composer/inline-refs'
 
-import { type DroppedFile, extractDroppedFiles, HERMES_PATHS_MIME } from './use-composer-actions'
+import { type DroppedFile, extractDroppedFiles, NEWROZ_PATHS_MIME } from './use-composer-actions'
 
 export type DragKind = 'files' | 'session' | null
 
@@ -16,7 +16,7 @@ const dragKindOf = (event: ReactDragEvent): DragKind => {
     return 'session'
   }
 
-  if (dragHasAttachments(event.dataTransfer, HERMES_PATHS_MIME)) {
+  if (dragHasAttachments(event.dataTransfer, NEWROZ_PATHS_MIME)) {
     return 'files'
   }
 

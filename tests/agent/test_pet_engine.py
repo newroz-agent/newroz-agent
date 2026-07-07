@@ -72,7 +72,7 @@ def test_state_row_index_maps_to_supported_atlas_taxonomies():
     assert constants.state_row_index(PetState.RUN, 9) == 7
     assert constants.state_row_index(PetState.REVIEW, 9) == 8
 
-    # Legacy Hermes/petdex sheets were 8 rows with Hermes state names packed in
+    # Legacy Newroz/petdex sheets were 8 rows with Newroz state names packed in
     # order. Keep those readable instead of forcing old installs through the
     # newer Codex taxonomy.
     assert constants.state_row_index(PetState.WAVE, 8) == 1
@@ -117,12 +117,12 @@ def test_resolve_cols_override_else_scale():
 
 @pytest.fixture
 def boba_like(tmp_path, monkeypatch):
-    """Install a synthetic 8-col × 9-row pet into a temp HERMES_HOME."""
+    """Install a synthetic 8-col × 9-row pet into a temp NEWROZ_HOME."""
     from PIL import Image
 
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     cols, rows = 8, 9
     sheet = Image.new("RGBA", (FRAME_W * cols, FRAME_H * rows), (0, 0, 0, 0))

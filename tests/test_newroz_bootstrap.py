@@ -1,7 +1,7 @@
-"""Tests for hermes_bootstrap — Windows UTF-8 stdio shim.
+"""Tests for newroz_bootstrap — Windows UTF-8 stdio shim.
 
-The bootstrap module is imported at the top of every Hermes entry point
-(hermes, hermes-agent, hermes-acp, gateway, batch_runner, cli.py).  It
+The bootstrap module is imported at the top of every Newroz entry point
+(newroz, newroz-agent, newroz-acp, gateway, batch_runner, cli.py).  It
 fixes Python's Windows UTF-8 defaults so print("café") doesn't crash and
 subprocess children inherit UTF-8 mode.
 
@@ -12,7 +12,7 @@ Key invariants covered by these tests:
   3. Idempotent: safe to call multiple times
   4. Respects user opt-out: if the user explicitly sets PYTHONUTF8=0 or
      PYTHONIOENCODING=something-else, we leave those alone
-  5. Load order: every Hermes entry point imports hermes_bootstrap as its
+  5. Load order: every Newroz entry point imports newroz_bootstrap as its
      first non-docstring import (before anything that might do file I/O
      or print to stdout)
 """
@@ -32,14 +32,14 @@ import pytest
 # We need to be able to reset its state between tests, so we import it
 # fresh in each test that manipulates _IS_WINDOWS.
 def _fresh_import():
-    """Return a freshly-imported hermes_bootstrap module.
+    """Return a freshly-imported newroz_bootstrap module.
 
     Drops any cached copy from sys.modules first so module-level code
     runs again and the platform check re-evaluates.
     """
-    sys.modules.pop("hermes_bootstrap", None)
-    import hermes_bootstrap  # noqa: WPS433
-    return hermes_bootstrap
+    sys.modules.pop("newroz_bootstrap", None)
+    import newroz_bootstrap  # noqa: WPS433
+    return newroz_bootstrap
 
 
 class TestWindowsBehavior:
@@ -64,7 +64,7 @@ class TestWindowsBehavior:
         reason="Windows-specific behavior",
     )
     def test_stdout_reconfigured_to_utf8_on_windows(self):
-        # The live process's stdout should now be UTF-8 (the Hermes CLI
+        # The live process's stdout should now be UTF-8 (the Newroz CLI
         # runs on Windows with a pytest console that's cp1252 by default).
         # If reconfigure succeeded, sys.stdout.encoding is 'utf-8'.
         _fresh_import()
@@ -232,17 +232,17 @@ class TestStdioReconfigureErrorHandling:
 
 
 class TestEntryPointsImportBootstrap:
-    """Every Hermes entry point must import hermes_bootstrap as its
+    """Every Newroz entry point must import newroz_bootstrap as its
     first non-docstring import.  We check this by scanning source files
     rather than invoking the entry points (which would require a full
     agent context)."""
 
-    # Entry points that invoke Hermes as a process.  Each one must
-    # import hermes_bootstrap before doing any file I/O or stdout writes.
+    # Entry points that invoke Newroz as a process.  Each one must
+    # import newroz_bootstrap before doing any file I/O or stdout writes.
     ENTRY_POINTS = [
-        "hermes_cli/main.py",   # hermes CLI (console_script)
-        "run_agent.py",          # hermes-agent (console_script)
-        "acp_adapter/entry.py",  # hermes-acp (console_script)
+        "newroz_cli/main.py",   # newroz CLI (console_script)
+        "run_agent.py",          # newroz-agent (console_script)
+        "acp_adapter/entry.py",  # newroz-acp (console_script)
         "gateway/run.py",        # gateway
         "batch_runner.py",       # batch mode
         "cli.py",                # legacy direct-launch CLI
@@ -250,7 +250,7 @@ class TestEntryPointsImportBootstrap:
 
     @pytest.mark.parametrize("path", ENTRY_POINTS)
     def test_entry_point_imports_bootstrap(self, path):
-        """The file must contain 'import hermes_bootstrap' and that
+        """The file must contain 'import newroz_bootstrap' and that
         line must appear before the first 'import' of anything else.
 
         We're lenient about the docstring (can be arbitrarily long) and
@@ -259,15 +259,15 @@ class TestEntryPointsImportBootstrap:
 
         Also lenient about a try/except wrapper around the import: entry
         points may guard the import against ``ModuleNotFoundError`` so a
-        half-finished ``hermes update`` (git-reset landed new code but
+        half-finished ``newroz update`` (git-reset landed new code but
         ``uv pip install -e .`` didn't finish re-registering
-        ``hermes_bootstrap`` as a top-level module) leaves hermes
+        ``newroz_bootstrap`` as a top-level module) leaves newroz
         recoverable instead of crashing on every invocation.  When the
         first top-level node is such a guarded-import block, we peek
         inside it to verify bootstrap is the imported module.
         """
-        # Resolve relative to the hermes-agent repo root.  Tests live
-        # at tests/test_hermes_bootstrap.py, so go up one dir.
+        # Resolve relative to the newroz-agent repo root.  Tests live
+        # at tests/test_newroz_bootstrap.py, so go up one dir.
         import pathlib
         here = pathlib.Path(__file__).resolve()
         repo_root = here.parent.parent  # tests/ -> repo root
@@ -288,7 +288,7 @@ class TestEntryPointsImportBootstrap:
                 break
             # Accept a guarded-import Try block where the body is a lone
             # Import node — this is the recovery-friendly form that lets
-            # hermes start even when hermes_bootstrap hasn't been
+            # newroz start even when newroz_bootstrap hasn't been
             # re-registered in the venv yet.
             if isinstance(node, ast.Try) and len(node.body) == 1 and isinstance(
                 node.body[0], (ast.Import, ast.ImportFrom)
@@ -305,94 +305,94 @@ class TestEntryPointsImportBootstrap:
         else:  # ImportFrom
             first_import_name = first_import_node.module or ""
 
-        assert first_import_name == "hermes_bootstrap", (
+        assert first_import_name == "newroz_bootstrap", (
             f"{path}: first top-level import is {first_import_name!r}, "
-            f"but it must be 'hermes_bootstrap' so UTF-8 stdio is "
+            f"but it must be 'newroz_bootstrap' so UTF-8 stdio is "
             f"configured before anything else initializes.  Move the "
-            f"'import hermes_bootstrap' line to be the first import."
+            f"'import newroz_bootstrap' line to be the first import."
         )
 
 
 class TestHardenImportPath:
     """harden_import_path() must keep a same-named package in the launch
-    directory from shadowing Hermes's own top-level modules — covering both
+    directory from shadowing Newroz's own top-level modules — covering both
     the relative ('' / '.') and absolute-path forms the cwd can take on
     sys.path (issue #51286)."""
 
     def _run(self, hb, path_seed, env=None):
         original = sys.path[:]
-        original_env = os.environ.get("HERMES_PYTHON_SRC_ROOT")
+        original_env = os.environ.get("NEWROZ_PYTHON_SRC_ROOT")
         try:
             sys.path[:] = path_seed
             if env is not None:
-                os.environ["HERMES_PYTHON_SRC_ROOT"] = env
-            elif "HERMES_PYTHON_SRC_ROOT" in os.environ:
-                del os.environ["HERMES_PYTHON_SRC_ROOT"]
-            hb.harden_import_path(src_root="/opt/hermes")
+                os.environ["NEWROZ_PYTHON_SRC_ROOT"] = env
+            elif "NEWROZ_PYTHON_SRC_ROOT" in os.environ:
+                del os.environ["NEWROZ_PYTHON_SRC_ROOT"]
+            hb.harden_import_path(src_root="/opt/newroz")
             return sys.path[:]
         finally:
             sys.path[:] = original
             if original_env is None:
-                os.environ.pop("HERMES_PYTHON_SRC_ROOT", None)
+                os.environ.pop("NEWROZ_PYTHON_SRC_ROOT", None)
             else:
-                os.environ["HERMES_PYTHON_SRC_ROOT"] = original_env
+                os.environ["NEWROZ_PYTHON_SRC_ROOT"] = original_env
 
     def test_relative_cwd_forms_removed(self):
         hb = _fresh_import()
-        result = self._run(hb, ["", ".", "/opt/hermes", "/usr/lib/python"])
+        result = self._run(hb, ["", ".", "/opt/newroz", "/usr/lib/python"])
         assert "" not in result
         assert "." not in result
 
     def test_src_root_forced_to_front(self):
         hb = _fresh_import()
-        result = self._run(hb, ["", "/opt/hermes", "/usr/lib/python"])
-        assert result[0] == "/opt/hermes"
+        result = self._run(hb, ["", "/opt/newroz", "/usr/lib/python"])
+        assert result[0] == "/opt/newroz"
 
     def test_absolute_cwd_path_loses_to_src_root(self):
         # The real #51286 bug: the launch dir is present as its own absolute
         # path (venv activation / a project on PYTHONPATH), ahead of the
-        # Hermes root.  The guard must relocate Hermes to the front.
+        # Newroz root.  The guard must relocate Newroz to the front.
         hb = _fresh_import()
-        result = self._run(hb, ["/home/user/tg-ws-proxy", "/opt/hermes"])
-        assert result[0] == "/opt/hermes"
+        result = self._run(hb, ["/home/user/tg-ws-proxy", "/opt/newroz"])
+        assert result[0] == "/opt/newroz"
         # The cwd absolute path may still appear (it can hold legit deps),
-        # but only AFTER the Hermes root.
-        assert result.index("/opt/hermes") < result.index("/home/user/tg-ws-proxy")
+        # but only AFTER the Newroz root.
+        assert result.index("/opt/newroz") < result.index("/home/user/tg-ws-proxy")
 
     def test_src_root_not_duplicated(self):
         hb = _fresh_import()
-        result = self._run(hb, ["/opt/hermes", "/opt/hermes", ""])
-        assert result.count("/opt/hermes") == 1
+        result = self._run(hb, ["/opt/newroz", "/opt/newroz", ""])
+        assert result.count("/opt/newroz") == 1
 
     def test_env_var_used_when_no_arg(self):
         hb = _fresh_import()
         original = sys.path[:]
-        original_env = os.environ.get("HERMES_PYTHON_SRC_ROOT")
+        original_env = os.environ.get("NEWROZ_PYTHON_SRC_ROOT")
         try:
             sys.path[:] = ["", "/cwd/proj", "/usr/lib"]
-            os.environ["HERMES_PYTHON_SRC_ROOT"] = "/env/hermes"
+            os.environ["NEWROZ_PYTHON_SRC_ROOT"] = "/env/newroz"
             hb.harden_import_path()
-            assert sys.path[0] == "/env/hermes"
+            assert sys.path[0] == "/env/newroz"
         finally:
             sys.path[:] = original
             if original_env is None:
-                os.environ.pop("HERMES_PYTHON_SRC_ROOT", None)
+                os.environ.pop("NEWROZ_PYTHON_SRC_ROOT", None)
             else:
-                os.environ["HERMES_PYTHON_SRC_ROOT"] = original_env
+                os.environ["NEWROZ_PYTHON_SRC_ROOT"] = original_env
 
     def test_defaults_to_module_dir(self):
         # With neither arg nor env var, the helper anchors on the bootstrap
         # module's own directory — the repo root for shipped entry points.
         hb = _fresh_import()
         original = sys.path[:]
-        original_env = os.environ.get("HERMES_PYTHON_SRC_ROOT")
+        original_env = os.environ.get("NEWROZ_PYTHON_SRC_ROOT")
         try:
             sys.path[:] = ["", "/somewhere/else"]
-            os.environ.pop("HERMES_PYTHON_SRC_ROOT", None)
+            os.environ.pop("NEWROZ_PYTHON_SRC_ROOT", None)
             hb.harden_import_path()
             expected = os.path.dirname(os.path.abspath(hb.__file__))
             assert sys.path[0] == expected
         finally:
             sys.path[:] = original
             if original_env is not None:
-                os.environ["HERMES_PYTHON_SRC_ROOT"] = original_env
+                os.environ["NEWROZ_PYTHON_SRC_ROOT"] = original_env

@@ -204,7 +204,7 @@ def build_billing_state(*, timeout: float = 15.0) -> BillingState:
     a clear message rather than crashing.
     """
     try:
-        from hermes_cli.nous_billing import (
+        from newroz_cli.nous_billing import (
             BillingAuthError,
             BillingError,
             _absolutize_portal_url,

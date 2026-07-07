@@ -1,7 +1,7 @@
-import { getGlobalModelOptions, type HermesGateway, type ModelOptionsResponse } from '@/hermes'
+import { getGlobalModelOptions, type NewrozGateway, type ModelOptionsResponse } from '@/newroz'
 
 interface ModelOptionsRequest {
-  gateway?: HermesGateway
+  gateway?: NewrozGateway
   refresh?: boolean
   sessionId?: null | string
 }

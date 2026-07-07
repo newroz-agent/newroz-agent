@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli import codex_runtime_switch as crs
+from newroz_cli import codex_runtime_switch as crs
 
 
 class TestParseArgs:
@@ -23,7 +23,7 @@ class TestParseArgs:
         ("off", "auto"),
         ("codex", "codex_app_server"),
         ("default", "auto"),
-        ("hermes", "auto"),
+        ("newroz", "auto"),
         ("ENABLE", "codex_app_server"),  # case-insensitive
         ("DiSaBlE", "auto"),
     ])
@@ -102,7 +102,7 @@ class TestApply:
         `openai_runtime: codex_app_server` in config.yaml, then runs
         /codex-runtime codex_app_server expecting the migration. Without
         this, the slash command short-circuits with "already set" and
-        ~/.codex/config.toml never gets the hermes-tools MCP callback
+        ~/.codex/config.toml never gets the newroz-tools MCP callback
         or plugin migration — silent partial setup.
         """
         cfg = {
@@ -118,8 +118,8 @@ class TestApply:
 
         with patch.object(crs, "check_codex_binary_ok",
                           return_value=(True, "0.130.0")), \
-             patch("hermes_cli.codex_runtime_plugin_migration.migrate") as mig:
-            mig.return_value.migrated = ["filesystem", "hermes-tools"]
+             patch("newroz_cli.codex_runtime_plugin_migration.migrate") as mig:
+            mig.return_value.migrated = ["filesystem", "newroz-tools"]
             mig.return_value.migrated_plugins = []
             mig.return_value.plugin_query_error = None
             mig.return_value.wrote_permissions_default = ":workspace"
@@ -167,18 +167,18 @@ class TestApply:
         # Patch migrate so this test doesn't reach into the user's real
         # ~/.codex/config.toml. See issue #26250 Bug C — without this patch,
         # crs.apply() invokes the real migrate() which writes to
-        # Path.home() / ".codex" using whatever HERMES_HOME the running pytest
+        # Path.home() / ".codex" using whatever NEWROZ_HOME the running pytest
         # session has set, leaking pytest tempdir paths into the user's
         # codex config.
         with patch.object(crs, "check_codex_binary_ok",
                           return_value=(True, "0.130.0")), \
-             patch("hermes_cli.codex_runtime_plugin_migration.migrate"):
+             patch("newroz_cli.codex_runtime_plugin_migration.migrate"):
             r = crs.apply(cfg, "codex_app_server", persist_callback=persist)
         assert r.success
         assert r.new_value == "codex_app_server"
         assert r.old_value == "auto"
         assert r.requires_new_session is True
-        assert "via MCP" in r.message  # hermes-tools callback message
+        assert "via MCP" in r.message  # newroz-tools callback message
         assert cfg["model"]["openai_runtime"] == "codex_app_server"
         assert persisted["model"]["openai_runtime"] == "codex_app_server"
 
@@ -206,7 +206,7 @@ class TestApply:
         assert "disk full" in r.message
 
     def test_enable_triggers_mcp_migration(self):
-        """Enabling codex_app_server should auto-migrate Hermes mcp_servers
+        """Enabling codex_app_server should auto-migrate Newroz mcp_servers
         to ~/.codex/config.toml so the spawned subprocess sees them."""
         cfg = {
             "mcp_servers": {
@@ -216,8 +216,8 @@ class TestApply:
 
         with patch.object(crs, "check_codex_binary_ok",
                           return_value=(True, "0.130.0")), \
-             patch("hermes_cli.codex_runtime_plugin_migration.migrate") as mig:
-            mig.return_value.migrated = ["filesystem", "hermes-tools"]
+             patch("newroz_cli.codex_runtime_plugin_migration.migrate") as mig:
+            mig.return_value.migrated = ["filesystem", "newroz-tools"]
             mig.return_value.migrated_plugins = []
             mig.return_value.plugin_query_error = None
             mig.return_value.wrote_permissions_default = ":workspace"
@@ -226,12 +226,12 @@ class TestApply:
             r = crs.apply(cfg, "codex_app_server")
         assert r.success
         assert mig.called  # migration was triggered
-        # User MCP servers are reported (excluding internal hermes-tools)
+        # User MCP servers are reported (excluding internal newroz-tools)
         assert "Migrated 1 MCP server" in r.message
         assert "filesystem" in r.message
         # Permissions default surfaces
         assert "Default sandbox: :workspace" in r.message
-        # Hermes tool callback announcement
+        # Newroz tool callback announcement
         assert "via MCP" in r.message
 
     def test_disable_does_not_trigger_migration(self):
@@ -240,7 +240,7 @@ class TestApply:
             "model": {"openai_runtime": "codex_app_server"},
             "mcp_servers": {"x": {"command": "y"}},
         }
-        with patch("hermes_cli.codex_runtime_plugin_migration.migrate") as mig:
+        with patch("newroz_cli.codex_runtime_plugin_migration.migrate") as mig:
             r = crs.apply(cfg, "auto")
         assert r.success
         assert not mig.called  # disabling does not migrate
@@ -251,7 +251,7 @@ class TestApply:
         cfg = {"mcp_servers": {"x": {"command": "y"}}}
         with patch.object(crs, "check_codex_binary_ok",
                           return_value=(True, "0.130.0")), \
-             patch("hermes_cli.codex_runtime_plugin_migration.migrate",
+             patch("newroz_cli.codex_runtime_plugin_migration.migrate",
                    side_effect=RuntimeError("disk full")):
             r = crs.apply(cfg, "codex_app_server")
         assert r.success  # change still applied
@@ -270,7 +270,7 @@ class TestApply:
         cfg = {}
         with patch.object(crs, "check_codex_binary_ok",
                           return_value=(True, "0.130.0")) as bin_check, \
-             patch("hermes_cli.codex_runtime_plugin_migration.migrate"):
+             patch("newroz_cli.codex_runtime_plugin_migration.migrate"):
             r = crs.apply(cfg, "codex_app_server")
         assert r.success
         assert bin_check.call_count == 1, (

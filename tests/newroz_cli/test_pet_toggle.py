@@ -12,9 +12,9 @@ from agent.pet.constants import FRAME_H, FRAME_W
 def boba_installed(tmp_path, monkeypatch):
     from PIL import Image
 
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     sheet = Image.new("RGBA", (FRAME_W * 8, FRAME_H * 9), (0, 0, 0, 0))
     pet_dir = store.pets_dir() / "boba"
@@ -34,7 +34,7 @@ def _write_config(home, *, enabled: bool, slug: str = "") -> None:
 
 
 def test_toggle_pet_display_turns_off_when_enabled(boba_installed):
-    from hermes_cli.pets import _pet_config, toggle_pet_display
+    from newroz_cli.pets import _pet_config, toggle_pet_display
 
     _write_config(boba_installed, enabled=True, slug="boba")
 
@@ -47,7 +47,7 @@ def test_toggle_pet_display_turns_off_when_enabled(boba_installed):
 
 
 def test_toggle_pet_display_turns_on_resolved_pet(boba_installed):
-    from hermes_cli.pets import _pet_config, toggle_pet_display
+    from newroz_cli.pets import _pet_config, toggle_pet_display
 
     _write_config(boba_installed, enabled=False, slug="boba")
 
@@ -60,11 +60,11 @@ def test_toggle_pet_display_turns_on_resolved_pet(boba_installed):
 
 
 def test_toggle_pet_display_errors_with_no_installed_pets(tmp_path, monkeypatch):
-    from hermes_cli.pets import toggle_pet_display
+    from newroz_cli.pets import toggle_pet_display
 
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     _write_config(home, enabled=False, slug="")
 
     enabled, name, err = toggle_pet_display()
@@ -76,15 +76,15 @@ def test_toggle_pet_display_errors_with_no_installed_pets(tmp_path, monkeypatch)
 
 @pytest.fixture
 def empty_home(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     return home
 
 
 def test_set_pet_scale_writes_clamped_value(empty_home):
     from agent.pet.constants import MAX_SCALE, MIN_SCALE
-    from hermes_cli.pets import _pet_config, set_pet_scale
+    from newroz_cli.pets import _pet_config, set_pet_scale
 
     applied, err = set_pet_scale("0.5")
     assert err is None
@@ -97,7 +97,7 @@ def test_set_pet_scale_writes_clamped_value(empty_home):
 
 
 def test_set_pet_scale_rejects_non_numbers(empty_home):
-    from hermes_cli.pets import set_pet_scale
+    from newroz_cli.pets import set_pet_scale
 
     applied, err = set_pet_scale("huge")
     assert applied == 0.0

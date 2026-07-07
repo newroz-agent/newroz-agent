@@ -73,7 +73,7 @@ class TestPlatformBackend:
     def test_add_forwards_kwargs(self):
         backend, client = self._make()
         msgs = [{"role": "user", "content": "hi"}]
-        result = backend.add(msgs, user_id="u1", agent_id="hermes", infer=False)
+        result = backend.add(msgs, user_id="u1", agent_id="newroz", infer=False)
         call = client.calls[0]
         assert call[2]["user_id"] == "u1"
         assert call[2]["infer"] is False
@@ -87,7 +87,7 @@ class TestPlatformBackend:
         backend.add(
             msgs,
             user_id="u1",
-            agent_id="hermes",
+            agent_id="newroz",
             infer=False,
             metadata={"channel": "telegram"},
         )
@@ -96,7 +96,7 @@ class TestPlatformBackend:
     def test_add_omits_empty_metadata(self):
         backend, client = self._make()
         msgs = [{"role": "user", "content": "hi"}]
-        backend.add(msgs, user_id="u1", agent_id="hermes", infer=False, metadata={})
+        backend.add(msgs, user_id="u1", agent_id="newroz", infer=False, metadata={})
         assert "metadata" not in client.calls[0][2]
 
     def test_update_forwards(self):
@@ -181,7 +181,7 @@ class TestOSSBackend:
     def test_add_forwards_kwargs(self):
         backend, memory = self._make()
         msgs = [{"role": "user", "content": "hi"}]
-        backend.add(msgs, user_id="u1", agent_id="hermes", infer=False)
+        backend.add(msgs, user_id="u1", agent_id="newroz", infer=False)
         assert memory.calls[0][2]["user_id"] == "u1"
         assert memory.calls[0][2]["infer"] is False
 

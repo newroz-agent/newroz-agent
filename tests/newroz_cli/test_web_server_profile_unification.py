@@ -2,21 +2,21 @@
 
 The dashboard is ONE machine-level management surface: config, env, MCP,
 model, and chat-PTY endpoints accept an optional ``profile`` so the global
-profile switcher can target any profile's HERMES_HOME. These tests pin:
+profile switcher can target any profile's NEWROZ_HOME. These tests pin:
 reads/writes land in the REQUESTED profile, the dashboard's own profile
-stays untouched, and the chat PTY env is scoped via HERMES_HOME.
+stays untouched, and the chat PTY env is scoped via NEWROZ_HOME.
 """
 import pytest
 import yaml
 
 
 @pytest.fixture
-def isolated_profiles(tmp_path, monkeypatch, _isolate_hermes_home):
+def isolated_profiles(tmp_path, monkeypatch, _isolate_newroz_home):
     """Isolated default home + one named profile, each with config + .env."""
-    from hermes_constants import get_hermes_home
-    from hermes_cli import profiles
+    from newroz_constants import get_newroz_home
+    from newroz_cli import profiles
 
-    default_home = get_hermes_home()
+    default_home = get_newroz_home()
     profiles_root = default_home / "profiles"
     worker_home = profiles_root / "worker_beta"
     for home in (default_home, worker_home):
@@ -24,7 +24,7 @@ def isolated_profiles(tmp_path, monkeypatch, _isolate_hermes_home):
         (home / "config.yaml").write_text("{}\n", encoding="utf-8")
     (worker_home / ".env").write_text("", encoding="utf-8")
 
-    monkeypatch.setattr(profiles, "_get_default_hermes_home", lambda: default_home)
+    monkeypatch.setattr(profiles, "_get_default_newroz_home", lambda: default_home)
     monkeypatch.setattr(profiles, "_get_profiles_root", lambda: profiles_root)
     return {"default": default_home, "worker_beta": worker_home}
 
@@ -36,11 +36,11 @@ def client(monkeypatch, isolated_profiles):
     except ImportError:
         pytest.skip("fastapi/starlette not installed")
 
-    import hermes_state
-    from hermes_constants import get_hermes_home
-    from hermes_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
+    import newroz_state
+    from newroz_constants import get_newroz_home
+    from newroz_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
-    monkeypatch.setattr(hermes_state, "DEFAULT_DB_PATH", get_hermes_home() / "state.db")
+    monkeypatch.setattr(newroz_state, "DEFAULT_DB_PATH", get_newroz_home() / "state.db")
     c = TestClient(app)
     c.headers[_SESSION_HEADER_NAME] = _SESSION_TOKEN
     return c
@@ -179,8 +179,8 @@ class TestProfileScopedMcp:
         """The test-server probe must execute with the selected profile's
         scope active so env-placeholder expansion reads the profile's .env,
         matching the config the server was saved into."""
-        import hermes_cli.mcp_config as mcp_config
-        from hermes_constants import get_hermes_home
+        import newroz_cli.mcp_config as mcp_config
+        from newroz_constants import get_newroz_home
 
         (isolated_profiles["worker_beta"] / "config.yaml").write_text(
             "mcp_servers:\n  probe-srv:\n    url: http://x/sse\n",
@@ -189,7 +189,7 @@ class TestProfileScopedMcp:
         seen = {}
 
         def fake_probe(name, config, connect_timeout=30, details=None):
-            seen["home"] = str(get_hermes_home())
+            seen["home"] = str(get_newroz_home())
             return [("tool-a", "desc")]
 
         monkeypatch.setattr(mcp_config, "_probe_single_server", fake_probe)
@@ -205,7 +205,7 @@ class TestProfileScopedMcp:
     ):
         """An `auth: oauth` server that serves tools/list anonymously must not
         false-green: a successful probe with no token on disk reports needs-auth."""
-        import hermes_cli.mcp_config as mcp_config
+        import newroz_cli.mcp_config as mcp_config
 
         (isolated_profiles["worker_beta"] / "config.yaml").write_text(
             "mcp_servers:\n  oauth-srv:\n    url: http://x/sse\n    auth: oauth\n",
@@ -332,9 +332,9 @@ class TestProfileScopedPostSetup:
         self, client, isolated_profiles, monkeypatch
     ):
         """Post-setup runs in a -p scoped subprocess so hooks that read
-        config / write per-profile state see the same HERMES_HOME the rest
+        config / write per-profile state see the same NEWROZ_HOME the rest
         of the drawer's writes targeted."""
-        import hermes_cli.web_server as web_server
+        import newroz_cli.web_server as web_server
 
         calls = []
 
@@ -343,11 +343,11 @@ class TestProfileScopedPostSetup:
 
         monkeypatch.setattr(
             web_server,
-            "_spawn_hermes_action",
+            "_spawn_newroz_action",
             lambda subcommand, name: calls.append(list(subcommand)) or _FakeProc(),
         )
         monkeypatch.setattr(
-            "hermes_cli.tools_config.valid_post_setup_keys",
+            "newroz_cli.tools_config.valid_post_setup_keys",
             lambda: {"agent_browser"},
         )
         resp = client.post(
@@ -362,7 +362,7 @@ class TestProfileScopedPostSetup:
     def test_post_setup_without_profile_keeps_legacy_argv(
         self, client, isolated_profiles, monkeypatch
     ):
-        import hermes_cli.web_server as web_server
+        import newroz_cli.web_server as web_server
 
         calls = []
 
@@ -371,11 +371,11 @@ class TestProfileScopedPostSetup:
 
         monkeypatch.setattr(
             web_server,
-            "_spawn_hermes_action",
+            "_spawn_newroz_action",
             lambda subcommand, name: calls.append(list(subcommand)) or _FakeProc(),
         )
         monkeypatch.setattr(
-            "hermes_cli.tools_config.valid_post_setup_keys",
+            "newroz_cli.tools_config.valid_post_setup_keys",
             lambda: {"agent_browser"},
         )
         resp = client.post(
@@ -390,7 +390,7 @@ class TestProfileScopedGateway:
     def test_lifecycle_spawns_with_profile_flag(
         self, client, isolated_profiles, monkeypatch
     ):
-        import hermes_cli.web_server as web_server
+        import newroz_cli.web_server as web_server
 
         calls = []
 
@@ -399,7 +399,7 @@ class TestProfileScopedGateway:
 
         monkeypatch.setattr(
             web_server,
-            "_spawn_hermes_action",
+            "_spawn_newroz_action",
             lambda subcommand, name: calls.append((list(subcommand), name)) or _FakeProc(),
         )
         web_server._ACTION_PROCS.pop("gateway-restart", None)
@@ -418,13 +418,13 @@ class TestProfileScopedGateway:
     def test_status_reads_requested_profile_home(
         self, client, isolated_profiles, monkeypatch
     ):
-        import hermes_cli.web_server as web_server
-        from hermes_constants import get_hermes_home
+        import newroz_cli.web_server as web_server
+        from newroz_constants import get_newroz_home
 
         seen_homes = []
 
         def fake_get_running_pid():
-            seen_homes.append(str(get_hermes_home()))
+            seen_homes.append(str(get_newroz_home()))
             return None
 
         monkeypatch.setattr(web_server, "check_config_version", lambda: (1, 1))
@@ -440,12 +440,12 @@ class TestProfileScopedGateway:
 
         assert resp.status_code == 200
         assert seen_homes[0] == str(isolated_profiles["worker_beta"])
-        assert resp.json()["hermes_home"] == str(isolated_profiles["worker_beta"])
+        assert resp.json()["newroz_home"] == str(isolated_profiles["worker_beta"])
 
     def test_status_uses_runtime_pid_when_profile_pid_file_is_missing(
         self, client, isolated_profiles, monkeypatch
     ):
-        import hermes_cli.web_server as web_server
+        import newroz_cli.web_server as web_server
 
         worker_home = isolated_profiles["worker_beta"]
         (worker_home / ".env").write_text(
@@ -494,7 +494,7 @@ class TestProfileScopedTelegramOnboarding:
         self, client, isolated_profiles, monkeypatch
     ):
         import time
-        import hermes_cli.web_server as web_server
+        import newroz_cli.web_server as web_server
 
         with web_server._telegram_onboarding_lock:
             web_server._telegram_onboarding_pairings.clear()
@@ -516,7 +516,7 @@ class TestProfileScopedTelegramOnboarding:
 
         monkeypatch.setattr(
             web_server,
-            "_spawn_hermes_action",
+            "_spawn_newroz_action",
             lambda subcommand, name: calls.append((list(subcommand), name)) or _FakeProc(),
         )
         web_server._ACTION_PROCS.pop("gateway-restart", None)
@@ -548,37 +548,37 @@ class TestProfileScopedTelegramOnboarding:
 
 
 class TestProfileScopedChatPty:
-    def test_chat_argv_scopes_hermes_home(self, isolated_profiles, monkeypatch):
-        import hermes_cli.web_server as web_server
+    def test_chat_argv_scopes_newroz_home(self, isolated_profiles, monkeypatch):
+        import newroz_cli.web_server as web_server
 
         monkeypatch.setattr(
-            "hermes_cli.main._make_tui_argv",
+            "newroz_cli.main._make_tui_argv",
             lambda root, tui_dev=False: (["cat"], None),
             raising=False,
         )
         argv, cwd, env = web_server._resolve_chat_argv(profile="worker_beta")
         assert env is not None
-        assert env["HERMES_HOME"] == str(isolated_profiles["worker_beta"])
+        assert env["NEWROZ_HOME"] == str(isolated_profiles["worker_beta"])
         # Scoped chat must NOT attach to the dashboard's in-memory gateway.
-        assert "HERMES_TUI_GATEWAY_URL" not in env
+        assert "NEWROZ_TUI_GATEWAY_URL" not in env
 
     def test_chat_argv_unscoped_keeps_legacy_env(self, isolated_profiles, monkeypatch):
-        import hermes_cli.web_server as web_server
+        import newroz_cli.web_server as web_server
 
         monkeypatch.setattr(
-            "hermes_cli.main._make_tui_argv",
+            "newroz_cli.main._make_tui_argv",
             lambda root, tui_dev=False: (["cat"], None),
             raising=False,
         )
         argv, cwd, env = web_server._resolve_chat_argv()
         assert env is not None
-        assert env.get("HERMES_HOME") != str(isolated_profiles["worker_beta"])
+        assert env.get("NEWROZ_HOME") != str(isolated_profiles["worker_beta"])
 
     def test_chat_argv_unknown_profile_raises(self, isolated_profiles, monkeypatch):
-        import hermes_cli.web_server as web_server
+        import newroz_cli.web_server as web_server
 
         monkeypatch.setattr(
-            "hermes_cli.main._make_tui_argv",
+            "newroz_cli.main._make_tui_argv",
             lambda root, tui_dev=False: (["cat"], None),
             raising=False,
         )

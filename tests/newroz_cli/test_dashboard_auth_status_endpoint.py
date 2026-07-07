@@ -16,9 +16,9 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from hermes_cli import web_server
-from hermes_cli.dashboard_auth import clear_providers, register_provider
-from tests.hermes_cli.conftest_dashboard_auth import StubAuthProvider
+from newroz_cli import web_server
+from newroz_cli.dashboard_auth import clear_providers, register_provider
+from tests.newroz_cli.conftest_dashboard_auth import StubAuthProvider
 
 
 @pytest.fixture
@@ -84,7 +84,7 @@ def test_status_preserves_existing_fields(loopback_client):
     r = loopback_client.get("/api/status")
     body = r.json()
     expected_keys = {
-        "version", "release_date", "hermes_home", "config_path", "env_path",
+        "version", "release_date", "newroz_home", "config_path", "env_path",
         "config_version", "latest_config_version", "gateway_running",
         "gateway_pid", "gateway_health_url", "gateway_state",
         "gateway_platforms", "gateway_exit_reason", "gateway_updated_at",
@@ -99,7 +99,7 @@ def test_status_preserves_existing_fields(loopback_client):
 # (it is in ``PUBLIC_API_PATHS``), so on a network-exposed bind it must not
 # leak that detail to anonymous callers.
 _HOST_DETAIL_FIELDS = frozenset({
-    "hermes_home", "config_path", "env_path", "gateway_pid",
+    "newroz_home", "config_path", "env_path", "gateway_pid",
     "gateway_health_url",
 })
 
@@ -123,7 +123,7 @@ def test_status_withholds_host_detail_in_gated_mode(gated_client):
 def test_status_includes_host_detail_in_loopback_mode(loopback_client):
     """Counterpart to the gated case: a loopback bind is local-only, so the
     full payload (including host paths and PID) is still served — preserving
-    the StatusPage / ``hermes status`` experience for local operators."""
+    the StatusPage / ``newroz status`` experience for local operators."""
     r = loopback_client.get("/api/status")
     assert r.status_code == 200
     body = r.json()

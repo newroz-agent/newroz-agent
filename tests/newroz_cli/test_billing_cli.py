@@ -14,12 +14,12 @@ import pytest
 
 import agent.billing_view as bv
 from agent.billing_view import BillingState, CardInfo, MonthlyCap
-from cli import HermesCLI
+from cli import NewrozCLI
 
 
 @pytest.fixture
 def cli():
-    obj = HermesCLI.__new__(HermesCLI)  # bypass __init__ (no full app needed)
+    obj = NewrozCLI.__new__(NewrozCLI)  # bypass __init__ (no full app needed)
     obj._app = None  # non-interactive: forces the text path
     return obj
 
@@ -33,11 +33,11 @@ def test_billing_logged_out(cli, monkeypatch, capsys):
     cli._show_billing("/billing")
     out = capsys.readouterr().out
     assert "Not logged into Nous Portal" in out
-    assert "hermes portal" in out
+    assert "newroz portal" in out
 
 
 def test_billing_overview_non_interactive_renders_text_not_modal(cli, monkeypatch, capsys):
-    monkeypatch.setattr(HermesCLI, "_prompt_text_input_modal", _boom_modal, raising=False)
+    monkeypatch.setattr(NewrozCLI, "_prompt_text_input_modal", _boom_modal, raising=False)
     state = BillingState(
         logged_in=True,
         org_name="Acme",
@@ -106,7 +106,7 @@ def test_billing_limit_screen_readonly(cli, monkeypatch, capsys):
 def test_billing_sub_arg_ignored_opens_overview(cli, monkeypatch, capsys):
     # A stray sub-arg must NOT error and must NOT dispatch to a sub-screen —
     # it just opens the overview (spec §0.4: zero sub-commands).
-    monkeypatch.setattr(HermesCLI, "_prompt_text_input_modal", _boom_modal, raising=False)
+    monkeypatch.setattr(NewrozCLI, "_prompt_text_input_modal", _boom_modal, raising=False)
     state = BillingState(
         logged_in=True, role="OWNER", balance_usd=Decimal("142.5"),
         cli_billing_enabled=True, charge_presets=(Decimal("25"),),
@@ -120,7 +120,7 @@ def test_billing_sub_arg_ignored_opens_overview(cli, monkeypatch, capsys):
 
 
 def test_billing_buy_non_interactive_defers_to_portal(cli, monkeypatch, capsys):
-    monkeypatch.setattr(HermesCLI, "_prompt_text_input_modal", _boom_modal, raising=False)
+    monkeypatch.setattr(NewrozCLI, "_prompt_text_input_modal", _boom_modal, raising=False)
     state = BillingState(
         logged_in=True, role="OWNER", cli_billing_enabled=True,
         charge_presets=(Decimal("25"), Decimal("50"), Decimal("100")),

@@ -10,7 +10,7 @@ const { pathToFileURL } = require('node:url')
 const { readDirForIpc } = require('./fs-read-dir.cjs')
 
 function mkTmpDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-fs-read-dir-'))
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-fs-read-dir-'))
 }
 
 function fakeDirent(name, flags = {}) {

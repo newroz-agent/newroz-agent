@@ -1,8 +1,8 @@
 """Unified provider catalog — one source of truth for the provider universe.
 
-The provider list shown by ``hermes model`` (CLI/TUI) and the desktop Settings
+The provider list shown by ``newroz model`` (CLI/TUI) and the desktop Settings
 → Providers tabs (Accounts + API keys) **must be the same set**.  Historically
-they were not: the CLI picker read :data:`hermes_cli.models.CANONICAL_PROVIDERS`
+they were not: the CLI picker read :data:`newroz_cli.models.CANONICAL_PROVIDERS`
 (which auto-extends from ``plugins/model-providers/<name>/``), while the desktop
 tabs read separate hand-maintained lists (``_OAUTH_PROVIDER_CATALOG``,
 ``OPTIONAL_ENV_VARS`` + ``PROVIDER_GROUPS``) that nobody kept in sync.  Every
@@ -11,10 +11,10 @@ GUI — e.g. GitHub Copilot showing up only under "tools", or ``openai-api`` bei
 configurable from the CLI but not the desktop app.
 
 This module fixes that at the root: it derives ONE descriptor per provider from
-the same universe ``hermes model`` renders (``CANONICAL_PROVIDERS``), joining:
+the same universe ``newroz model`` renders (``CANONICAL_PROVIDERS``), joining:
 
 * ``auth_type`` / ``api_key_env_vars`` / ``base_url_env_var`` from
-  :data:`hermes_cli.auth.PROVIDER_REGISTRY` (credential truth), and
+  :data:`newroz_cli.auth.PROVIDER_REGISTRY` (credential truth), and
 * ``display_name`` / ``description`` / ``signup_url`` from the provider's
   :class:`providers.base.ProviderProfile` when one exists, falling back to the
   ``CANONICAL_PROVIDERS`` entry's ``label`` / ``tui_desc`` and the
@@ -30,7 +30,7 @@ this catalog; the old hand lists are demoted to presentation/override overlays
 longer decide which providers exist.
 
 Parity contract (locked by tests): the union of the two tabs equals the
-``CANONICAL_PROVIDERS`` universe, i.e. exactly what ``hermes model`` shows.
+``CANONICAL_PROVIDERS`` universe, i.e. exactly what ``newroz model`` shows.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ from dataclasses import dataclass
 # pasted API key.  These route to the desktop "Accounts" tab; everything else
 # (api_key, and aws_sdk which is configured via AWS_REGION/AWS_PROFILE) routes
 # to the "API keys" tab.  Mirrors the auth_type strings used in
-# hermes_cli.auth.PROVIDER_REGISTRY and providers.base.ProviderProfile.
+# newroz_cli.auth.PROVIDER_REGISTRY and providers.base.ProviderProfile.
 _ACCOUNTS_AUTH_TYPES: frozenset[str] = frozenset(
     {
         "oauth_device_code",
@@ -65,7 +65,7 @@ class ProviderDescriptor:
     api_key_env_vars: tuple[str, ...]  # credential env vars (may be empty)
     base_url_env_var: str          # base-URL override env var (may be "")
     signup_url: str                # signup / console URL (may be "")
-    order: int                     # CANONICAL_PROVIDERS index — mirrors `hermes model`
+    order: int                     # CANONICAL_PROVIDERS index — mirrors `newroz model`
 
 
 def tab_for_auth_type(auth_type: str) -> str:
@@ -81,7 +81,7 @@ def _split_env_vars(env_vars: tuple[str, ...]) -> tuple[tuple[str, ...], str]:
 
 
 def provider_catalog() -> list[ProviderDescriptor]:
-    """Return one descriptor per provider in the ``hermes model`` universe.
+    """Return one descriptor per provider in the ``newroz model`` universe.
 
     Membership is :data:`CANONICAL_PROVIDERS` (the list the CLI/TUI picker
     renders, which auto-extends from provider plugins).  Auth + env come from
@@ -89,13 +89,13 @@ def provider_catalog() -> list[ProviderDescriptor]:
     canonical/env fallbacks so providers without a profile (or with blank
     profile metadata) still resolve sensibly.
     """
-    from hermes_cli.models import CANONICAL_PROVIDERS
+    from newroz_cli.models import CANONICAL_PROVIDERS
 
     # PROVIDER_REGISTRY / list_providers are imported lazily and defensively:
     # this module is on the import path of the web server and the CLI, and we
     # never want a provider-plugin import error to blank the whole catalog.
     try:
-        from hermes_cli.auth import PROVIDER_REGISTRY
+        from newroz_cli.auth import PROVIDER_REGISTRY
     except Exception:
         PROVIDER_REGISTRY = {}
 
@@ -107,27 +107,27 @@ def provider_catalog() -> list[ProviderDescriptor]:
         profiles = {}
 
     try:
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
     except Exception:
         OPTIONAL_ENV_VARS = {}
 
-    # Hermes overlays carry auth_type for providers that have no registry/profile
+    # Newroz overlays carry auth_type for providers that have no registry/profile
     # entry of their own — notably the ``moa`` virtual provider (auth_type
     # "virtual"), which has no real credential and no network endpoint.
     try:
-        from hermes_cli.providers import HERMES_OVERLAYS
+        from newroz_cli.providers import NEWROZ_OVERLAYS
     except Exception:
-        HERMES_OVERLAYS = {}
+        NEWROZ_OVERLAYS = {}
 
     out: list[ProviderDescriptor] = []
     for order, entry in enumerate(CANONICAL_PROVIDERS):
         slug = entry.slug
         cfg = PROVIDER_REGISTRY.get(slug)
         prof = profiles.get(slug)
-        overlay = HERMES_OVERLAYS.get(slug)
+        overlay = NEWROZ_OVERLAYS.get(slug)
 
         # auth_type: registry is authoritative; fall back to profile, then the
-        # Hermes overlay (e.g. moa → "virtual"), then api_key.
+        # Newroz overlay (e.g. moa → "virtual"), then api_key.
         auth_type = (
             (getattr(cfg, "auth_type", "") if cfg else "")
             or (getattr(prof, "auth_type", "") if prof else "")

@@ -1,4 +1,4 @@
-"""Regression tests for hermes secrets bitwarden setup non-TTY guard.
+"""Regression tests for newroz secrets bitwarden setup non-TTY guard.
 
 Issue #40274: cmd_setup() crashes with EOFError when stdin is not a TTY
 because getpass.getpass() and console.input() require an interactive terminal.
@@ -27,13 +27,13 @@ class TestCmdSetupNonTtyGuard:
         """Non-TTY with no flags → exit 1 with missing flags listed."""
         monkeypatch.setattr("sys.stdin.isatty", lambda: False)
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
+            "newroz_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
         )
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli._bws_version", lambda _: "2.0.0"
+            "newroz_cli.secrets_cli._bws_version", lambda _: "2.0.0"
         )
 
-        from hermes_cli.secrets_cli import cmd_setup
+        from newroz_cli.secrets_cli import cmd_setup
 
         result = cmd_setup(self._make_args())
         assert result == 1
@@ -47,13 +47,13 @@ class TestCmdSetupNonTtyGuard:
         """Non-TTY with server-url and project-id but no token → reports --access-token."""
         monkeypatch.setattr("sys.stdin.isatty", lambda: False)
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
+            "newroz_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
         )
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli._bws_version", lambda _: "2.0.0"
+            "newroz_cli.secrets_cli._bws_version", lambda _: "2.0.0"
         )
 
-        from hermes_cli.secrets_cli import cmd_setup
+        from newroz_cli.secrets_cli import cmd_setup
 
         result = cmd_setup(self._make_args(
             server_url="https://vault.bitwarden.com",
@@ -76,20 +76,20 @@ class TestCmdSetupNonTtyGuard:
         monkeypatch.setattr("sys.stdin.isatty", lambda: False)
         monkeypatch.setenv("BWS_SERVER_URL", "https://vault.bitwarden.com")
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
+            "newroz_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
         )
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli._bws_version", lambda _: "2.0.0"
+            "newroz_cli.secrets_cli._bws_version", lambda _: "2.0.0"
         )
-        monkeypatch.setattr("hermes_cli.secrets_cli.load_config", lambda: {})
-        monkeypatch.setattr("hermes_cli.secrets_cli.save_env_value", lambda *a: None)
-        monkeypatch.setattr("hermes_cli.secrets_cli.get_env_path", lambda: "/tmp/.env")
+        monkeypatch.setattr("newroz_cli.secrets_cli.load_config", lambda: {})
+        monkeypatch.setattr("newroz_cli.secrets_cli.save_env_value", lambda *a: None)
+        monkeypatch.setattr("newroz_cli.secrets_cli.get_env_path", lambda: "/tmp/.env")
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.fetch_bitwarden_secrets",
+            "newroz_cli.secrets_cli.bw.fetch_bitwarden_secrets",
             lambda **kw: ({"KEY": "val"}, []),
         )
 
-        from hermes_cli.secrets_cli import cmd_setup
+        from newroz_cli.secrets_cli import cmd_setup
 
         result = cmd_setup(self._make_args(
             access_token="0.valid-token",
@@ -101,20 +101,20 @@ class TestCmdSetupNonTtyGuard:
         """Non-TTY with all three flags → guard passes, proceeds to setup."""
         monkeypatch.setattr("sys.stdin.isatty", lambda: False)
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
+            "newroz_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
         )
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli._bws_version", lambda _: "2.0.0"
+            "newroz_cli.secrets_cli._bws_version", lambda _: "2.0.0"
         )
-        monkeypatch.setattr("hermes_cli.secrets_cli.load_config", lambda: {})
-        monkeypatch.setattr("hermes_cli.secrets_cli.save_env_value", lambda *a: None)
-        monkeypatch.setattr("hermes_cli.secrets_cli.get_env_path", lambda: "/tmp/.env")
+        monkeypatch.setattr("newroz_cli.secrets_cli.load_config", lambda: {})
+        monkeypatch.setattr("newroz_cli.secrets_cli.save_env_value", lambda *a: None)
+        monkeypatch.setattr("newroz_cli.secrets_cli.get_env_path", lambda: "/tmp/.env")
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.fetch_bitwarden_secrets",
+            "newroz_cli.secrets_cli.bw.fetch_bitwarden_secrets",
             lambda **kw: ({"KEY": "val"}, []),
         )
 
-        from hermes_cli.secrets_cli import cmd_setup
+        from newroz_cli.secrets_cli import cmd_setup
 
         result = cmd_setup(self._make_args(
             access_token="0.valid-token",
@@ -127,28 +127,28 @@ class TestCmdSetupNonTtyGuard:
         """With TTY, the guard should not trigger (interactive mode allowed)."""
         monkeypatch.setattr("sys.stdin.isatty", lambda: True)
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
+            "newroz_cli.secrets_cli.bw.find_bws", lambda install_if_missing=False: "/usr/bin/bws"
         )
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli._bws_version", lambda _: "2.0.0"
+            "newroz_cli.secrets_cli._bws_version", lambda _: "2.0.0"
         )
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.masked_secret_prompt", lambda prompt: "0.valid-token"
+            "newroz_cli.secrets_cli.masked_secret_prompt", lambda prompt: "0.valid-token"
         )
-        monkeypatch.setattr("hermes_cli.secrets_cli.load_config", lambda: {})
-        monkeypatch.setattr("hermes_cli.secrets_cli.save_env_value", lambda *a: None)
-        monkeypatch.setattr("hermes_cli.secrets_cli.get_env_path", lambda: "/tmp/.env")
+        monkeypatch.setattr("newroz_cli.secrets_cli.load_config", lambda: {})
+        monkeypatch.setattr("newroz_cli.secrets_cli.save_env_value", lambda *a: None)
+        monkeypatch.setattr("newroz_cli.secrets_cli.get_env_path", lambda: "/tmp/.env")
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli._resolve_server_url",
+            "newroz_cli.secrets_cli._resolve_server_url",
             lambda *a: "https://vault.bitwarden.com",
         )
         # Provide project_id directly to avoid interactive project prompt
         monkeypatch.setattr(
-            "hermes_cli.secrets_cli.bw.fetch_bitwarden_secrets",
+            "newroz_cli.secrets_cli.bw.fetch_bitwarden_secrets",
             lambda **kw: ({"KEY": "val"}, []),
         )
 
-        from hermes_cli.secrets_cli import cmd_setup
+        from newroz_cli.secrets_cli import cmd_setup
 
         # With TTY + all flags → should complete without hitting guard
         result = cmd_setup(self._make_args(

@@ -19,7 +19,7 @@ mode parameter):
      previews, timestamps).
 
 All three modes operate on the SQLite session DB via the FTS5 index and
-the get_anchored_view / get_messages_around primitives in hermes_state.
+the get_anchored_view / get_messages_around primitives in newroz_state.
 No LLM calls anywhere — every shape returns actual messages from the DB.
 
 History: PR #20238 (JabberELF) seeded a fast/summary dual-mode split; the
@@ -34,7 +34,7 @@ import logging
 from typing import Any, Dict, List, Optional, Union
 
 # Sources that are excluded from session browsing/searching by default.
-# Third-party integrations tag their sessions with HERMES_SESSION_SOURCE=tool;
+# Third-party integrations tag their sessions with NEWROZ_SESSION_SOURCE=tool;
 # delegate subagent runs are tagged "subagent" — neither belongs in the
 # user's session history.
 _HIDDEN_SESSION_SOURCES = ("subagent", "tool")
@@ -153,8 +153,8 @@ def _resolve_profile_db(profile: str):
     if profile is None or not str(profile).strip():
         return None
 
-    from hermes_cli import profiles as profiles_mod
-    from hermes_state import SessionDB
+    from newroz_cli import profiles as profiles_mod
+    from newroz_state import SessionDB
 
     canon = profiles_mod.normalize_profile_name(profile)
     profiles_mod.validate_profile_name(canon)
@@ -176,8 +176,8 @@ def _locate_session_db(session_id: str):
     from pathlib import Path
 
     try:
-        from hermes_cli import profiles as profiles_mod
-        from hermes_state import SessionDB
+        from newroz_cli import profiles as profiles_mod
+        from newroz_state import SessionDB
     except Exception:
         return None, None
 
@@ -644,11 +644,11 @@ def session_search(
     """
     if db is None:
         try:
-            from hermes_state import SessionDB
+            from newroz_state import SessionDB
             db = SessionDB()
         except Exception:
             logging.debug("SessionDB unavailable for session_search", exc_info=True)
-            from hermes_state import format_session_db_unavailable
+            from newroz_state import format_session_db_unavailable
             return tool_error(format_session_db_unavailable(), success=False)
 
     # Normalise a raw `@session:<profile>/<id>` link value passed as session_id.
@@ -743,7 +743,7 @@ def session_search(
 def check_session_search_requirements() -> bool:
     """Requires the SQLite state database."""
     try:
-        from hermes_state import DEFAULT_DB_PATH
+        from newroz_state import DEFAULT_DB_PATH
         return DEFAULT_DB_PATH.parent.exists()
     except ImportError:
         return False
@@ -756,7 +756,7 @@ SESSION_SEARCH_SCHEMA = {
         "FTS5-backed retrieval over the SQLite message store. No LLM calls — every "
         "shape returns actual messages from the DB.\n\n"
         "SOURCE-FIRST LIMIT\n\n"
-        "  This tool searches Hermes conversation history only. It is not evidence "
+        "  This tool searches Newroz conversation history only. It is not evidence "
         "about the current contents of external sources. If the user provided a "
         "direct source such as a URL, phone number/contact, app/thread, file path, "
         "account, website, or live system, inspect that original source before or "
@@ -808,7 +808,7 @@ SESSION_SEARCH_SCHEMA = {
         "(`\"docker networking\"`), boolean (`python NOT java`), or prefix wildcards "
         "(`deploy*`).\n\n"
         "WHEN TO USE\n\n"
-        "  Reach for this on questions about Hermes conversation history itself, such "
+        "  Reach for this on questions about Newroz conversation history itself, such "
         "as \"what did we do about X\", \"where did we leave Y\", or \"find the "
         "session where Z\". If the user provided a direct source identifier, inspect "
         "that source first when accessible; session_search can then supply historical "
@@ -885,7 +885,7 @@ SESSION_SEARCH_SCHEMA = {
             "profile": {
                 "type": "string",
                 "description": (
-                    "Optional. Read sessions from another Hermes profile's database "
+                    "Optional. Read sessions from another Newroz profile's database "
                     "(read-only). Use when resolving an `@session:<profile>/<id>` link: "
                     "pass the profile segment here with session_id as the id segment. "
                     "Omit to use the current profile."

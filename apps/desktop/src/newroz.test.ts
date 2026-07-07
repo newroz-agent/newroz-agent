@@ -4,14 +4,14 @@ import {
   getCronJobs,
   getGlobalModelInfo,
   getGlobalModelOptions,
-  getHermesConfig,
-  getHermesConfigDefaults,
+  getNewrozConfig,
+  getNewrozConfigDefaults,
   getProfiles,
   getSessionMessages,
   getStatus,
   listAllProfileSessions,
   listSessions
-} from './hermes'
+} from './newroz'
 import { refreshActiveProfile } from './store/profile'
 
 const emptySessionsResponse = {
@@ -21,12 +21,12 @@ const emptySessionsResponse = {
   total: 0
 }
 
-describe('Hermes REST session helpers', () => {
+describe('Newroz REST session helpers', () => {
   let api: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     api = vi.fn().mockResolvedValue(emptySessionsResponse)
-    Object.defineProperty(window, 'hermesDesktop', {
+    Object.defineProperty(window, 'newrozDesktop', {
       configurable: true,
       value: { api }
     })
@@ -34,7 +34,7 @@ describe('Hermes REST session helpers', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    Reflect.deleteProperty(window, 'hermesDesktop')
+    Reflect.deleteProperty(window, 'newrozDesktop')
   })
 
   it('uses a longer timeout for the single-profile session list', async () => {
@@ -97,8 +97,8 @@ describe('Hermes REST session helpers', () => {
     api.mockResolvedValue({})
 
     const bootCalls: [() => Promise<unknown>, string][] = [
-      [getHermesConfig, '/api/config'],
-      [getHermesConfigDefaults, '/api/config/defaults'],
+      [getNewrozConfig, '/api/config'],
+      [getNewrozConfigDefaults, '/api/config/defaults'],
       [getGlobalModelInfo, '/api/model/info'],
       [() => getGlobalModelOptions(), '/api/model/options'],
       [getCronJobs, '/api/cron/jobs']

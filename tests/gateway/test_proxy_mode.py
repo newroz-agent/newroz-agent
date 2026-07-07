@@ -265,7 +265,7 @@ class TestRunAgentViaProxy:
         assert session.captured_headers["Authorization"] == "Bearer test-key-123"
 
         # Verify session ID header
-        assert session.captured_headers["X-Hermes-Session-Id"] == "session-abc"
+        assert session.captured_headers["X-Newroz-Session-Id"] == "session-abc"
 
         # Verify messages include system, history, and current message
         messages = session.captured_json["messages"]
@@ -528,14 +528,14 @@ class TestEnvVarRegistration:
     """Verify GATEWAY_PROXY_URL and GATEWAY_PROXY_KEY are registered."""
 
     def test_proxy_url_in_optional_env_vars(self):
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         assert "GATEWAY_PROXY_URL" in OPTIONAL_ENV_VARS
         info = OPTIONAL_ENV_VARS["GATEWAY_PROXY_URL"]
         assert info["category"] == "messaging"
         assert info["password"] is False
 
     def test_proxy_key_in_optional_env_vars(self):
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         assert "GATEWAY_PROXY_KEY" in OPTIONAL_ENV_VARS
         info = OPTIONAL_ENV_VARS["GATEWAY_PROXY_KEY"]
         assert info["category"] == "messaging"

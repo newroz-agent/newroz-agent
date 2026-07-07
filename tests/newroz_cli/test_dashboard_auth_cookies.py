@@ -6,7 +6,7 @@ from fastapi.responses import Response
 from fastapi.testclient import TestClient
 from starlette.requests import Request
 
-from hermes_cli.dashboard_auth.cookies import (
+from newroz_cli.dashboard_auth.cookies import (
     PKCE_COOKIE,
     SESSION_AT_COOKIE,
     SESSION_RT_COOKIE,
@@ -71,13 +71,13 @@ def test_session_cookies_use_host_prefix_on_https_direct():
 
 
 def test_session_cookies_use_secure_prefix_when_proxied():
-    """HTTPS + /hermes prefix → __Secure- prefix (__Host- forbids
+    """HTTPS + /newroz prefix → __Secure- prefix (__Host- forbids
     Path != "/"; __Secure- keeps the Secure-required hardening)."""
-    client = TestClient(_build_app(use_https=True, prefix="/hermes"))
+    client = TestClient(_build_app(use_https=True, prefix="/newroz"))
     r = client.get("/set")
     cookies = r.headers.get_list("set-cookie")
     at = next(c for c in cookies if c.startswith(f"__Secure-{SESSION_AT_COOKIE}="))
-    assert "Path=/hermes" in at
+    assert "Path=/newroz" in at
     assert "Secure" in at
     # __Host- variant must NOT be emitted on the prefix path.
     assert not any(
@@ -220,7 +220,7 @@ def test_detect_https_via_scheme():
     Under uvicorn proxy_headers=True the scheme is rewritten from
     ``X-Forwarded-Proto``; that's an integration concern, not unit.
     """
-    from hermes_cli.dashboard_auth.cookies import detect_https
+    from newroz_cli.dashboard_auth.cookies import detect_https
     http_req = Request({
         "type": "http", "method": "GET", "path": "/", "scheme": "http",
         "headers": [], "server": ("x", 80),

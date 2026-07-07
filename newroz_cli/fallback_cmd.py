@@ -1,18 +1,18 @@
 """
-hermes fallback — manage the fallback provider chain.
+newroz fallback — manage the fallback provider chain.
 
 Fallback providers are tried in order when the primary model fails with
 rate-limit, overload, or connection errors. See:
-https://hermes-agent.nousresearch.com/docs/user-guide/features/fallback-providers
+https://newroz-agent.nousresearch.com/docs/user-guide/features/fallback-providers
 
 Subcommands:
-  hermes fallback [list]   Show the current fallback chain (default when no subcommand)
-  hermes fallback add      Pick provider + model via the same picker as `hermes model`,
+  newroz fallback [list]   Show the current fallback chain (default when no subcommand)
+  newroz fallback add      Pick provider + model via the same picker as `newroz model`,
                            then append the selection to the chain
-  hermes fallback remove   Pick an entry to delete from the chain
-  hermes fallback clear    Remove all fallback entries
+  newroz fallback remove   Pick an entry to delete from the chain
+  newroz fallback clear    Remove all fallback entries
 
-Storage: ``fallback_providers`` in ``~/.hermes/config.yaml`` (top-level, list of
+Storage: ``fallback_providers`` in ``~/.newroz/config.yaml`` (top-level, list of
 ``{provider, model, base_url?, api_mode?}`` dicts).  The legacy single-dict
 ``fallback_model`` format is migrated to the new list format on first add.
 """
@@ -21,7 +21,7 @@ from __future__ import annotations
 import copy
 from typing import Any, Dict, List, Optional
 
-from hermes_cli.fallback_config import get_fallback_chain
+from newroz_cli.fallback_config import get_fallback_chain
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ def _extract_fallback_from_model_cfg(model_cfg: Any) -> Optional[Dict[str, Any]]
 def _snapshot_auth_active_provider() -> Any:
     """Return the current ``active_provider`` in auth.json, or a sentinel if unavailable."""
     try:
-        from hermes_cli.auth import _load_auth_store
+        from newroz_cli.auth import _load_auth_store
         store = _load_auth_store()
         return store.get("active_provider")
     except Exception:
@@ -88,7 +88,7 @@ def _snapshot_auth_active_provider() -> Any:
 def _restore_auth_active_provider(value: Any) -> None:
     """Write back a previously snapshotted ``active_provider`` value."""
     try:
-        from hermes_cli.auth import _auth_store_lock, _load_auth_store, _save_auth_store
+        from newroz_cli.auth import _auth_store_lock, _load_auth_store, _save_auth_store
         with _auth_store_lock():
             store = _load_auth_store()
             store["active_provider"] = value
@@ -96,7 +96,7 @@ def _restore_auth_active_provider(value: Any) -> None:
     except Exception:
         # Best-effort — if auth.json can't be restored, the user's primary
         # provider may have been deactivated by the picker.  They can re-run
-        # `hermes model` to fix it.  Don't fail the fallback add.
+        # `newroz model` to fix it.  Don't fail the fallback add.
         pass
 
 
@@ -106,7 +106,7 @@ def _restore_auth_active_provider(value: Any) -> None:
 
 def cmd_fallback_list(args) -> None:  # noqa: ARG001
     """Print the current fallback chain."""
-    from hermes_cli.config import load_config
+    from newroz_cli.config import load_config
 
     config = load_config()
     chain = _read_chain(config)
@@ -115,7 +115,7 @@ def cmd_fallback_list(args) -> None:  # noqa: ARG001
     if not chain:
         print("  No fallback providers configured.")
         print()
-        print("  Add one with:  hermes fallback add")
+        print("  Add one with:  newroz fallback add")
         print()
         return
 
@@ -128,7 +128,7 @@ def cmd_fallback_list(args) -> None:  # noqa: ARG001
         print(f"    {i}. {_format_entry(entry)}")
     print()
     print("  Tried in order when the primary fails (rate-limit, 5xx, connection errors).")
-    print("  Docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/fallback-providers")
+    print("  Docs: https://newroz-agent.nousresearch.com/docs/user-guide/features/fallback-providers")
     print()
 
 
@@ -145,9 +145,9 @@ def _describe_primary(config: Dict[str, Any]) -> Optional[str]:
 
 
 def cmd_fallback_add(args) -> None:
-    """Launch the same picker as `hermes model`, then append the selection to the chain."""
-    from hermes_cli.main import _require_tty, select_provider_and_model
-    from hermes_cli.config import load_config, save_config
+    """Launch the same picker as `newroz model`, then append the selection to the chain."""
+    from newroz_cli.main import _require_tty, select_provider_and_model
+    from newroz_cli.config import load_config, save_config
 
     _require_tty("fallback add")
 
@@ -159,7 +159,7 @@ def cmd_fallback_add(args) -> None:
 
     print()
     print("  Adding a fallback provider.  The picker below is the same one used by")
-    print("  `hermes model` — select the provider + model you want as a fallback.")
+    print("  `newroz model` — select the provider + model you want as a fallback.")
     print()
 
     try:
@@ -221,12 +221,12 @@ def cmd_fallback_add(args) -> None:
     print(f"  Added fallback: {_format_entry(new_entry)}")
     print(f"  Chain is now {len(chain)} {'entry' if len(chain) == 1 else 'entries'} long.")
     print()
-    print("  Run `hermes fallback list` to view, or `hermes fallback remove` to delete.")
+    print("  Run `newroz fallback list` to view, or `newroz fallback remove` to delete.")
 
 
 def _restore_model_cfg(model_before: Any) -> None:
     """Restore ``config["model"]`` to a previously-captured snapshot."""
-    from hermes_cli.config import load_config, save_config
+    from newroz_cli.config import load_config, save_config
 
     cfg = load_config()
     if model_before is None:
@@ -238,7 +238,7 @@ def _restore_model_cfg(model_before: Any) -> None:
 
 def cmd_fallback_remove(args) -> None:  # noqa: ARG001
     """Pick an entry from the chain and remove it."""
-    from hermes_cli.config import load_config, save_config
+    from newroz_cli.config import load_config, save_config
 
     config = load_config()
     chain = _read_chain(config)
@@ -253,7 +253,7 @@ def cmd_fallback_remove(args) -> None:  # noqa: ARG001
     choices.append("Cancel")
 
     try:
-        from hermes_cli.setup import _curses_prompt_choice
+        from newroz_cli.setup import _curses_prompt_choice
         idx = _curses_prompt_choice("Select a fallback to remove:", choices, 0)
     except Exception:
         idx = _numbered_pick("Select a fallback to remove:", choices)
@@ -278,7 +278,7 @@ def cmd_fallback_remove(args) -> None:  # noqa: ARG001
 
 def cmd_fallback_clear(args) -> None:  # noqa: ARG001
     """Remove all fallback entries (with confirmation)."""
-    from hermes_cli.config import load_config, save_config
+    from newroz_cli.config import load_config, save_config
 
     config = load_config()
     chain = _read_chain(config)
@@ -338,7 +338,7 @@ def _numbered_pick(question: str, choices: List[str]) -> Optional[int]:
 # ---------------------------------------------------------------------------
 
 def cmd_fallback(args) -> None:
-    """Top-level dispatcher for ``hermes fallback [subcommand]``."""
+    """Top-level dispatcher for ``newroz fallback [subcommand]``."""
     sub = getattr(args, "fallback_command", None)
     if sub in {None, "", "list", "ls"}:
         cmd_fallback_list(args)

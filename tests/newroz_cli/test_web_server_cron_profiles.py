@@ -7,9 +7,9 @@ from fastapi import HTTPException
 @pytest.fixture()
 def isolated_profiles(tmp_path, monkeypatch):
     """Give profile discovery an isolated default home with one named profile."""
-    from hermes_cli import profiles
+    from newroz_cli import profiles
 
-    default_home = tmp_path / ".hermes"
+    default_home = tmp_path / ".newroz"
     profiles_root = default_home / "profiles"
     worker_home = profiles_root / "worker_alpha"
 
@@ -17,14 +17,14 @@ def isolated_profiles(tmp_path, monkeypatch):
         (home / "cron").mkdir(parents=True, exist_ok=True)
         (home / "config.yaml").write_text("model: test-model\n", encoding="utf-8")
 
-    monkeypatch.setattr(profiles, "_get_default_hermes_home", lambda: default_home)
+    monkeypatch.setattr(profiles, "_get_default_newroz_home", lambda: default_home)
     monkeypatch.setattr(profiles, "_get_profiles_root", lambda: profiles_root)
     return {"default": default_home, "worker_alpha": worker_home}
 
 
 def test_call_cron_for_profile_routes_storage_and_restores_globals(isolated_profiles):
     from cron import jobs as cron_jobs
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     old_cron_dir = cron_jobs.CRON_DIR
     old_jobs_file = cron_jobs.JOBS_FILE
@@ -40,7 +40,7 @@ def test_call_cron_for_profile_routes_storage_and_restores_globals(isolated_prof
 
     assert job["profile"] == "worker_alpha"
     assert job["profile_name"] == "worker_alpha"
-    assert job["hermes_home"] == str(isolated_profiles["worker_alpha"])
+    assert job["newroz_home"] == str(isolated_profiles["worker_alpha"])
     assert job["is_default_profile"] is False
     assert (isolated_profiles["worker_alpha"] / "cron" / "jobs.json").exists()
     assert not (isolated_profiles["default"] / "cron" / "jobs.json").exists()
@@ -52,7 +52,7 @@ def test_call_cron_for_profile_routes_storage_and_restores_globals(isolated_prof
 
 @pytest.mark.asyncio
 async def test_list_cron_jobs_all_includes_default_and_named_profiles(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     default_job = web_server._call_cron_for_profile(
         "default",
@@ -75,15 +75,15 @@ async def test_list_cron_jobs_all_includes_default_and_named_profiles(isolated_p
     assert set(by_id) >= {default_job["id"], worker_job["id"]}
     assert by_id[default_job["id"]]["profile"] == "default"
     assert by_id[default_job["id"]]["is_default_profile"] is True
-    assert by_id[default_job["id"]]["hermes_home"] == str(isolated_profiles["default"])
+    assert by_id[default_job["id"]]["newroz_home"] == str(isolated_profiles["default"])
     assert by_id[worker_job["id"]]["profile"] == "worker_alpha"
     assert by_id[worker_job["id"]]["is_default_profile"] is False
-    assert by_id[worker_job["id"]]["hermes_home"] == str(isolated_profiles["worker_alpha"])
+    assert by_id[worker_job["id"]]["newroz_home"] == str(isolated_profiles["worker_alpha"])
 
 
 @pytest.mark.asyncio
 async def test_list_cron_jobs_specific_profile_filters_results(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     web_server._call_cron_for_profile(
         "default",
@@ -110,7 +110,7 @@ async def test_list_cron_jobs_specific_profile_filters_results(isolated_profiles
 async def test_create_cron_job_normalizes_representative_core_fields(
     isolated_profiles, tmp_path
 ):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     scripts_dir = isolated_profiles["worker_alpha"] / "scripts"
     scripts_dir.mkdir()
@@ -136,7 +136,7 @@ async def test_create_cron_job_normalizes_representative_core_fields(
 
 @pytest.mark.asyncio
 async def test_cron_mutation_without_profile_finds_named_profile_job(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     worker_job = web_server._call_cron_for_profile(
         "worker_alpha",
@@ -161,7 +161,7 @@ async def test_cron_mutation_without_profile_finds_named_profile_job(isolated_pr
 
 @pytest.mark.asyncio
 async def test_update_cron_job_normalizes_dashboard_core_fields(isolated_profiles, tmp_path):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     scripts_dir = isolated_profiles["worker_alpha"] / "scripts"
     scripts_dir.mkdir()
@@ -197,7 +197,7 @@ async def test_update_cron_job_normalizes_dashboard_core_fields(isolated_profile
 async def test_create_cron_job_rejects_script_outside_profile_scripts(
     isolated_profiles, tmp_path
 ):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     outside = tmp_path / "outside.py"
     outside.write_text("print('nope')\n", encoding="utf-8")
@@ -218,7 +218,7 @@ async def test_create_cron_job_rejects_script_outside_profile_scripts(
 
 @pytest.mark.asyncio
 async def test_create_cron_job_rejects_empty_agent_job(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     with pytest.raises(HTTPException) as exc:
         await web_server.create_cron_job(
@@ -232,7 +232,7 @@ async def test_create_cron_job_rejects_empty_agent_job(isolated_profiles):
 
 @pytest.mark.asyncio
 async def test_update_cron_job_no_agent_reuses_existing_script(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     scripts_dir = isolated_profiles["worker_alpha"] / "scripts"
     scripts_dir.mkdir()
@@ -258,7 +258,7 @@ async def test_update_cron_job_no_agent_reuses_existing_script(isolated_profiles
 
 @pytest.mark.asyncio
 async def test_dashboard_cron_rejects_missing_context_from(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     with pytest.raises(HTTPException) as create_exc:
         await web_server.create_cron_job(
@@ -298,7 +298,7 @@ async def test_dashboard_cron_rejects_missing_context_from(isolated_profiles):
 
 @pytest.mark.asyncio
 async def test_dashboard_cron_context_from_is_profile_scoped(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     default_job = web_server._call_cron_for_profile(
         "default",
@@ -342,7 +342,7 @@ async def test_update_cron_job_refreshes_snapshots_when_unpinning(
     isolated_profiles,
     monkeypatch,
 ):
-    from hermes_cli import runtime_provider, web_server
+    from newroz_cli import runtime_provider, web_server
 
     monkeypatch.setattr(
         runtime_provider,
@@ -385,7 +385,7 @@ async def test_dashboard_cron_noop_inference_fields_keep_existing_snapshots(
     isolated_profiles,
     monkeypatch,
 ):
-    from hermes_cli import runtime_provider, web_server
+    from newroz_cli import runtime_provider, web_server
 
     current_provider = {"name": "initial-provider"}
     monkeypatch.setattr(
@@ -435,7 +435,7 @@ async def test_update_cron_job_clears_snapshots_for_no_agent(
     isolated_profiles,
     monkeypatch,
 ):
-    from hermes_cli import runtime_provider, web_server
+    from newroz_cli import runtime_provider, web_server
 
     monkeypatch.setattr(
         runtime_provider,
@@ -476,7 +476,7 @@ async def test_update_cron_job_clears_snapshots_for_no_agent(
 async def test_update_cron_job_rejects_id_mutation(isolated_profiles):
     """Dashboard surfaces a 400 (not a 500 or silent rename) when an
     id-mutation attempt is rejected by cron/jobs.update_job."""
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     worker_job = web_server._call_cron_for_profile(
         "worker_alpha",
@@ -501,7 +501,7 @@ async def test_update_cron_job_rejects_id_mutation(isolated_profiles):
 
 @pytest.mark.asyncio
 async def test_cron_delete_with_profile_deletes_only_target_profile(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     default_job = web_server._call_cron_for_profile(
         "default",
@@ -529,7 +529,7 @@ async def test_cron_delete_with_profile_deletes_only_target_profile(isolated_pro
 
 @pytest.mark.asyncio
 async def test_cron_profile_validation_errors(isolated_profiles):
-    from hermes_cli import web_server
+    from newroz_cli import web_server
 
     with pytest.raises(HTTPException) as bad_name:
         await web_server.list_cron_jobs(profile="../bad")

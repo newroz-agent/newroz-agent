@@ -1,4 +1,4 @@
-"""Shared time/filter parsing for `hermes sessions prune` / `archive`.
+"""Shared time/filter parsing for `newroz sessions prune` / `archive`.
 
 Turns user-friendly CLI values into the epoch bounds and filter kwargs
 consumed by ``SessionDB.prune_sessions`` / ``archive_sessions`` /

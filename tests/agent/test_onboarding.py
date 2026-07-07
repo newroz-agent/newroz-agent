@@ -207,12 +207,12 @@ class TestOpenclawResidueHint:
     def test_hint_mentions_migrate_command(self):
         # `migrate` is the non-destructive path — should lead the banner.
         msg = openclaw_residue_hint_cli()
-        assert "hermes claw migrate" in msg
+        assert "newroz claw migrate" in msg
         assert "~/.openclaw" in msg
 
     def test_hint_mentions_cleanup_command(self):
         # `cleanup` is mentioned as the follow-up archive step.
-        assert "hermes claw cleanup" in openclaw_residue_hint_cli()
+        assert "newroz claw cleanup" in openclaw_residue_hint_cli()
 
     def test_hint_warns_cleanup_breaks_openclaw(self):
         # Archiving the directory breaks OpenClaw for users still running it —
@@ -306,6 +306,6 @@ class TestProfileBuildSeenFlag:
 
 class TestProfileBuildConfigDefault:
     def test_default_config_carries_ask(self):
-        from hermes_cli.config import DEFAULT_CONFIG
+        from newroz_cli.config import DEFAULT_CONFIG
 
         assert DEFAULT_CONFIG["onboarding"]["profile_build"] == "ask"

@@ -2,23 +2,23 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getHermesConfig } from '@/hermes'
+import { getNewrozConfig } from '@/newroz'
 import { persistString } from '@/lib/storage'
 import { $currentCwd, setCurrentCwd } from '@/store/session'
 
-import { useHermesConfig } from './use-hermes-config'
+import { useNewrozConfig } from './use-newroz-config'
 
-vi.mock('@/hermes', () => ({
-  getHermesConfig: vi.fn(),
-  getHermesConfigDefaults: vi.fn().mockResolvedValue({})
+vi.mock('@/newroz', () => ({
+  getNewrozConfig: vi.fn(),
+  getNewrozConfigDefaults: vi.fn().mockResolvedValue({})
 }))
 
-const WORKSPACE_CWD_KEY = 'hermes.desktop.workspace-cwd'
+const WORKSPACE_CWD_KEY = 'newroz.desktop.workspace-cwd'
 
 const mockConfig = (config: Record<string, unknown>) =>
-  vi.mocked(getHermesConfig).mockResolvedValue(config as Awaited<ReturnType<typeof getHermesConfig>>)
+  vi.mocked(getNewrozConfig).mockResolvedValue(config as Awaited<ReturnType<typeof getNewrozConfig>>)
 
-describe('useHermesConfig refreshHermesConfig', () => {
+describe('useNewrozConfig refreshNewrozConfig', () => {
   beforeEach(() => {
     // Reset atoms and localStorage between tests
     setCurrentCwd('')
@@ -33,14 +33,14 @@ describe('useHermesConfig refreshHermesConfig', () => {
     mockConfig({ terminal: { cwd: '/Users/example/new-workspace' } })
 
     const { result } = renderHook(() =>
-      useHermesConfig({
+      useNewrozConfig({
         activeSessionIdRef: { current: null },
         refreshProjectBranch: vi.fn().mockResolvedValue(undefined)
       })
     )
 
     await act(async () => {
-      await result.current.refreshHermesConfig()
+      await result.current.refreshNewrozConfig()
     })
 
     // The configured terminal.cwd must override the stale localStorage value
@@ -53,14 +53,14 @@ describe('useHermesConfig refreshHermesConfig', () => {
     mockConfig({ terminal: { cwd: '/Users/example/new-workspace' } })
 
     const { result } = renderHook(() =>
-      useHermesConfig({
+      useNewrozConfig({
         activeSessionIdRef: { current: 'session-1' },
         refreshProjectBranch: vi.fn().mockResolvedValue(undefined)
       })
     )
 
     await act(async () => {
-      await result.current.refreshHermesConfig()
+      await result.current.refreshNewrozConfig()
     })
 
     // Config refreshes mid-session must not yank the workspace out from
@@ -72,14 +72,14 @@ describe('useHermesConfig refreshHermesConfig', () => {
     mockConfig({})
 
     const { result } = renderHook(() =>
-      useHermesConfig({
+      useNewrozConfig({
         activeSessionIdRef: { current: null },
         refreshProjectBranch: vi.fn().mockResolvedValue(undefined)
       })
     )
 
     await act(async () => {
-      await result.current.refreshHermesConfig()
+      await result.current.refreshNewrozConfig()
     })
 
     expect($currentCwd.get()).toBe('')
@@ -89,14 +89,14 @@ describe('useHermesConfig refreshHermesConfig', () => {
     mockConfig({ terminal: { cwd: '.' } })
 
     const { result } = renderHook(() =>
-      useHermesConfig({
+      useNewrozConfig({
         activeSessionIdRef: { current: null },
         refreshProjectBranch: vi.fn().mockResolvedValue(undefined)
       })
     )
 
     await act(async () => {
-      await result.current.refreshHermesConfig()
+      await result.current.refreshNewrozConfig()
     })
 
     expect($currentCwd.get()).toBe('')
@@ -109,14 +109,14 @@ describe('useHermesConfig refreshHermesConfig', () => {
     mockConfig({ terminal: { cwd: '/workspace/project-a' } })
 
     const { result } = renderHook(() =>
-      useHermesConfig({
+      useNewrozConfig({
         activeSessionIdRef: { current: null },
         refreshProjectBranch
       })
     )
 
     await act(async () => {
-      await result.current.refreshHermesConfig()
+      await result.current.refreshNewrozConfig()
     })
 
     expect(refreshProjectBranch).toHaveBeenCalledWith('/workspace/project-a')
@@ -129,14 +129,14 @@ describe('useHermesConfig refreshHermesConfig', () => {
     mockConfig({ terminal: { cwd: '/Users/example/new-workspace' } })
 
     const { result } = renderHook(() =>
-      useHermesConfig({
+      useNewrozConfig({
         activeSessionIdRef: { current: 'session-1' },
         refreshProjectBranch
       })
     )
 
     await act(async () => {
-      await result.current.refreshHermesConfig()
+      await result.current.refreshNewrozConfig()
     })
 
     expect(refreshProjectBranch).toHaveBeenCalledWith('/workspace/attached-project')

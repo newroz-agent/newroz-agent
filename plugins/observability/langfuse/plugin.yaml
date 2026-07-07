@@ -1,10 +1,10 @@
 name: langfuse
 version: "1.0.0"
-description: "Optional Langfuse observability for Hermes — traces conversations, LLM calls, and tool usage. Opt-in via `hermes plugins enable observability/langfuse` or `hermes tools → Langfuse Observability`."
+description: "Optional Langfuse observability for Newroz — traces conversations, LLM calls, and tool usage. Opt-in via `newroz plugins enable observability/langfuse` or `newroz tools → Langfuse Observability`."
 author: NousResearch
 requires_env:
-  - HERMES_LANGFUSE_PUBLIC_KEY
-  - HERMES_LANGFUSE_SECRET_KEY
+  - NEWROZ_LANGFUSE_PUBLIC_KEY
+  - NEWROZ_LANGFUSE_SECRET_KEY
 hooks:
   - pre_api_request
   - post_api_request

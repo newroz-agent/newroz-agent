@@ -12,7 +12,7 @@ import pytest
 # files that gate the app.
 from fastapi.testclient import TestClient
 
-from hermes_cli import web_server
+from newroz_cli import web_server
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def test_loopback_protected_route_accepts_session_token(client_loopback):
     """The injected SPA token unlocks protected /api/ routes."""
     r = client_loopback.get(
         "/api/sessions",
-        headers={"X-Hermes-Session-Token": web_server._SESSION_TOKEN},
+        headers={"X-Newroz-Session-Token": web_server._SESSION_TOKEN},
     )
     # 200 or 404 (no sessions yet) both prove the auth layer let it through.
     # 500 is also acceptable if there's a downstream issue unrelated to auth.
@@ -68,7 +68,7 @@ def test_loopback_index_injects_session_token(client_loopback):
     r = client_loopback.get("/")
     if r.status_code == 404:
         pytest.skip("WEB_DIST not built in this env")
-    assert "__HERMES_SESSION_TOKEN__" in r.text
+    assert "__NEWROZ_SESSION_TOKEN__" in r.text
 
 
 def test_loopback_host_header_validation_still_enforced(client_loopback):
@@ -94,10 +94,10 @@ def test_loopback_host_header_validation_still_enforced(client_loopback):
     ("192.168.1.5", False, True),
     ("10.0.0.1",  True,  True),     # allow_public ignored — LAN IP is public
     ("100.64.0.1", False, True),    # Tailscale CGNAT — treated as public
-    ("hermes-agent-prod-abc.fly.dev", False, True),
+    ("newroz-agent-prod-abc.fly.dev", False, True),
 ])
 def test_should_require_auth_truth_table(host, allow_public, expected):
-    from hermes_cli.web_server import should_require_auth
+    from newroz_cli.web_server import should_require_auth
     assert should_require_auth(host, allow_public) is expected
 
 
@@ -182,7 +182,7 @@ def test_start_server_insecure_public_no_longer_bypasses_gate(monkeypatch):
     June 2026 hardening: --insecure no longer disables auth. With no providers
     registered, the bind fails closed (SystemExit) and auth_required is True.
     """
-    from hermes_cli.dashboard_auth import clear_providers
+    from newroz_cli.dashboard_auth import clear_providers
     clear_providers()
     _stub_uvicorn_run(monkeypatch)
     web_server.app.state.auth_required = None
@@ -201,7 +201,7 @@ def test_start_server_public_without_insecure_records_auth_required(monkeypatch)
     flag-stashing happens BEFORE the exit so the rest of the system can
     branch on it. (See task 3.5 tests below for the with-provider path.)
     """
-    from hermes_cli.dashboard_auth import clear_providers
+    from newroz_cli.dashboard_auth import clear_providers
     clear_providers()
     _stub_uvicorn_run(monkeypatch)
     web_server.app.state.auth_required = None
@@ -226,8 +226,8 @@ def test_start_server_gate_with_provider_proceeds_and_sets_proxy_headers(monkeyp
     succeeds.  uvicorn is called with proxy_headers=True so X-Forwarded-Proto
     from Fly's TLS terminator is honoured for cookie Secure-flag decisions.
     """
-    from hermes_cli.dashboard_auth import clear_providers, register_provider
-    from tests.hermes_cli.conftest_dashboard_auth import StubAuthProvider
+    from newroz_cli.dashboard_auth import clear_providers, register_provider
+    from tests.newroz_cli.conftest_dashboard_auth import StubAuthProvider
 
     clear_providers()
     register_provider(StubAuthProvider())
@@ -247,7 +247,7 @@ def test_start_server_gate_with_provider_proceeds_and_sets_proxy_headers(monkeyp
 
 def test_start_server_gate_without_provider_fails_closed(monkeypatch):
     """No providers + gate would activate → SystemExit with a clear message."""
-    from hermes_cli.dashboard_auth import clear_providers
+    from newroz_cli.dashboard_auth import clear_providers
 
     clear_providers()
     _stub_uvicorn_run(monkeypatch)
@@ -263,18 +263,18 @@ def test_start_server_surfaces_nous_skip_reason_when_unconfigured(monkeypatch):
     """When the bundled Nous plugin loaded but skipped registration (no
     env vars set), the gate's fail-closed message should surface the
     plugin's LAST_SKIP_REASON so the operator knows the config fix is
-    'set HERMES_DASHBOARD_OAUTH_CLIENT_ID', not 'install a plugin'."""
-    from hermes_cli.dashboard_auth import clear_providers
+    'set NEWROZ_DASHBOARD_OAUTH_CLIENT_ID', not 'install a plugin'."""
+    from newroz_cli.dashboard_auth import clear_providers
     from plugins.dashboard_auth import nous as nous_plugin
 
     # Simulate the plugin running and skipping for "no client_id".
     clear_providers()
     _stub_uvicorn_run(monkeypatch)
-    monkeypatch.delenv("HERMES_DASHBOARD_OAUTH_CLIENT_ID", raising=False)
-    monkeypatch.delenv("HERMES_DASHBOARD_PORTAL_URL", raising=False)
+    monkeypatch.delenv("NEWROZ_DASHBOARD_OAUTH_CLIENT_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_DASHBOARD_PORTAL_URL", raising=False)
     from unittest.mock import MagicMock
     nous_plugin.register(MagicMock())  # populates LAST_SKIP_REASON
-    assert "HERMES_DASHBOARD_OAUTH_CLIENT_ID" in nous_plugin.LAST_SKIP_REASON
+    assert "NEWROZ_DASHBOARD_OAUTH_CLIENT_ID" in nous_plugin.LAST_SKIP_REASON
 
     web_server.app.state.auth_required = None
     with pytest.raises(SystemExit) as exc_info:
@@ -285,7 +285,7 @@ def test_start_server_surfaces_nous_skip_reason_when_unconfigured(monkeypatch):
     # The error message embeds the plugin's specific skip reason rather
     # than the generic "Install the default Nous provider" boilerplate.
     msg = str(exc_info.value)
-    assert "HERMES_DASHBOARD_OAUTH_CLIENT_ID" in msg
+    assert "NEWROZ_DASHBOARD_OAUTH_CLIENT_ID" in msg
     assert "nous:" in msg
 
 
@@ -306,7 +306,7 @@ def test_start_server_insecure_public_engages_gate_and_fails_closed(monkeypatch)
     auth as of the June 2026 hardening, so a public bind with no provider
     refuses to start.
     """
-    from hermes_cli.dashboard_auth import clear_providers
+    from newroz_cli.dashboard_auth import clear_providers
 
     clear_providers()
     _stub_uvicorn_run(monkeypatch)

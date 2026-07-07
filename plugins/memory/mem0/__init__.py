@@ -7,10 +7,10 @@ Original PR #2933 by kartik-mem0, adapted to MemoryProvider ABC.
 
 Configuration
 -------------
-Secret (lives in $HERMES_HOME/.env or the environment):
+Secret (lives in $NEWROZ_HOME/.env or the environment):
   MEM0_API_KEY       — Mem0 Platform API key (required for platform mode)
 
-Behavioral settings (live in $HERMES_HOME/mem0.json, set via `hermes memory
+Behavioral settings (live in $NEWROZ_HOME/mem0.json, set via `newroz memory
 setup`):
   mode               — Backend mode: "platform" (default) or "oss"
   user_id            — Canonical user identifier. When set, it is applied
@@ -18,7 +18,7 @@ setup`):
                        Discord, …) so the same human gets one merged memory
                        store. When unset, the gateway-native id (e.g. Telegram
                        numeric id, Discord snowflake) is used instead.
-  agent_id           — Agent identifier (default: hermes)
+  agent_id           — Agent identifier (default: newroz)
 
 The matching MEM0_MODE / MEM0_USER_ID / MEM0_AGENT_ID environment variables are
 still read as a backward-compatible fallback, but mem0.json is the canonical
@@ -53,7 +53,7 @@ _CLIENT_ERROR_TYPES = ("MemoryNotFoundError", "ValidationError")
 # that legacy mem0.json files written by the setup wizard (which historically
 # wrote this exact placeholder) still allow gateway-native ids to flow
 # through instead of silently overriding them with the placeholder.
-_DEFAULT_USER_ID = "hermes-user"
+_DEFAULT_USER_ID = "newroz-user"
 
 
 def _is_client_error(exc: Exception) -> bool:
@@ -70,18 +70,18 @@ def _is_client_error(exc: Exception) -> bool:
 # ---------------------------------------------------------------------------
 
 def _load_config() -> dict:
-    """Load config from env vars, with $HERMES_HOME/mem0.json overrides.
+    """Load config from env vars, with $NEWROZ_HOME/mem0.json overrides.
 
     Environment variables provide defaults; mem0.json (if present) overrides
     individual keys.  This avoids a silent failure when the JSON file exists
     but is missing fields like ``api_key`` that the user set in ``.env``.
     """
-    from hermes_constants import get_hermes_home
+    from newroz_constants import get_newroz_home
 
     config = {
         "mode": os.environ.get("MEM0_MODE", "platform"),
         "api_key": os.environ.get("MEM0_API_KEY", ""),
-        "agent_id": os.environ.get("MEM0_AGENT_ID", "hermes"),
+        "agent_id": os.environ.get("MEM0_AGENT_ID", "newroz"),
         "oss": {},
     }
     # Only carry user_id when the operator explicitly configured one (env or
@@ -91,7 +91,7 @@ def _load_config() -> dict:
     if env_user_id:
         config["user_id"] = env_user_id
 
-    config_path = get_hermes_home() / "mem0.json"
+    config_path = get_newroz_home() / "mem0.json"
     if config_path.exists():
         try:
             file_cfg = json.loads(config_path.read_text(encoding="utf-8"))
@@ -215,7 +215,7 @@ class Mem0MemoryProvider(MemoryProvider):
         self._mode = "platform"
         self._api_key = ""
         self._user_id = _DEFAULT_USER_ID
-        self._agent_id = "hermes"
+        self._agent_id = "newroz"
         self._channel = "cli"  # gateway channel name (cli/telegram/discord/...)
         self._sync_thread = None
         self._prefetch_thread = None
@@ -241,11 +241,11 @@ class Mem0MemoryProvider(MemoryProvider):
             return bool(cfg.get("oss", {}).get("vector_store"))
         return bool(cfg.get("api_key"))
 
-    def save_config(self, values, hermes_home):
-        """Write config to $HERMES_HOME/mem0.json."""
+    def save_config(self, values, newroz_home):
+        """Write config to $NEWROZ_HOME/mem0.json."""
         import json
         from pathlib import Path
-        config_path = Path(hermes_home) / "mem0.json"
+        config_path = Path(newroz_home) / "mem0.json"
         existing = {}
         if config_path.exists():
             try:
@@ -262,14 +262,14 @@ class Mem0MemoryProvider(MemoryProvider):
         api_key_required = mode != "oss"
         return [
             {"key": "api_key", "description": "Mem0 Platform API key", "secret": True, "required": api_key_required, "env_var": "MEM0_API_KEY", "url": "https://app.mem0.ai"},
-            {"key": "user_id", "description": "User identifier", "default": "hermes-user"},
-            {"key": "agent_id", "description": "Agent identifier", "default": "hermes"},
+            {"key": "user_id", "description": "User identifier", "default": "newroz-user"},
+            {"key": "agent_id", "description": "Agent identifier", "default": "newroz"},
             {"key": "rerank", "description": "Enable reranking for recall", "default": "true", "choices": ["true", "false"]},
         ]
 
-    def post_setup(self, hermes_home: str, config: dict) -> None:
+    def post_setup(self, newroz_home: str, config: dict) -> None:
         from ._setup import post_setup
-        post_setup(hermes_home, config)
+        post_setup(newroz_home, config)
 
     def _create_backend(self):
         # Lazy-install the mem0 SDK on demand before either backend imports
@@ -343,7 +343,7 @@ class Mem0MemoryProvider(MemoryProvider):
         self._mode = self._config.get("mode", "platform")
         self._api_key = self._config.get("api_key", "")
         # Resolution order for user_id:
-        #   1. Operator-configured MEM0_USER_ID (env or $HERMES_HOME/mem0.json) —
+        #   1. Operator-configured MEM0_USER_ID (env or $NEWROZ_HOME/mem0.json) —
         #      the canonical principal, applied across every gateway so the same
         #      human gets one merged memory store.
         #   2. Gateway-native id from kwargs (Telegram numeric id, Discord
@@ -357,7 +357,7 @@ class Mem0MemoryProvider(MemoryProvider):
         if configured == _DEFAULT_USER_ID:
             configured = None
         self._user_id = configured or kwargs.get("user_id") or _DEFAULT_USER_ID
-        self._agent_id = self._config.get("agent_id", "hermes")
+        self._agent_id = self._config.get("agent_id", "newroz")
         self._channel = kwargs.get("platform") or "cli"
         self._backend = self._create_backend()
         if self._backend and not self._atexit_registered:

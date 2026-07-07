@@ -31,9 +31,9 @@ class NewrozAgent < Formula
 
       (bin/exe).write_env_script(
         libexec/"bin"/exe,
-        HERMES_BUNDLED_SKILLS: pkgshare/"skills",
-        HERMES_OPTIONAL_SKILLS: pkgshare/"optional-skills",
-        HERMES_MANAGED: "homebrew"
+        NEWROZ_BUNDLED_SKILLS: pkgshare/"skills",
+        NEWROZ_OPTIONAL_SKILLS: pkgshare/"optional-skills",
+        NEWROZ_MANAGED: "homebrew"
       )
     end
   end

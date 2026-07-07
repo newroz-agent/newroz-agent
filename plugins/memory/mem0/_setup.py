@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from hermes_constants import get_hermes_home
+from newroz_constants import get_newroz_home
 
 from ._oss_providers import (
     LLM_PROVIDERS,
@@ -26,7 +26,7 @@ from ._oss_providers import (
 
 def _curses_select(title: str, items: list[tuple[str, str]], default: int = 0) -> int:
     """Interactive single-select with arrow keys."""
-    from hermes_cli.curses_ui import curses_radiolist
+    from newroz_cli.curses_ui import curses_radiolist
     display_items = [
         f"{label}  {desc}" if desc else label
         for label, desc in items
@@ -207,9 +207,9 @@ def _write_env(env_path: Path, env_writes: dict[str, str]) -> None:
     env_path.write_text("\n".join(new_lines) + "\n")
 
 
-def _save_mem0_json(hermes_home: str, data: dict) -> None:
+def _save_mem0_json(newroz_home: str, data: dict) -> None:
     """Merge-write to mem0.json."""
-    config_path = Path(hermes_home) / "mem0.json"
+    config_path = Path(newroz_home) / "mem0.json"
     existing = {}
     if config_path.exists():
         try:
@@ -220,7 +220,7 @@ def _save_mem0_json(hermes_home: str, data: dict) -> None:
     config_path.write_text(json.dumps(existing, indent=2) + "\n")
 
 
-def _setup_platform(hermes_home: str, config: dict, flags: dict[str, str]) -> None:
+def _setup_platform(newroz_home: str, config: dict, flags: dict[str, str]) -> None:
     """Platform mode setup — uses the framework's schema-based flow.
 
     Delegates to the same code path the framework uses when post_setup
@@ -228,13 +228,13 @@ def _setup_platform(hermes_home: str, config: dict, flags: dict[str, str]) -> No
     """
     schema = [
         {"key": "api_key", "description": "Mem0 Platform API key", "secret": True, "required": True, "env_var": "MEM0_API_KEY", "url": "https://app.mem0.ai"},
-        {"key": "user_id", "description": "User identifier", "default": "hermes-user"},
-        {"key": "agent_id", "description": "Agent identifier", "default": "hermes"},
+        {"key": "user_id", "description": "User identifier", "default": "newroz-user"},
+        {"key": "agent_id", "description": "Agent identifier", "default": "newroz"},
         {"key": "rerank", "description": "Enable reranking for recall", "default": "true", "choices": ["true", "false"]},
     ]
 
     existing_config = {}
-    config_path = Path(hermes_home) / "mem0.json"
+    config_path = Path(newroz_home) / "mem0.json"
     if config_path.exists():
         try:
             existing_config = json.loads(config_path.read_text())
@@ -294,16 +294,16 @@ def _setup_platform(hermes_home: str, config: dict, flags: dict[str, str]) -> No
 
     provider_config["mode"] = "platform"
 
-    from hermes_cli.config import save_config
+    from newroz_cli.config import save_config
     config["memory"]["provider"] = "mem0"
     save_config(config)
 
     from plugins.memory.mem0 import Mem0MemoryProvider
     provider = Mem0MemoryProvider()
-    provider.save_config(provider_config, hermes_home)
+    provider.save_config(provider_config, newroz_home)
 
     if env_writes:
-        _write_env(Path(hermes_home) / ".env", env_writes)
+        _write_env(Path(newroz_home) / ".env", env_writes)
 
     print("\n  Memory provider: mem0")
     print("  Activation saved to config.yaml")
@@ -313,14 +313,14 @@ def _setup_platform(hermes_home: str, config: dict, flags: dict[str, str]) -> No
     print("\n  Start a new session to activate.\n")
 
 
-def _setup_oss(hermes_home: str, config: dict, flags: dict[str, str]) -> None:
+def _setup_oss(newroz_home: str, config: dict, flags: dict[str, str]) -> None:
     """OSS mode setup — build config from flags or interactive prompts.
 
     Non-interactive when --mode was set explicitly via flags (post_setup already
     resolved mode). Interactive only when mode was chosen via curses picker.
     """
     if not flags.get("_mode_from_flag"):
-        _setup_oss_interactive(hermes_home, config)
+        _setup_oss_interactive(newroz_home, config)
         return
 
     oss_config, env_writes = build_oss_config(flags)
@@ -330,7 +330,7 @@ def _setup_oss(hermes_home: str, config: dict, flags: dict[str, str]) -> None:
             print(f"  Error: {e}", file=sys.stderr)
         sys.exit(1)
 
-    user_id = flags.get("user_id") or os.getenv("USER", "hermes-user")
+    user_id = flags.get("user_id") or os.getenv("USER", "newroz-user")
 
     llm_id = oss_config["llm"]["provider"]
     embedder_id = oss_config["embedder"]["provider"]
@@ -348,12 +348,12 @@ def _setup_oss(hermes_home: str, config: dict, flags: dict[str, str]) -> None:
         return
 
     if env_writes:
-        _write_env(Path(hermes_home) / ".env", env_writes)
-    _save_mem0_json(hermes_home, {"mode": "oss", "user_id": user_id, "agent_id": "hermes", "oss": oss_config})
+        _write_env(Path(newroz_home) / ".env", env_writes)
+    _save_mem0_json(newroz_home, {"mode": "oss", "user_id": user_id, "agent_id": "newroz", "oss": oss_config})
 
     _install_provider_deps(llm_id, embedder_id, vector_id)
 
-    from hermes_cli.config import save_config
+    from newroz_cli.config import save_config
     config["memory"]["provider"] = "mem0"
     save_config(config)
 
@@ -369,11 +369,11 @@ def _setup_oss(hermes_home: str, config: dict, flags: dict[str, str]) -> None:
     print("\n  Start a new session to activate.\n")
 
 
-def _prompt_api_key(label: str, env_var: str, hermes_home: str) -> str:
+def _prompt_api_key(label: str, env_var: str, newroz_home: str) -> str:
     """Prompt for API key, showing masked existing value if found."""
     existing = os.environ.get(env_var, "")
     if not existing:
-        env_path = Path(hermes_home) / ".env"
+        env_path = Path(newroz_home) / ".env"
         if env_path.exists():
             for line in env_path.read_text().splitlines():
                 if line.startswith(f"{env_var}="):
@@ -385,9 +385,9 @@ def _prompt_api_key(label: str, env_var: str, hermes_home: str) -> str:
     return getpass.getpass(f"  {label} API key: ").strip()
 
 
-_PGVECTOR_CONTAINER = "hermes-pgvector"
+_PGVECTOR_CONTAINER = "newroz-pgvector"
 _PGVECTOR_IMAGE = "pgvector/pgvector:pg17"
-_PGVECTOR_PASSWORD = "hermes"
+_PGVECTOR_PASSWORD = "newroz"
 
 
 def _ensure_pgvector(host: str = "localhost", port: int = 5432) -> dict | None:
@@ -601,7 +601,7 @@ def _vector_description(pid: str, v: dict) -> str:
     return pid
 
 
-def _setup_oss_interactive(hermes_home: str, config: dict) -> None:
+def _setup_oss_interactive(newroz_home: str, config: dict) -> None:
     """Interactive OSS setup using curses pickers."""
     llm_items = [(v["label"], _provider_description(v)) for pid, v in LLM_PROVIDERS.items()]
     llm_idx = _curses_select("LLM Provider", llm_items, 0)
@@ -612,7 +612,7 @@ def _setup_oss_interactive(hermes_home: str, config: dict) -> None:
     llm_model = llm_def["default_model"]
     llm_url = llm_def.get("default_url")
     if llm_def["needs_key"]:
-        key = _prompt_api_key(llm_def["label"], llm_def["env_var"], hermes_home)
+        key = _prompt_api_key(llm_def["label"], llm_def["env_var"], newroz_home)
         if key:
             env_writes[llm_def["env_var"]] = key
     if llm_id == "ollama":
@@ -627,7 +627,7 @@ def _setup_oss_interactive(hermes_home: str, config: dict) -> None:
     embedder_model = embedder_def["default_model"]
     embedder_url = embedder_def.get("default_url")
     if embedder_def["needs_key"] and embedder_id != llm_id:
-        key = _prompt_api_key(f"{embedder_def['label']} embedder", embedder_def["env_var"], hermes_home)
+        key = _prompt_api_key(f"{embedder_def['label']} embedder", embedder_def["env_var"], newroz_home)
         if key:
             env_writes[embedder_def["env_var"]] = key
     elif embedder_def["needs_key"] and embedder_id == llm_id:
@@ -669,11 +669,11 @@ def _setup_oss_interactive(hermes_home: str, config: dict) -> None:
             if pg_password:
                 pgvector_config["password"] = pg_password
 
-    user_id = input(f"  User ID [{os.getenv('USER', 'hermes-user')}]: ").strip()
-    user_id = user_id or os.getenv("USER", "hermes-user")
+    user_id = input(f"  User ID [{os.getenv('USER', 'newroz-user')}]: ").strip()
+    user_id = user_id or os.getenv("USER", "newroz-user")
 
-    agent_id = input("  Agent ID [hermes]: ").strip()
-    agent_id = agent_id or "hermes"
+    agent_id = input("  Agent ID [newroz]: ").strip()
+    agent_id = agent_id or "newroz"
 
     flags = {
         "oss_llm": llm_id,
@@ -698,15 +698,15 @@ def _setup_oss_interactive(hermes_home: str, config: dict) -> None:
     oss_config, _ = build_oss_config(flags)
 
     if env_writes:
-        _write_env(Path(hermes_home) / ".env", env_writes)
-    _save_mem0_json(hermes_home, {"mode": "oss", "user_id": user_id, "agent_id": agent_id, "oss": oss_config})
+        _write_env(Path(newroz_home) / ".env", env_writes)
+    _save_mem0_json(newroz_home, {"mode": "oss", "user_id": user_id, "agent_id": agent_id, "oss": oss_config})
 
     _install_provider_deps(llm_id, embedder_id, vector_id)
 
     if vector_id == "pgvector" and pgvector_config:
         _ensure_pgvector_extension(pgvector_config)
 
-    from hermes_cli.config import save_config
+    from newroz_cli.config import save_config
     config["memory"]["provider"] = "mem0"
     save_config(config)
 
@@ -825,8 +825,8 @@ def _check_min_dep_version() -> None:
         pass
 
 
-def post_setup(hermes_home: str, config: dict) -> None:
-    """Entry point called by hermes memory setup framework.
+def post_setup(newroz_home: str, config: dict) -> None:
+    """Entry point called by newroz memory setup framework.
 
     Only intercepts when OSS mode is requested (via --mode oss flag or
     interactive picker). For platform mode, returns without action so the
@@ -838,11 +838,11 @@ def post_setup(hermes_home: str, config: dict) -> None:
 
     if flags["mode"] == "oss":
         flags["_mode_from_flag"] = True
-        _setup_oss(hermes_home, config, flags)
+        _setup_oss(newroz_home, config, flags)
         return
 
     if flags["mode"] == "platform":
-        _setup_platform(hermes_home, config, flags)
+        _setup_platform(newroz_home, config, flags)
         return
 
     # No --mode flag: show interactive picker
@@ -853,6 +853,6 @@ def post_setup(hermes_home: str, config: dict) -> None:
     mode_idx = _curses_select("  Select mode", mode_items, 0)
     if mode_idx == 1:
         flags["_mode_from_flag"] = False
-        _setup_oss(hermes_home, config, flags)
+        _setup_oss(newroz_home, config, flags)
     else:
-        _setup_platform(hermes_home, config, flags)
+        _setup_platform(newroz_home, config, flags)

@@ -11,9 +11,9 @@ import pytest
 
 
 def _write_auth_store(tmp_path, payload: dict) -> None:
-    hermes_home = tmp_path / "hermes"
-    hermes_home.mkdir(parents=True, exist_ok=True)
-    (hermes_home / "auth.json").write_text(json.dumps(payload, indent=2))
+    newroz_home = tmp_path / "newroz"
+    newroz_home.mkdir(parents=True, exist_ok=True)
+    (newroz_home / "auth.json").write_text(json.dumps(payload, indent=2))
 
 
 def _jwt_with_claims(claims: dict) -> str:
@@ -25,7 +25,7 @@ def _jwt_with_claims(claims: dict) -> str:
 
 
 def test_fill_first_selection_skips_recently_exhausted_entry(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -70,7 +70,7 @@ def test_fill_first_selection_skips_recently_exhausted_entry(tmp_path, monkeypat
 
 
 def test_select_clears_expired_exhaustion(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -103,7 +103,7 @@ def test_select_clears_expired_exhaustion(tmp_path, monkeypatch):
 
 
 def test_round_robin_strategy_rotates_priorities(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -130,7 +130,7 @@ def test_round_robin_strategy_rotates_priorities(tmp_path, monkeypatch):
             },
         },
     )
-    config_path = tmp_path / "hermes" / "config.yaml"
+    config_path = tmp_path / "newroz" / "config.yaml"
     config_path.write_text("credential_pool_strategies:\n  openrouter: round_robin\n")
 
     from agent.credential_pool import load_pool
@@ -147,7 +147,7 @@ def test_round_robin_strategy_rotates_priorities(tmp_path, monkeypatch):
 
 
 def test_random_strategy_uses_random_choice(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     _write_auth_store(
         tmp_path,
@@ -175,7 +175,7 @@ def test_random_strategy_uses_random_choice(tmp_path, monkeypatch):
             },
         },
     )
-    config_path = tmp_path / "hermes" / "config.yaml"
+    config_path = tmp_path / "newroz" / "config.yaml"
     config_path.write_text("credential_pool_strategies:\n  openrouter: random\n")
 
     monkeypatch.setattr("agent.credential_pool.random.choice", lambda entries: entries[-1])
@@ -190,7 +190,7 @@ def test_random_strategy_uses_random_choice(tmp_path, monkeypatch):
 
 
 def test_exhausted_entry_resets_after_ttl(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -226,7 +226,7 @@ def test_exhausted_entry_resets_after_ttl(tmp_path, monkeypatch):
 
 def test_exhausted_402_entry_resets_after_one_hour(tmp_path, monkeypatch):
     """402-exhausted credentials recover after 1 hour, not 24."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -262,7 +262,7 @@ def test_exhausted_402_entry_resets_after_one_hour(tmp_path, monkeypatch):
 
 def test_exhausted_401_entry_resets_after_five_minutes(tmp_path, monkeypatch):
     """Transient auth failures should not strand single-key setups for an hour."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -297,10 +297,10 @@ def test_exhausted_401_entry_resets_after_five_minutes(tmp_path, monkeypatch):
 
 
 def test_explicit_reset_timestamp_overrides_default_429_ttl(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     # Prevent auto-seeding from Codex CLI tokens on the host
     monkeypatch.setattr(
-        "hermes_cli.auth._import_codex_cli_tokens",
+        "newroz_cli.auth._import_codex_cli_tokens",
         lambda: None,
     )
     _write_auth_store(
@@ -335,7 +335,7 @@ def test_explicit_reset_timestamp_overrides_default_429_ttl(tmp_path, monkeypatc
 
 
 def test_mark_exhausted_and_rotate_persists_status(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -373,7 +373,7 @@ def test_mark_exhausted_and_rotate_persists_status(tmp_path, monkeypatch):
     assert next_entry is not None
     assert next_entry.id == "cred-2"
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["anthropic"][0]
     assert persisted["last_status"] == "exhausted"
     assert persisted["last_error_code"] == 402
@@ -388,7 +388,7 @@ def test_token_invalidated_marks_credential_dead(tmp_path, monkeypatch):
     summary" on context compression.  Terminal OAuth failures should never
     auto-recover.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -437,7 +437,7 @@ def test_token_invalidated_marks_credential_dead(tmp_path, monkeypatch):
     assert next_entry.id == "cred-ok"
 
     # The revoked credential is now permanently marked DEAD.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["openai-codex"][0]
     assert persisted["last_status"] == STATUS_DEAD
     assert persisted["last_error_code"] == 401
@@ -453,7 +453,7 @@ def test_dead_credential_never_re_enters_rotation_after_ttl(tmp_path, monkeypatc
     (b) the manual-prune TTL elapses (covered by separate tests below).
     This test verifies the core invariant in the recent-entry window.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     # DEAD entry from 2 hours ago — well past the exhausted TTLs (5min/1h)
     # but well within the 24h manual-prune window.
     two_hours_ago = time.time() - (2 * 3600)
@@ -501,7 +501,7 @@ def test_dead_credential_never_re_enters_rotation_after_ttl(tmp_path, monkeypatc
     assert selected.id == "cred-ok"
 
     # The DEAD entry is still marked dead on disk — not cleared by TTL.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     dead_entry = next(e for e in auth_payload["credential_pool"]["openai-codex"]
                        if e["id"] == "cred-dead")
     assert dead_entry["last_status"] == STATUS_DEAD
@@ -513,7 +513,7 @@ def test_429_rate_limit_still_uses_exhausted_not_dead(tmp_path, monkeypatch):
     They should keep the existing 1-hour TTL cooldown semantics so the
     credential re-enters rotation once the rate window resets.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -555,7 +555,7 @@ def test_429_rate_limit_still_uses_exhausted_not_dead(tmp_path, monkeypatch):
     assert next_entry is not None
     assert next_entry.id == "cred-2"
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["openai-codex"][0]
     # 429 stays exhausted (transient) — NOT dead.
     assert persisted["last_status"] == STATUS_EXHAUSTED
@@ -569,7 +569,7 @@ def test_generic_401_without_terminal_reason_still_uses_exhausted(tmp_path, monk
     transition to DEAD.  A generic 401 might be a transient server-side
     issue worth retrying after the 5-min TTL.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -610,7 +610,7 @@ def test_generic_401_without_terminal_reason_still_uses_exhausted(tmp_path, monk
         error_context={"message": "Unauthorized"},
     )
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["openai-codex"][0]
     assert persisted["last_status"] == STATUS_EXHAUSTED
     assert persisted["last_error_code"] == 401
@@ -622,9 +622,9 @@ def test_dead_manual_entry_pruned_after_24h(tmp_path, monkeypatch):
     Manual entries (``manual:*``) are independent credentials with no
     singleton to re-seed from, so we can clean them up after a quiet
     window without losing recoverability — the user can always re-add
-    via ``hermes auth add``.
+    via ``newroz auth add``.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     # DEAD entry from > 24h ago
     long_ago = time.time() - (25 * 3600)
     _write_auth_store(
@@ -669,7 +669,7 @@ def test_dead_manual_entry_pruned_after_24h(tmp_path, monkeypatch):
     assert selected.id == "cred-ok"
 
     # On-disk pool should have the dead entry removed.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["openai-codex"]
     assert len(persisted) == 1
     assert persisted[0]["id"] == "cred-ok"
@@ -682,7 +682,7 @@ def test_dead_manual_entry_kept_within_24h(tmp_path, monkeypatch):
     timestamps) remains visible while the user investigates.  They simply
     don't participate in rotation (covered by the DEAD-skip test above).
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     # DEAD entry from only an hour ago — well within the 24h window
     recent = time.time() - 3600
     _write_auth_store(
@@ -726,7 +726,7 @@ def test_dead_manual_entry_kept_within_24h(tmp_path, monkeypatch):
     assert selected.id == "cred-ok"
 
     # On-disk pool should still have BOTH entries — recent dead is preserved.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["openai-codex"]
     assert len(persisted) == 2
     dead_entry = next(e for e in persisted if e["id"] == "cred-recent-dead")
@@ -741,7 +741,7 @@ def test_dead_singleton_seeded_entry_not_pruned(tmp_path, monkeypatch):
     immediately with the same stale singleton tokens.  Keep them visible
     with the DEAD marker so the user knows what's broken.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     long_ago = time.time() - (48 * 3600)
     _write_auth_store(
         tmp_path,
@@ -781,7 +781,7 @@ def test_dead_singleton_seeded_entry_not_pruned(tmp_path, monkeypatch):
     assert pool.select() is None
 
     # On-disk: the singleton-seeded DEAD entry is preserved.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["openai-codex"]
     assert len(persisted) == 1
     assert persisted[0]["id"] == "cred-seeded-dead"
@@ -789,7 +789,7 @@ def test_dead_singleton_seeded_entry_not_pruned(tmp_path, monkeypatch):
 
 
 def test_load_pool_seeds_env_api_key(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-seeded")
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
 
@@ -807,7 +807,7 @@ def test_load_pool_seeds_env_api_key(tmp_path, monkeypatch):
 def test_load_pool_does_not_persist_env_seeded_secret_value(tmp_path, monkeypatch):
     """Runtime env keys may be used in memory but must not land in auth.json."""
     sentinel = "S3NTINEL_DO_NOT_PERSIST_OPENROUTER"
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setenv("OPENROUTER_API_KEY", sentinel)
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
 
@@ -820,7 +820,7 @@ def test_load_pool_does_not_persist_env_seeded_secret_value(tmp_path, monkeypatc
     assert entry.source == "env:OPENROUTER_API_KEY"
     assert entry.access_token == sentinel
 
-    auth_text = (tmp_path / "hermes" / "auth.json").read_text()
+    auth_text = (tmp_path / "newroz" / "auth.json").read_text()
     assert sentinel not in auth_text
     persisted = json.loads(auth_text)["credential_pool"]["openrouter"][0]
     assert persisted["source"] == "env:OPENROUTER_API_KEY"
@@ -835,10 +835,10 @@ def test_load_pool_does_not_persist_env_seeded_secret_value(tmp_path, monkeypatc
 def test_load_pool_persists_bitwarden_origin_metadata_without_secret(tmp_path, monkeypatch):
     """Bitwarden-injected env vars retain source metadata but not raw values."""
     sentinel = "S3NTINEL_DO_NOT_PERSIST_BITWARDEN"
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setenv("OPENROUTER_API_KEY", sentinel)
     monkeypatch.setattr(
-        "hermes_cli.env_loader.get_secret_source",
+        "newroz_cli.env_loader.get_secret_source",
         lambda env_var: "bitwarden" if env_var == "OPENROUTER_API_KEY" else None,
     )
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
@@ -852,7 +852,7 @@ def test_load_pool_persists_bitwarden_origin_metadata_without_secret(tmp_path, m
     assert entry.access_token == sentinel
     assert entry.source == "env:OPENROUTER_API_KEY"
 
-    auth_text = (tmp_path / "hermes" / "auth.json").read_text()
+    auth_text = (tmp_path / "newroz" / "auth.json").read_text()
     assert sentinel not in auth_text
     persisted = json.loads(auth_text)["credential_pool"]["openrouter"][0]
     assert persisted["source"] == "env:OPENROUTER_API_KEY"
@@ -864,7 +864,7 @@ def test_load_pool_persists_bitwarden_origin_metadata_without_secret(tmp_path, m
 def test_load_pool_sanitizes_legacy_raw_borrowed_entry_when_value_unchanged(tmp_path, monkeypatch):
     """Existing raw env-seeded pool entries are rewritten even if the env value matches."""
     sentinel = "S3NTINEL_DO_NOT_PERSIST_LEGACY_RAW"
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setenv("OPENROUTER_API_KEY", sentinel)
     _write_auth_store(
         tmp_path,
@@ -893,7 +893,7 @@ def test_load_pool_sanitizes_legacy_raw_borrowed_entry_when_value_unchanged(tmp_
 
     assert entry is not None
     assert entry.access_token == sentinel
-    auth_text = (tmp_path / "hermes" / "auth.json").read_text()
+    auth_text = (tmp_path / "newroz" / "auth.json").read_text()
     assert sentinel not in auth_text
     persisted = json.loads(auth_text)["credential_pool"]["openrouter"][0]
     assert persisted["id"] == "legacy-env"
@@ -991,7 +991,7 @@ def test_borrowed_source_variants_strip_secret_fields(source):
 
 def test_load_pool_prunes_stale_borrowed_custom_config_entry(tmp_path, monkeypatch):
     sentinel = "S3NTINEL_DO_NOT_PERSIST_STALE_CUSTOM"
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -1017,7 +1017,7 @@ def test_load_pool_prunes_stale_borrowed_custom_config_entry(tmp_path, monkeypat
     pool = load_pool("custom:foo")
 
     assert pool.entries() == []
-    auth_text = (tmp_path / "hermes" / "auth.json").read_text()
+    auth_text = (tmp_path / "newroz" / "auth.json").read_text()
     assert sentinel not in auth_text
     assert json.loads(auth_text)["credential_pool"]["custom:foo"] == []
 
@@ -1027,9 +1027,9 @@ def test_write_credential_pool_sanitizes_borrowed_payload_at_disk_boundary(tmp_p
     """Direct dictionary callers cannot bypass the borrowed-secret guard."""
     sentinel = "S3NTINEL_DO_NOT_PERSIST_DIRECT_WRITE"
     manual_secret = "MANUAL_SECRET_STAYS_PERSISTABLE"
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
 
-    from hermes_cli.auth import write_credential_pool
+    from newroz_cli.auth import write_credential_pool
 
     write_credential_pool("openrouter", [
         {
@@ -1037,7 +1037,7 @@ def test_write_credential_pool_sanitizes_borrowed_payload_at_disk_boundary(tmp_p
             "label": "systemd-ref",
             "auth_type": "api_key",
             "priority": 0,
-            "source": "systemd://hermes/openrouter",
+            "source": "systemd://newroz/openrouter",
             "access_token": sentinel,
             "refresh_token": f"refresh-{sentinel}",
             "agent_key": f"agent-{sentinel}",
@@ -1053,12 +1053,12 @@ def test_write_credential_pool_sanitizes_borrowed_payload_at_disk_boundary(tmp_p
         },
     ])
 
-    auth_text = (tmp_path / "hermes" / "auth.json").read_text()
+    auth_text = (tmp_path / "newroz" / "auth.json").read_text()
     assert sentinel not in auth_text
     assert manual_secret in auth_text
     entries = json.loads(auth_text)["credential_pool"]["openrouter"]
     borrowed, manual = entries
-    assert borrowed["source"] == "systemd://hermes/openrouter"
+    assert borrowed["source"] == "systemd://newroz/openrouter"
     assert "access_token" not in borrowed
     assert "refresh_token" not in borrowed
     assert "agent_key" not in borrowed
@@ -1070,9 +1070,9 @@ def test_write_credential_pool_sanitizes_borrowed_payload_at_disk_boundary(tmp_p
 
 def test_write_credential_pool_treats_unowned_oauth_source_as_borrowed(tmp_path, monkeypatch):
     sentinel = "S3NTINEL_DO_NOT_PERSIST_UNOWNED_OAUTH"
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
 
-    from hermes_cli.auth import write_credential_pool
+    from newroz_cli.auth import write_credential_pool
 
     write_credential_pool("openrouter", [
         {
@@ -1086,7 +1086,7 @@ def test_write_credential_pool_treats_unowned_oauth_source_as_borrowed(tmp_path,
         }
     ])
 
-    auth_text = (tmp_path / "hermes" / "auth.json").read_text()
+    auth_text = (tmp_path / "newroz" / "auth.json").read_text()
     assert sentinel not in auth_text
     persisted = json.loads(auth_text)["credential_pool"]["openrouter"][0]
     assert persisted["source"] == "oauth"
@@ -1098,9 +1098,9 @@ def test_write_credential_pool_treats_unowned_oauth_source_as_borrowed(tmp_path,
 
 def test_write_credential_pool_preserves_known_provider_owned_oauth_state(tmp_path, monkeypatch):
     sentinel = "PROVIDER_OWNED_DEVICE_CODE_STAYS_PERSISTABLE"
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
 
-    from hermes_cli.auth import write_credential_pool
+    from newroz_cli.auth import write_credential_pool
 
     write_credential_pool("nous", [
         {
@@ -1115,7 +1115,7 @@ def test_write_credential_pool_preserves_known_provider_owned_oauth_state(tmp_pa
         }
     ])
 
-    persisted = json.loads((tmp_path / "hermes" / "auth.json").read_text())["credential_pool"]["nous"][0]
+    persisted = json.loads((tmp_path / "newroz" / "auth.json").read_text())["credential_pool"]["nous"][0]
     assert persisted["access_token"] == sentinel
     assert persisted["refresh_token"] == f"refresh-{sentinel}"
     assert persisted["agent_key"] == f"agent-{sentinel}"
@@ -1124,20 +1124,20 @@ def test_write_credential_pool_preserves_known_provider_owned_oauth_state(tmp_pa
 
 def test_load_pool_prefers_dotenv_over_stale_os_environ(tmp_path, monkeypatch):
     """Regression for #18254: stale OPENROUTER_API_KEY in os.environ (inherited
-    from a parent shell) must NOT shadow the fresh key in ~/.hermes/.env when
+    from a parent shell) must NOT shadow the fresh key in ~/.newroz/.env when
     seeding the credential pool. Before the fix, `get_env_value()` preferred
     os.environ and silently wrote the stale value into auth.json, causing
     persistent 401 errors after key rotation.
     """
-    hermes_home = tmp_path / "hermes"
-    hermes_home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    newroz_home = tmp_path / "newroz"
+    newroz_home.mkdir()
+    monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
 
     # Simulate the bug: parent shell exported a stale test key
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-STALE-from-shell")
 
-    # User edited ~/.hermes/.env with the fresh key
-    (hermes_home / ".env").write_text(
+    # User edited ~/.newroz/.env with the fresh key
+    (newroz_home / ".env").write_text(
         "OPENROUTER_API_KEY=sk-or-FRESH-from-dotenv\n"
     )
 
@@ -1156,18 +1156,18 @@ def test_load_pool_prefers_dotenv_over_stale_os_environ(tmp_path, monkeypatch):
 
 
 def test_load_pool_falls_back_to_os_environ_when_dotenv_empty(tmp_path, monkeypatch):
-    """When ~/.hermes/.env does not define OPENROUTER_API_KEY (typical Docker /
+    """When ~/.newroz/.env does not define OPENROUTER_API_KEY (typical Docker /
     K8s / systemd deployment), seeding must still pick up the key from
     os.environ. Guards against regressions that would break production
     deployments relying on runtime-injected env vars.
     """
-    hermes_home = tmp_path / "hermes"
-    hermes_home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    newroz_home = tmp_path / "newroz"
+    newroz_home.mkdir()
+    monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-from-runtime-env")
 
     # .env exists but does not define OPENROUTER_API_KEY
-    (hermes_home / ".env").write_text("SOME_OTHER_VAR=unrelated\n")
+    (newroz_home / ".env").write_text("SOME_OTHER_VAR=unrelated\n")
 
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
 
@@ -1183,7 +1183,7 @@ def test_load_pool_preserves_env_seeded_entry_when_env_is_missing(tmp_path, monk
     # Regression for #9331: load_pool() is a non-destructive read. A process
     # that lacks the seeding env var must NOT delete the persisted pool entry
     # that another process correctly seeded.
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     _write_auth_store(
         tmp_path,
@@ -1213,7 +1213,7 @@ def test_load_pool_preserves_env_seeded_entry_when_env_is_missing(tmp_path, monk
     assert len(entries) == 1
     assert entries[0].source == "env:OPENROUTER_API_KEY"
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["openrouter"]
     assert len(persisted) == 1
     assert persisted[0]["source"] == "env:OPENROUTER_API_KEY"
@@ -1223,7 +1223,7 @@ def test_load_pool_missing_env_does_not_overwrite_other_process_seed(tmp_path, m
     # The exact cross-process oscillation described in #9331: a process without
     # MINIMAX_API_KEY must leave the on-disk entry intact for processes that
     # do have it.
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
     _write_auth_store(
         tmp_path,
@@ -1253,14 +1253,14 @@ def test_load_pool_missing_env_does_not_overwrite_other_process_seed(tmp_path, m
     assert len(pool.entries()) == 1
     assert pool.entries()[0].source == "env:MINIMAX_API_KEY"
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     persisted = auth_payload["credential_pool"]["minimax"]
     assert len(persisted) == 1
     assert persisted[0]["source"] == "env:MINIMAX_API_KEY"
 
 
 def test_load_pool_migrates_nous_provider_state(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -1270,7 +1270,7 @@ def test_load_pool_migrates_nous_provider_state(tmp_path, monkeypatch):
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-token",
@@ -1295,7 +1295,7 @@ def test_load_pool_migrates_nous_provider_state(tmp_path, monkeypatch):
 
 
 def test_load_pool_mirrors_nous_invoke_jwt_agent_key_runtime_api_key(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     expires_at = datetime.fromtimestamp(time.time() + 3600, tz=timezone.utc).isoformat()
     token = _jwt_with_claims({
         "sub": "test-user",
@@ -1311,7 +1311,7 @@ def test_load_pool_mirrors_nous_invoke_jwt_agent_key_runtime_api_key(tmp_path, m
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": token,
@@ -1334,7 +1334,7 @@ def test_load_pool_mirrors_nous_invoke_jwt_agent_key_runtime_api_key(tmp_path, m
     assert entry.agent_key == token
     assert entry.runtime_api_key == token
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     pool_entry = auth_payload["credential_pool"]["nous"][0]
     assert pool_entry["agent_key"] == token
     assert pool_entry["agent_key_expires_at"] == expires_at
@@ -1364,8 +1364,8 @@ def test_nous_runtime_api_key_rejects_opaque_agent_key():
 
 
 def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
-    monkeypatch.setenv("HERMES_SHARED_AUTH_DIR", str(tmp_path / "shared"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
+    monkeypatch.setenv("NEWROZ_SHARED_AUTH_DIR", str(tmp_path / "shared"))
     _write_auth_store(
         tmp_path,
         {
@@ -1375,7 +1375,7 @@ def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypa
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-token",
@@ -1389,8 +1389,8 @@ def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypa
     )
 
     from agent.credential_pool import PooledCredential, load_pool
-    from hermes_cli import auth as auth_mod
-    from hermes_cli.auth import AuthError
+    from newroz_cli import auth as auth_mod
+    from newroz_cli.auth import AuthError
 
     refresh_calls = {"count": 0}
 
@@ -1428,7 +1428,7 @@ def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypa
 
     assert [entry.id for entry in pool.entries()] == ["manual-key"]
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     nous_state = auth_payload["providers"]["nous"]
     assert not nous_state.get("refresh_token")
     assert not nous_state.get("access_token")
@@ -1441,7 +1441,7 @@ def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypa
 
 
 def test_load_pool_removes_nous_device_code_when_singleton_quarantined(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -1451,7 +1451,7 @@ def test_load_pool_removes_nous_device_code_when_singleton_quarantined(tmp_path,
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "last_auth_error": {"code": "invalid_grant"},
                 }
             },
@@ -1487,12 +1487,12 @@ def test_load_pool_removes_nous_device_code_when_singleton_quarantined(tmp_path,
     pool = load_pool("nous")
 
     assert [entry.id for entry in pool.entries()] == ["manual-key"]
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     assert [entry["id"] for entry in auth_payload["credential_pool"]["nous"]] == ["manual-key"]
 
 
 def test_load_pool_removes_stale_file_backed_singleton_entry(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_TOKEN", raising=False)
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
@@ -1518,7 +1518,7 @@ def test_load_pool_removes_stale_file_backed_singleton_entry(tmp_path, monkeypat
     )
 
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_newroz_oauth_credentials",
         lambda: None,
     )
     monkeypatch.setattr(
@@ -1532,12 +1532,12 @@ def test_load_pool_removes_stale_file_backed_singleton_entry(tmp_path, monkeypat
 
     assert pool.entries() == []
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     assert auth_payload["credential_pool"]["anthropic"] == []
 
 
 def test_load_pool_migrates_nous_provider_state_preserves_tls(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -1547,7 +1547,7 @@ def test_load_pool_migrates_nous_provider_state_preserves_tls(tmp_path, monkeypa
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-token",
@@ -1575,7 +1575,7 @@ def test_load_pool_migrates_nous_provider_state_preserves_tls(tmp_path, monkeypa
         "ca_bundle": "/tmp/nous-ca.pem",
     }
 
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     assert auth_payload["credential_pool"]["nous"][0]["tls"] == {
         "insecure": True,
         "ca_bundle": "/tmp/nous-ca.pem",
@@ -1583,11 +1583,11 @@ def test_load_pool_migrates_nous_provider_state_preserves_tls(tmp_path, monkeypa
 
 
 def test_singleton_seed_does_not_clobber_manual_oauth_entry(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_TOKEN", raising=False)
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
-    monkeypatch.setattr("hermes_cli.auth.is_provider_explicitly_configured", lambda pid: True)
+    monkeypatch.setattr("newroz_cli.auth.is_provider_explicitly_configured", lambda pid: True)
     _write_auth_store(
         tmp_path,
         {
@@ -1599,7 +1599,7 @@ def test_singleton_seed_does_not_clobber_manual_oauth_entry(tmp_path, monkeypatc
                         "label": "manual-pkce",
                         "auth_type": "oauth",
                         "priority": 0,
-                        "source": "manual:hermes_pkce",
+                        "source": "manual:newroz_pkce",
                         "access_token": "manual-token",
                         "refresh_token": "manual-refresh",
                         "expires_at_ms": 1711234567000,
@@ -1610,7 +1610,7 @@ def test_singleton_seed_does_not_clobber_manual_oauth_entry(tmp_path, monkeypatc
     )
 
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_newroz_oauth_credentials",
         lambda: {
             "accessToken": "seeded-token",
             "refreshToken": "seeded-refresh",
@@ -1628,18 +1628,18 @@ def test_singleton_seed_does_not_clobber_manual_oauth_entry(tmp_path, monkeypatc
     entries = pool.entries()
 
     assert len(entries) == 2
-    assert {entry.source for entry in entries} == {"manual:hermes_pkce", "hermes_pkce"}
+    assert {entry.source for entry in entries} == {"manual:newroz_pkce", "newroz_pkce"}
 
 
 def test_load_pool_prefers_anthropic_env_token_over_file_backed_oauth(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("ANTHROPIC_TOKEN", "env-override-token")
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
 
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_newroz_oauth_credentials",
         lambda: {
             "accessToken": "file-backed-token",
             "refreshToken": "refresh-token",
@@ -1664,22 +1664,22 @@ def test_load_pool_prefers_anthropic_env_token_over_file_backed_oauth(tmp_path, 
 def test_load_pool_api_key_path_skips_oauth_autodiscovery(tmp_path, monkeypatch):
     """API-key auth path: autodiscovered OAuth creds must NOT be seeded.
 
-    When the user picks "Anthropic API key" at `hermes setup`,
+    When the user picks "Anthropic API key" at `newroz setup`,
     `save_anthropic_api_key()` writes ANTHROPIC_API_KEY and zeros
     ANTHROPIC_TOKEN.  That env-var pattern is the explicit signal that the
     user opted into the API-key path and explicitly OUT of the OAuth
     masquerade (Claude Code identity injection + `mcp_` tool-name rewrite
-    + claude-cli user-agent).  Autodiscovered Claude Code / Hermes PKCE
+    + claude-cli user-agent).  Autodiscovered Claude Code / Newroz PKCE
     tokens from other tools' credential files must NOT be silently mixed
     into the anthropic pool — otherwise rotation on a 401/429 could flip
     the session onto OAuth credentials mid-conversation.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-api03-explicit-user-key")
     monkeypatch.delenv("ANTHROPIC_TOKEN", raising=False)
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
-    monkeypatch.setattr("hermes_cli.auth.is_provider_explicitly_configured", lambda pid: True)
+    monkeypatch.setattr("newroz_cli.auth.is_provider_explicitly_configured", lambda pid: True)
 
     pkce_called = {"n": 0}
     cc_called = {"n": 0}
@@ -1700,7 +1700,7 @@ def test_load_pool_api_key_path_skips_oauth_autodiscovery(tmp_path, monkeypatch)
             "expiresAt": int(time.time() * 1000) + 3_600_000,
         }
 
-    monkeypatch.setattr("agent.anthropic_adapter.read_hermes_oauth_credentials", _fake_pkce)
+    monkeypatch.setattr("agent.anthropic_adapter.read_newroz_oauth_credentials", _fake_pkce)
     monkeypatch.setattr("agent.anthropic_adapter.read_claude_code_credentials", _fake_cc)
 
     from agent.credential_pool import load_pool
@@ -1719,12 +1719,12 @@ def test_load_pool_api_key_path_prunes_stale_oauth_entries(tmp_path, monkeypatch
     """Switching OAuth -> API key must prune stale OAuth entries from auth.json.
 
     Without this, a user who logs into OAuth (seeding `claude_code` or
-    `hermes_pkce` into auth.json) and later switches to the API key at
-    `hermes setup` would still have those OAuth entries dormant on disk.
+    `newroz_pkce` into auth.json) and later switches to the API key at
+    `newroz setup` would still have those OAuth entries dormant on disk.
     Pool rotation on a transient 401 could revive them and flip the
     session onto the OAuth masquerade.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-api03-explicit-user-key")
     monkeypatch.delenv("ANTHROPIC_TOKEN", raising=False)
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
@@ -1753,8 +1753,8 @@ def test_load_pool_api_key_path_prunes_stale_oauth_entries(tmp_path, monkeypatch
             },
         },
     )
-    monkeypatch.setattr("hermes_cli.auth.is_provider_explicitly_configured", lambda pid: True)
-    monkeypatch.setattr("agent.anthropic_adapter.read_hermes_oauth_credentials", lambda: None)
+    monkeypatch.setattr("newroz_cli.auth.is_provider_explicitly_configured", lambda pid: True)
+    monkeypatch.setattr("agent.anthropic_adapter.read_newroz_oauth_credentials", lambda: None)
     monkeypatch.setattr("agent.anthropic_adapter.read_claude_code_credentials", lambda: None)
 
     from agent.credential_pool import load_pool
@@ -1771,19 +1771,19 @@ def test_load_pool_oauth_path_still_autodiscovers(tmp_path, monkeypatch):
     """OAuth path: ANTHROPIC_TOKEN set, autodiscovery still fires.
 
     Regression guard: the API-key gate must not affect users who chose the
-    OAuth path at `hermes setup`.  When ANTHROPIC_TOKEN is set (and
+    OAuth path at `newroz setup`.  When ANTHROPIC_TOKEN is set (and
     ANTHROPIC_API_KEY is empty), autodiscovered Claude Code creds should
     still be seeded into the pool as before.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("ANTHROPIC_TOKEN", "sk-ant-oat01-explicit-oauth-token")
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
-    monkeypatch.setattr("hermes_cli.auth.is_provider_explicitly_configured", lambda pid: True)
+    monkeypatch.setattr("newroz_cli.auth.is_provider_explicitly_configured", lambda pid: True)
 
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_newroz_oauth_credentials",
         lambda: None,
     )
     monkeypatch.setattr(
@@ -1807,7 +1807,7 @@ def test_load_pool_oauth_path_still_autodiscovers(tmp_path, monkeypatch):
 
 def test_least_used_strategy_selects_lowest_count(tmp_path, monkeypatch):
     """least_used strategy should select the credential with the lowest request_count."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setattr(
         "agent.credential_pool.get_pool_strategy",
         lambda _provider: "least_used",
@@ -1871,7 +1871,7 @@ def test_thread_safety_concurrent_select(tmp_path, monkeypatch):
     """Concurrent select() calls should not corrupt pool state."""
     import threading as _threading
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setattr(
         "agent.credential_pool.get_pool_strategy",
         lambda _provider: "round_robin",
@@ -1931,7 +1931,7 @@ def test_thread_safety_concurrent_select(tmp_path, monkeypatch):
 
 def test_custom_endpoint_pool_keyed_by_name(tmp_path, monkeypatch):
     """Verify load_pool('custom:together.ai') works and returns entries from auth.json."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     # Disable seeding so we only test stored entries
     monkeypatch.setattr(
         "agent.credential_pool._seed_custom_pool",
@@ -1983,11 +1983,11 @@ def test_custom_endpoint_pool_keyed_by_name(tmp_path, monkeypatch):
 
 def test_custom_endpoint_pool_seeds_from_config(tmp_path, monkeypatch):
     """Verify seeding from custom_providers api_key in config.yaml."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, {"version": 1})
 
     # Write config.yaml with a custom_providers entry
-    config_path = tmp_path / "hermes" / "config.yaml"
+    config_path = tmp_path / "newroz" / "config.yaml"
     import yaml
     config_path.write_text(yaml.dump({
         "custom_providers": [
@@ -2011,11 +2011,11 @@ def test_custom_endpoint_pool_seeds_from_config(tmp_path, monkeypatch):
 
 def test_custom_endpoint_pool_seeds_from_model_config(tmp_path, monkeypatch):
     """Verify seeding from model.api_key when model.provider=='custom' and base_url matches."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, {"version": 1})
 
     import yaml
-    config_path = tmp_path / "hermes" / "config.yaml"
+    config_path = tmp_path / "newroz" / "config.yaml"
     config_path.write_text(yaml.dump({
         "custom_providers": [
             {
@@ -2043,7 +2043,7 @@ def test_custom_endpoint_pool_seeds_from_model_config(tmp_path, monkeypatch):
 
 def test_custom_pool_does_not_break_existing_providers(tmp_path, monkeypatch):
     """Existing registry providers work exactly as before with custom pool support."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
 
@@ -2058,10 +2058,10 @@ def test_custom_pool_does_not_break_existing_providers(tmp_path, monkeypatch):
 
 def test_get_custom_provider_pool_key(tmp_path, monkeypatch):
     """get_custom_provider_pool_key maps base_url to custom:<name> pool key."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
-    (tmp_path / "hermes").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
+    (tmp_path / "newroz").mkdir(parents=True, exist_ok=True)
     import yaml
-    config_path = tmp_path / "hermes" / "config.yaml"
+    config_path = tmp_path / "newroz" / "config.yaml"
     config_path.write_text(yaml.dump({
         "custom_providers": [
             {
@@ -2087,10 +2087,10 @@ def test_get_custom_provider_pool_key(tmp_path, monkeypatch):
 
 def test_get_custom_provider_pool_key_prefers_name_over_base_url(tmp_path, monkeypatch):
     """When two custom providers share the same base_url, provider_name resolves to the correct one."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
-    (tmp_path / "hermes").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
+    (tmp_path / "newroz").mkdir(parents=True, exist_ok=True)
     import yaml
-    config_path = tmp_path / "hermes" / "config.yaml"
+    config_path = tmp_path / "newroz" / "config.yaml"
     config_path.write_text(yaml.dump({
         "custom_providers": [
             {
@@ -2124,7 +2124,7 @@ def test_get_custom_provider_pool_key_prefers_name_over_base_url(tmp_path, monke
 
 def test_list_custom_pool_providers(tmp_path, monkeypatch):
     """list_custom_pool_providers returns custom: pool keys from auth.json."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -2174,7 +2174,7 @@ def test_list_custom_pool_providers(tmp_path, monkeypatch):
 
 
 def test_acquire_lease_prefers_unleased_entry(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -2216,7 +2216,7 @@ def test_acquire_lease_prefers_unleased_entry(tmp_path, monkeypatch):
 
 
 def test_release_lease_decrements_counter(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -2249,7 +2249,7 @@ def test_release_lease_decrements_counter(tmp_path, monkeypatch):
 
 def test_load_pool_does_not_seed_claude_code_when_anthropic_not_configured(tmp_path, monkeypatch):
     """Claude Code credentials must not be auto-seeded when the user never selected anthropic."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, {"version": 1, "credential_pool": {}})
 
     # Claude Code credentials exist on disk
@@ -2258,12 +2258,12 @@ def test_load_pool_does_not_seed_claude_code_when_anthropic_not_configured(tmp_p
         lambda: {"accessToken": "sk-ant...oken", "refreshToken": "rt", "expiresAt": 9999999999999},
     )
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_newroz_oauth_credentials",
         lambda: None,
     )
     # User configured kimi-coding, NOT anthropic
     monkeypatch.setattr(
-        "hermes_cli.auth.is_provider_explicitly_configured",
+        "newroz_cli.auth.is_provider_explicitly_configured",
         lambda pid: pid == "kimi-coding",
     )
 
@@ -2276,11 +2276,11 @@ def test_load_pool_does_not_seed_claude_code_when_anthropic_not_configured(tmp_p
 
 def test_load_pool_seeds_copilot_via_gh_auth_token(tmp_path, monkeypatch):
     """Copilot credentials from `gh auth token` should be seeded into the pool."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, {"version": 1, "credential_pool": {}})
 
     monkeypatch.setattr(
-        "hermes_cli.copilot_auth.resolve_copilot_token",
+        "newroz_cli.copilot_auth.resolve_copilot_token",
         lambda: ("gho_fake_token_abc123", "gh auth token"),
     )
 
@@ -2297,11 +2297,11 @@ def test_load_pool_seeds_copilot_via_gh_auth_token(tmp_path, monkeypatch):
 
 def test_load_pool_does_not_seed_copilot_when_no_token(tmp_path, monkeypatch):
     """Copilot pool should be empty when resolve_copilot_token() returns nothing."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, {"version": 1, "credential_pool": {}})
 
     monkeypatch.setattr(
-        "hermes_cli.copilot_auth.resolve_copilot_token",
+        "newroz_cli.copilot_auth.resolve_copilot_token",
         lambda: ("", ""),
     )
 
@@ -2314,11 +2314,11 @@ def test_load_pool_does_not_seed_copilot_when_no_token(tmp_path, monkeypatch):
 
 def test_load_pool_seeds_qwen_oauth_via_cli_tokens(tmp_path, monkeypatch):
     """Qwen OAuth credentials from ~/.qwen/oauth_creds.json should be seeded into the pool."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, {"version": 1, "credential_pool": {}})
 
     monkeypatch.setattr(
-        "hermes_cli.auth.resolve_qwen_runtime_credentials",
+        "newroz_cli.auth.resolve_qwen_runtime_credentials",
         lambda **kw: {
             "provider": "qwen-oauth",
             "base_url": "https://portal.qwen.ai/v1",
@@ -2341,13 +2341,13 @@ def test_load_pool_seeds_qwen_oauth_via_cli_tokens(tmp_path, monkeypatch):
 
 def test_load_pool_does_not_seed_qwen_oauth_when_no_token(tmp_path, monkeypatch):
     """Qwen OAuth pool should be empty when no CLI credentials exist."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, {"version": 1, "credential_pool": {}})
 
-    from hermes_cli.auth import AuthError
+    from newroz_cli.auth import AuthError
 
     monkeypatch.setattr(
-        "hermes_cli.auth.resolve_qwen_runtime_credentials",
+        "newroz_cli.auth.resolve_qwen_runtime_credentials",
         lambda **kw: (_ for _ in ()).throw(
             AuthError("Qwen CLI credentials not found.", provider="qwen-oauth", code="qwen_auth_missing")
         ),
@@ -2370,7 +2370,7 @@ def test_nous_seed_from_singletons_preserves_obtained_at_timestamps(tmp_path, mo
     (self-heal hooks, pool pruning by age) treat just-minted credentials as
     older than they actually are and evict them.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -2379,7 +2379,7 @@ def test_nous_seed_from_singletons_preserves_obtained_at_timestamps(tmp_path, mo
                 "nous": {
                     "access_token": "at_XXXXXXXX",
                     "refresh_token": "rt_YYYYYYYY",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "portal_base_url": "https://portal.nousresearch.com",
                     "inference_base_url": "https://inference.nousresearch.com/v1",
                     "token_type": "Bearer",
@@ -2463,7 +2463,7 @@ class TestLeastUsedStrategy:
 
 def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypatch):
     """When auth.json has a newer refresh token, the pool entry should adopt it."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -2473,7 +2473,7 @@ def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypat
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-OLD",
@@ -2503,7 +2503,7 @@ def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypat
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-NEW",
@@ -2525,7 +2525,7 @@ def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypat
 
 def test_sync_nous_entry_noop_when_tokens_match(tmp_path, monkeypatch):
     """When auth.json has the same refresh token, sync should be a no-op."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -2535,7 +2535,7 @@ def test_sync_nous_entry_noop_when_tokens_match(tmp_path, monkeypatch):
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-token",
@@ -2559,7 +2559,7 @@ def test_sync_nous_entry_noop_when_tokens_match(tmp_path, monkeypatch):
 
 def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch):
     """An exhausted Nous entry should recover when auth.json has newer tokens."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     from agent.credential_pool import load_pool, STATUS_EXHAUSTED
     from dataclasses import replace as dc_replace
 
@@ -2572,7 +2572,7 @@ def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-OLD",
@@ -2609,7 +2609,7 @@ def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch
                 "nous": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
-                    "client_id": "hermes-cli",
+                    "client_id": "newroz-cli",
                     "token_type": "Bearer",
                     "scope": "inference:invoke",
                     "access_token": "access-FRESH",
@@ -2650,7 +2650,7 @@ def _codex_auth_store(access: str, refresh: str) -> dict:
 
 def test_sync_codex_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypatch):
     """When auth.json has newer Codex tokens, the pool entry should adopt them."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, _codex_auth_store("access-OLD", "refresh-OLD"))
 
     from agent.credential_pool import load_pool
@@ -2661,7 +2661,7 @@ def test_sync_codex_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypa
     assert entry.access_token == "access-OLD"
     assert entry.refresh_token == "refresh-OLD"
 
-    # Simulate `hermes auth openai-codex` replacing the token pair on disk.
+    # Simulate `newroz auth openai-codex` replacing the token pair on disk.
     _write_auth_store(tmp_path, _codex_auth_store("access-NEW", "refresh-NEW"))
 
     synced = pool._sync_codex_entry_from_auth_store(entry)
@@ -2675,7 +2675,7 @@ def test_sync_codex_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypa
 
 def test_sync_codex_entry_noop_when_tokens_match(tmp_path, monkeypatch):
     """When auth.json has the same tokens, sync should be a no-op."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(tmp_path, _codex_auth_store("access-same", "refresh-same"))
 
     from agent.credential_pool import load_pool
@@ -2692,12 +2692,12 @@ def test_codex_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatc
     """An exhausted Codex entry should recover when auth.json has newer tokens.
 
     Reproduces the Discord report (p1aceho1der, Apr 2026): after a Codex
-    rate-limit reset the user ran `hermes model` to reauth, but the pool
+    rate-limit reset the user ran `newroz model` to reauth, but the pool
     entry stayed marked EXHAUSTED with last_error_reset_at many hours in
     the future — so `_available_entries` kept returning empty and every
     request failed with "no available entries (all exhausted or empty)".
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     from agent.credential_pool import load_pool, STATUS_EXHAUSTED
     from dataclasses import replace as dc_replace
 
@@ -2726,7 +2726,7 @@ def test_codex_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatc
     available_before = pool._available_entries(clear_expired=True, refresh=False)
     assert available_before == []
 
-    # Simulate `hermes model` / `hermes auth` refreshing the tokens.
+    # Simulate `newroz model` / `newroz auth` refreshing the tokens.
     _write_auth_store(tmp_path, _codex_auth_store("access-FRESH", "refresh-FRESH"))
 
     available = pool._available_entries(clear_expired=True, refresh=False)
@@ -2741,7 +2741,7 @@ def test_codex_exhausted_entry_stays_stuck_without_auth_store_update(tmp_path, m
     """Regression guard: if auth.json tokens haven't changed, the exhausted
     entry must stay stuck behind its reset window — sync must not spuriously
     clear status just because the entry is STATUS_EXHAUSTED."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     from agent.credential_pool import load_pool, STATUS_EXHAUSTED
     from dataclasses import replace as dc_replace
 
@@ -2791,7 +2791,7 @@ def _xai_auth_store(access_token: str, refresh_token: str) -> dict:
 
 
 def test_is_terminal_xai_oauth_refresh_error():
-    from hermes_cli.auth import AuthError, _is_terminal_xai_oauth_refresh_error
+    from newroz_cli.auth import AuthError, _is_terminal_xai_oauth_refresh_error
 
     assert _is_terminal_xai_oauth_refresh_error(
         AuthError("Refresh failed", provider="xai-oauth", code="xai_refresh_failed", relogin_required=True)
@@ -2814,15 +2814,15 @@ def test_is_terminal_xai_oauth_refresh_error():
 def test_xai_oauth_terminal_refresh_clears_auth_json_and_removes_pool_entries(
     tmp_path, monkeypatch
 ):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("XAI_API_KEY", raising=False)
     monkeypatch.delenv("XAI_OAUTH_ACCESS_TOKEN", raising=False)
 
     _write_auth_store(tmp_path, _xai_auth_store("old-access-token", "old-refresh-token"))
 
     from agent.credential_pool import PooledCredential, load_pool
-    import hermes_cli.auth as auth_mod
-    from hermes_cli.auth import AuthError
+    import newroz_cli.auth as auth_mod
+    from newroz_cli.auth import AuthError
 
     pool = load_pool("xai-oauth")
     selected = pool.select()
@@ -2856,7 +2856,7 @@ def test_xai_oauth_terminal_refresh_clears_auth_json_and_removes_pool_entries(
     assert [entry.id for entry in pool.entries()] == ["manual-key"]
 
     # Auth.json tokens must be cleared.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     xai_state = auth_payload["providers"]["xai-oauth"]
     tokens = xai_state.get("tokens", {})
     assert not tokens.get("access_token")
@@ -2874,15 +2874,15 @@ def test_xai_oauth_terminal_refresh_clears_auth_json_and_removes_pool_entries(
 
 
 def test_xai_oauth_nonterminal_refresh_does_not_quarantine(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("XAI_API_KEY", raising=False)
     monkeypatch.delenv("XAI_OAUTH_ACCESS_TOKEN", raising=False)
 
     _write_auth_store(tmp_path, _xai_auth_store("old-access-token", "old-refresh-token"))
 
     from agent.credential_pool import load_pool
-    import hermes_cli.auth as auth_mod
-    from hermes_cli.auth import AuthError
+    import newroz_cli.auth as auth_mod
+    from newroz_cli.auth import AuthError
 
     pool = load_pool("xai-oauth")
     assert pool.select() is not None
@@ -2900,7 +2900,7 @@ def test_xai_oauth_nonterminal_refresh_does_not_quarantine(tmp_path, monkeypatch
     pool.try_refresh_current()
 
     # Tokens must NOT be cleared from auth.json.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     tokens = auth_payload["providers"]["xai-oauth"].get("tokens", {})
     assert tokens.get("access_token") == "old-access-token"
     assert tokens.get("refresh_token") == "old-refresh-token"
@@ -2927,7 +2927,7 @@ def _codex_auth_store(access_token: str, refresh_token: str) -> dict:
 
 
 def test_is_terminal_codex_oauth_refresh_error():
-    from hermes_cli.auth import AuthError, _is_terminal_codex_oauth_refresh_error
+    from newroz_cli.auth import AuthError, _is_terminal_codex_oauth_refresh_error
 
     assert _is_terminal_codex_oauth_refresh_error(
         AuthError("Refresh failed", provider="openai-codex", code="codex_refresh_failed", relogin_required=True)
@@ -2956,15 +2956,15 @@ def test_is_terminal_codex_oauth_refresh_error():
 def test_codex_oauth_terminal_refresh_clears_auth_json_and_removes_pool_entries(
     tmp_path, monkeypatch
 ):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("CODEX_OAUTH_ACCESS_TOKEN", raising=False)
 
     _write_auth_store(tmp_path, _codex_auth_store("old-access-token", "old-refresh-token"))
 
     from agent.credential_pool import PooledCredential, load_pool
-    import hermes_cli.auth as auth_mod
-    from hermes_cli.auth import AuthError
+    import newroz_cli.auth as auth_mod
+    from newroz_cli.auth import AuthError
 
     pool = load_pool("openai-codex")
     selected = pool.select()
@@ -2998,7 +2998,7 @@ def test_codex_oauth_terminal_refresh_clears_auth_json_and_removes_pool_entries(
     assert [entry.id for entry in pool.entries()] == ["manual-key"]
 
     # Auth.json tokens must be cleared.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     codex_state = auth_payload["providers"]["openai-codex"]
     tokens = codex_state.get("tokens", {})
     assert not tokens.get("access_token")
@@ -3015,15 +3015,15 @@ def test_codex_oauth_terminal_refresh_clears_auth_json_and_removes_pool_entries(
 
 
 def test_codex_oauth_nonterminal_refresh_does_not_quarantine(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("CODEX_OAUTH_ACCESS_TOKEN", raising=False)
 
     _write_auth_store(tmp_path, _codex_auth_store("old-access-token", "old-refresh-token"))
 
     from agent.credential_pool import load_pool
-    import hermes_cli.auth as auth_mod
-    from hermes_cli.auth import AuthError
+    import newroz_cli.auth as auth_mod
+    from newroz_cli.auth import AuthError
 
     pool = load_pool("openai-codex")
     assert pool.select() is not None
@@ -3041,7 +3041,7 @@ def test_codex_oauth_nonterminal_refresh_does_not_quarantine(tmp_path, monkeypat
     pool.try_refresh_current()
 
     # Tokens must NOT be cleared from auth.json.
-    auth_payload = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    auth_payload = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     tokens = auth_payload["providers"]["openai-codex"].get("tokens", {})
     assert tokens.get("access_token") == "old-access-token"
     assert tokens.get("refresh_token") == "old-refresh-token"
@@ -3049,7 +3049,7 @@ def test_codex_oauth_nonterminal_refresh_does_not_quarantine(tmp_path, monkeypat
 
 def test_persist_preserves_concurrent_disk_only_entry(tmp_path, monkeypatch):
     """Regression for #19566: stale rotation writes keep concurrent entries."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -3078,7 +3078,7 @@ def test_persist_preserves_concurrent_disk_only_entry(tmp_path, monkeypatch):
     )
 
     from agent.credential_pool import load_pool
-    from hermes_cli.auth import read_credential_pool, write_credential_pool
+    from newroz_cli.auth import read_credential_pool, write_credential_pool
 
     pool = load_pool("anthropic")
     assert {entry.id for entry in pool.entries()} == {"cred-A", "cred-B"}
@@ -3098,7 +3098,7 @@ def test_persist_preserves_concurrent_disk_only_entry(tmp_path, monkeypatch):
 
     pool.mark_exhausted_and_rotate(status_code=429)
 
-    final = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    final = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     final_ids = [entry["id"] for entry in final["credential_pool"]["anthropic"]]
     assert set(final_ids) == {"cred-A", "cred-B", "cred-C"}
     persisted_a = next(
@@ -3110,7 +3110,7 @@ def test_persist_preserves_concurrent_disk_only_entry(tmp_path, monkeypatch):
 
 
 def test_remove_index_does_not_resurrect_via_disk_merge(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     _write_auth_store(
         tmp_path,
         {
@@ -3143,7 +3143,7 @@ def test_remove_index_does_not_resurrect_via_disk_merge(tmp_path, monkeypatch):
     pool = load_pool("anthropic")
     pool.remove_index(2)
 
-    final = json.loads((tmp_path / "hermes" / "auth.json").read_text())
+    final = json.loads((tmp_path / "newroz" / "auth.json").read_text())
     final_ids = [entry["id"] for entry in final["credential_pool"]["anthropic"]]
     assert final_ids == ["cred-A"]
 
@@ -3154,14 +3154,14 @@ def test_remove_index_does_not_resurrect_via_disk_merge(tmp_path, monkeypatch):
 
 def _make_anthropic_claude_code_pool(tmp_path, monkeypatch, *, access_token, refresh_token, expires_at_ms=9_999_999_999_000):
     """Helper: load an Anthropic pool seeded with a single claude_code entry."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "newroz"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_TOKEN", raising=False)
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
     _write_auth_store(tmp_path, {"version": 1, "credential_pool": {}})
-    monkeypatch.setattr("hermes_cli.auth.is_provider_explicitly_configured", lambda pid: pid == "anthropic")
+    monkeypatch.setattr("newroz_cli.auth.is_provider_explicitly_configured", lambda pid: pid == "anthropic")
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_newroz_oauth_credentials",
         lambda: None,
     )
     monkeypatch.setattr(

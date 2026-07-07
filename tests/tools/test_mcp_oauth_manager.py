@@ -34,7 +34,7 @@ def test_manager_is_singleton():
 
 def test_manager_get_or_build_provider_caches(tmp_path, monkeypatch):
     """Calling get_or_build_provider twice with same name returns same provider."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     _set_interactive_stdin(monkeypatch)
     from tools.mcp_oauth_manager import MCPOAuthManager
 
@@ -46,7 +46,7 @@ def test_manager_get_or_build_provider_caches(tmp_path, monkeypatch):
 
 def test_manager_get_or_build_rebuilds_on_url_change(tmp_path, monkeypatch):
     """Changing the URL discards the cached provider."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     _set_interactive_stdin(monkeypatch)
     from tools.mcp_oauth_manager import MCPOAuthManager
 
@@ -58,7 +58,7 @@ def test_manager_get_or_build_rebuilds_on_url_change(tmp_path, monkeypatch):
 
 def test_manager_remove_evicts_cache(tmp_path, monkeypatch):
     """remove(name) evicts the provider from cache AND deletes disk files."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     _set_interactive_stdin(monkeypatch)
     from tools.mcp_oauth_manager import MCPOAuthManager
 
@@ -82,13 +82,13 @@ def test_manager_remove_evicts_cache(tmp_path, monkeypatch):
     assert p1 is not p2
 
 
-def test_hermes_provider_subclass_exists():
-    """HermesMCPOAuthProvider is defined and subclasses OAuthClientProvider."""
-    from tools.mcp_oauth_manager import _HERMES_PROVIDER_CLS
+def test_newroz_provider_subclass_exists():
+    """NewrozMCPOAuthProvider is defined and subclasses OAuthClientProvider."""
+    from tools.mcp_oauth_manager import _NEWROZ_PROVIDER_CLS
     from mcp.client.auth.oauth2 import OAuthClientProvider
 
-    assert _HERMES_PROVIDER_CLS is not None
-    assert issubclass(_HERMES_PROVIDER_CLS, OAuthClientProvider)
+    assert _NEWROZ_PROVIDER_CLS is not None
+    assert issubclass(_NEWROZ_PROVIDER_CLS, OAuthClientProvider)
 
 
 @pytest.mark.asyncio
@@ -99,7 +99,7 @@ async def test_disk_watch_invalidates_on_mtime_change(tmp_path, monkeypatch):
     invalidateOAuthCacheIfDiskChanged (CC-1096 / GH#24317) and is the core
     fix for Cthulhu's external-cron refresh workflow.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     from tools.mcp_oauth_manager import MCPOAuthManager, reset_manager_for_tests
 
     reset_manager_for_tests()
@@ -146,7 +146,7 @@ async def test_handle_401_tracks_inflight_task_to_prevent_gc(tmp_path, monkeypat
     """
     import asyncio
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     from tools.mcp_oauth_manager import MCPOAuthManager, _ProviderEntry
 
     class _TrackedSet(set):
@@ -206,7 +206,7 @@ async def test_handle_401_dedup_survives_even_if_task_reference_dropped(tmp_path
     import asyncio
     import gc
 
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     from tools.mcp_oauth_manager import MCPOAuthManager, _ProviderEntry
 
     mgr = MCPOAuthManager()
@@ -237,26 +237,26 @@ async def test_handle_401_dedup_survives_even_if_task_reference_dropped(tmp_path
     assert len(mgr._inflight_tasks) == 0
 
 
-def test_manager_builds_hermes_provider_subclass(tmp_path, monkeypatch):
-    """get_or_build_provider returns HermesMCPOAuthProvider, not plain OAuthClientProvider."""
+def test_manager_builds_newroz_provider_subclass(tmp_path, monkeypatch):
+    """get_or_build_provider returns NewrozMCPOAuthProvider, not plain OAuthClientProvider."""
     from tools.mcp_oauth_manager import (
-        MCPOAuthManager, _HERMES_PROVIDER_CLS, reset_manager_for_tests,
+        MCPOAuthManager, _NEWROZ_PROVIDER_CLS, reset_manager_for_tests,
     )
     reset_manager_for_tests()
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     _set_interactive_stdin(monkeypatch)
 
     mgr = MCPOAuthManager()
     provider = mgr.get_or_build_provider("srv", "https://example.com/mcp", None)
 
-    assert _HERMES_PROVIDER_CLS is not None
-    assert isinstance(provider, _HERMES_PROVIDER_CLS)
-    assert provider._hermes_server_name == "srv"
+    assert _NEWROZ_PROVIDER_CLS is not None
+    assert isinstance(provider, _NEWROZ_PROVIDER_CLS)
+    assert provider._newroz_server_name == "srv"
 
 
 def test_manager_fails_fast_noninteractive_without_cached_tokens(tmp_path, monkeypatch):
     """A daemon without cached MCP OAuth tokens must not enter browser auth."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     _set_interactive_stdin(monkeypatch, is_tty=False)
     from tools.mcp_oauth import OAuthNonInteractiveError
     from tools.mcp_oauth_manager import MCPOAuthManager
@@ -307,7 +307,7 @@ def _provider_with_token_endpoint(tmp_path, oauth_config, token_endpoint, monkey
 
 def test_invalid_client_at_token_endpoint_poisons(tmp_path, monkeypatch):
     """400 invalid_client on the token endpoint deletes the dead client.json."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     d = tmp_path / "mcp-tokens"
     d.mkdir(parents=True)
     (d / "srv.client.json").write_text('{"client_id": "dead"}')
@@ -329,7 +329,7 @@ def test_invalid_client_at_token_endpoint_poisons(tmp_path, monkeypatch):
 
 def test_invalid_client_at_other_endpoint_is_ignored(tmp_path, monkeypatch):
     """An invalid_client body from a non-token endpoint must not poison."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     d = tmp_path / "mcp-tokens"
     d.mkdir(parents=True)
     (d / "srv.client.json").write_text('{"client_id": "live"}')
@@ -347,7 +347,7 @@ def test_invalid_client_at_other_endpoint_is_ignored(tmp_path, monkeypatch):
 
 
 def test_success_response_is_ignored(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     d = tmp_path / "mcp-tokens"
     d.mkdir(parents=True)
     (d / "srv.client.json").write_text('{"client_id": "live"}')
@@ -366,7 +366,7 @@ def test_success_response_is_ignored(tmp_path, monkeypatch):
 
 def test_preregistered_client_is_never_poisoned(tmp_path, monkeypatch):
     """A config-supplied client_id is never auto-deleted (re-reg can't help)."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     provider = _provider_with_token_endpoint(
         tmp_path, {"client_id": "from-config"}, "https://idp.example.com/oauth/token", monkeypatch
     )
@@ -385,7 +385,7 @@ def test_preregistered_client_is_never_poisoned(tmp_path, monkeypatch):
 
 def test_invalid_client_metadata_does_not_trip(tmp_path, monkeypatch):
     """RFC 7591 `invalid_client_metadata` must NOT be mistaken for invalid_client."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     d = tmp_path / "mcp-tokens"
     d.mkdir(parents=True)
     (d / "srv.client.json").write_text('{"client_id": "live"}')
@@ -420,7 +420,7 @@ def test_bridge_forwards_requests_and_poisons_on_token_endpoint_400(
     genuinely fragile part. A patched SDK base generator stands in for the
     real OAuth flow so we control exactly which response the bridge sees.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     token_ep = "https://idp.example.com/oauth/token"
     d = tmp_path / "mcp-tokens"
     d.mkdir(parents=True)

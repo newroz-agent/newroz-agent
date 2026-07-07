@@ -1,12 +1,12 @@
-"""Shared CLI output helpers for Hermes CLI modules.
+"""Shared CLI output helpers for Newroz CLI modules.
 
 Extracts the identical ``print_info/success/warning/error`` and ``prompt()``
 functions previously duplicated across setup.py, tools_config.py,
 mcp_config.py, and memory_setup.py.
 """
 
-from hermes_cli.colors import Colors, color
-from hermes_cli.secret_prompt import masked_secret_prompt
+from newroz_cli.colors import Colors, color
+from newroz_cli.secret_prompt import masked_secret_prompt
 
 
 # ─── Print Helpers ────────────────────────────────────────────────────────────

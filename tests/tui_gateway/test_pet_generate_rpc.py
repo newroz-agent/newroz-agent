@@ -191,7 +191,7 @@ def test_pet_hatch_then_adopt_activates(monkeypatch, tmp_path):
     monkeypatch.setattr(gen, "hatch_pet", _fake_hatch_factory(captured))
 
     activated = {}
-    monkeypatch.setattr("hermes_cli.pets._set_active", lambda slug: activated.setdefault("slug", slug))
+    monkeypatch.setattr("newroz_cli.pets._set_active", lambda slug: activated.setdefault("slug", slug))
 
     token = server._methods["pet.generate"]("r1", {"prompt": "a fox"})["result"]["token"]
     hatched = server._methods["pet.hatch"]("r2", {"token": token, "index": 0, "name": "My Fox"})["result"]
@@ -207,7 +207,7 @@ def test_pet_sprite_payload_includes_concrete_row_counts():
 
     cols, rows = 8, 9
     sheet = Image.new("RGBA", (constants.FRAME_W * cols, constants.FRAME_H * rows), (0, 0, 0, 0))
-    # Current Codex rows can have more/fewer frames than Hermes' generic
+    # Current Codex rows can have more/fewer frames than Newroz' generic
     # FRAMES_PER_STATE. The desktop preview needs the concrete row count.
     real = {0: 6, 1: 8, 3: 4, 4: 5, 7: 6}
     for row, count in real.items():
@@ -225,7 +225,7 @@ def test_pet_sprite_payload_includes_concrete_row_counts():
 
 
 def test_pet_info_meta_avoids_full_payload(monkeypatch):
-    import hermes_cli.config as cli_config
+    import newroz_cli.config as cli_config
     from agent.pet import constants, store
 
     sheet = Image.new("RGBA", (constants.FRAME_W * 8, constants.FRAME_H * 9), (80, 120, 220, 255))

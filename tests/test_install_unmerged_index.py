@@ -7,7 +7,7 @@ path's ``git stash`` aborts with "could not write index" and the following
 first" -- surfacing to GUI/bootstrap users as ``git checkout main failed
 (exit 1)`` and failing the whole install at the repository stage.
 
-The ``hermes update`` Python path already clears the conflict with ``git reset``
+The ``newroz update`` Python path already clears the conflict with ``git reset``
 before stashing (#4735); both installer scripts must do the same.
 """
 
@@ -86,7 +86,7 @@ def _make_unmerged_repo(repo: Path) -> None:
 
 @pytest.mark.live_system_guard_bypass  # runs against a dedicated throwaway repo
 def test_install_sh_clears_unmerged_index_then_stashes(tmp_path: Path) -> None:
-    repo = tmp_path / "hermes-agent"
+    repo = tmp_path / "newroz-agent"
     repo.mkdir()
     _make_unmerged_repo(repo)
 
@@ -157,16 +157,16 @@ def test_install_ps1_stops_venv_resident_processes_before_removing_venv() -> Non
     old venv before deleting it.
 
     A gateway autostarted by a scheduled task runs as
-    ``venv\\Scripts\\pythonw.exe -m hermes_cli.main gateway run`` — image name
-    ``pythonw``, not ``hermes.exe`` — so the ``taskkill /IM hermes.exe`` guard
+    ``venv\\Scripts\\pythonw.exe -m newroz_cli.main gateway run`` — image name
+    ``pythonw``, not ``newroz.exe`` — so the ``taskkill /IM newroz.exe`` guard
     misses it, the loaded ``.pyd`` stays locked, and ``Remove-Item venv`` fails
     mid-recursion (issues #47036/#47557/#47910). The recreate branch must also
     sweep by venv path prefix, and that sweep must run before the delete.
     """
     text = INSTALL_PS1.read_text()
 
-    # The hermes.exe tree-kill is preserved (kills spawned child processes too).
-    assert 'taskkill /F /T /IM hermes.exe' in text
+    # The newroz.exe tree-kill is preserved (kills spawned child processes too).
+    assert 'taskkill /F /T /IM newroz.exe' in text
 
     # The venv path-prefix sweep exists. It must match by case-insensitive
     # StartsWith, NOT PowerShell -like: a venv path containing wildcard

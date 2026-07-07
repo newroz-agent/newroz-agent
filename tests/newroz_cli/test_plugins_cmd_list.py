@@ -2,7 +2,7 @@ import argparse
 import json
 from types import SimpleNamespace
 
-from hermes_cli import plugins_cmd
+from newroz_cli import plugins_cmd
 
 
 def _args(**kwargs):
@@ -97,18 +97,18 @@ def test_discover_all_plugins_includes_entrypoint_plugins(monkeypatch, tmp_path)
 
     dist = SimpleNamespace(
         version="0.1.0",
-        metadata={"Summary": "Karpathy-style LLM Wikis for Hermes"},
+        metadata={"Summary": "Karpathy-style LLM Wikis for Newroz"},
     )
     entry_point = SimpleNamespace(
         name="wiki",
-        value="adapters.hermes.cli_plugin",
-        group="hermes_agent.plugins",
+        value="adapters.newroz.cli_plugin",
+        group="newroz_agent.plugins",
         dist=dist,
     )
 
     monkeypatch.setattr(plugins_cmd, "_plugins_dir", lambda: user_dir)
     monkeypatch.setattr(
-        "hermes_cli.plugins.get_bundled_plugins_dir",
+        "newroz_cli.plugins.get_bundled_plugins_dir",
         lambda: bundled_dir,
     )
     monkeypatch.setattr(
@@ -123,9 +123,9 @@ def test_discover_all_plugins_includes_entrypoint_plugins(monkeypatch, tmp_path)
         (
             "wiki",
             "0.1.0",
-            "Karpathy-style LLM Wikis for Hermes",
+            "Karpathy-style LLM Wikis for Newroz",
             "entrypoint",
-            "adapters.hermes.cli_plugin",
+            "adapters.newroz.cli_plugin",
             "wiki",
         )
     ]
@@ -136,9 +136,9 @@ def test_cmd_list_json_output_includes_entrypoint_source(monkeypatch, capsys):
         (
             "wiki",
             "0.1.0",
-            "Karpathy-style LLM Wikis for Hermes",
+            "Karpathy-style LLM Wikis for Newroz",
             "entrypoint",
-            "adapters.hermes.cli_plugin",
+            "adapters.newroz.cli_plugin",
             "wiki",
         )
     ]
@@ -154,7 +154,7 @@ def test_cmd_list_json_output_includes_entrypoint_source(monkeypatch, capsys):
             "name": "wiki",
             "status": "enabled",
             "version": "0.1.0",
-            "description": "Karpathy-style LLM Wikis for Hermes",
+            "description": "Karpathy-style LLM Wikis for Newroz",
             "source": "entrypoint",
         }
     ]

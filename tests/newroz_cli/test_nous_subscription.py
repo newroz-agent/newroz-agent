@@ -1,7 +1,7 @@
 """Tests for Nous subscription feature detection."""
 
-from hermes_cli.nous_account import NousPortalAccountInfo, NousToolAccessInfo
-from hermes_cli import nous_subscription as ns
+from newroz_cli.nous_account import NousPortalAccountInfo, NousToolAccessInfo
+from newroz_cli import nous_subscription as ns
 
 
 _POOL_COVERAGE = {
@@ -414,11 +414,11 @@ def _capture_checklist(monkeypatch, *, selected_idx):
         captured["pre_selected"] = list(pre_selected or [])
         return list(selected_idx)
 
-    import hermes_cli.setup as setup_mod
+    import newroz_cli.setup as setup_mod
 
     monkeypatch.setattr(setup_mod, "prompt_checklist", _fake_checklist, raising=False)
     monkeypatch.setattr(
-        "hermes_cli.config.save_config", lambda cfg: None, raising=False
+        "newroz_cli.config.save_config", lambda cfg: None, raising=False
     )
     return captured
 
@@ -574,7 +574,7 @@ def test_apply_nous_managed_defaults_preserves_existing_video_gen_section(monkey
 
 
 # ---------------------------------------------------------------------------
-# ensure_nous_portal_access — inline login gate for `hermes tools`
+# ensure_nous_portal_access — inline login gate for `newroz tools`
 # ---------------------------------------------------------------------------
 
 

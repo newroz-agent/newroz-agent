@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import pytest
 
-from hermes_cli.codex_runtime_plugin_migration import (
+from newroz_cli.codex_runtime_plugin_migration import (
     MIGRATION_MARKER,
     MIGRATION_END_MARKER,
-    _build_hermes_tools_mcp_entry,
+    _build_newroz_tools_mcp_entry,
     _format_toml_value,
     _looks_like_test_tempdir,
     _strip_existing_managed_block,
@@ -186,7 +186,7 @@ class TestTomlValueFormatter:
         migrate({"mcp_servers": {"x": {"command": "y"}}},
                 codex_home=tmp_path,
                 discover_plugins=False,
-                expose_hermes_tools=False,
+                expose_newroz_tools=False,
                 default_permission_profile=None)
         # config.toml should exist
         assert (tmp_path / "config.toml").exists()
@@ -210,7 +210,7 @@ class TestTomlValueFormatter:
             {"mcp_servers": {"x": {"command": "y"}}},
             codex_home=tmp_path,
             discover_plugins=False,
-            expose_hermes_tools=False,
+            expose_newroz_tools=False,
             default_permission_profile=None,
         )
         # Error surfaced
@@ -306,13 +306,13 @@ class TestStripExistingManagedBlock:
         assert 'foo = "bar"' in out
 
 
-# ---- end-to-end migrate(, expose_hermes_tools=False) ----
+# ---- end-to-end migrate(, expose_newroz_tools=False) ----
 
 class TestMigrate:
     def test_no_servers_no_plugins_no_perms_writes_placeholder(self, tmp_path):
         report = migrate({}, codex_home=tmp_path,
                          discover_plugins=False,
-                         default_permission_profile=None, expose_hermes_tools=False)
+                         default_permission_profile=None, expose_newroz_tools=False)
         assert report.written
         text = (tmp_path / "config.toml").read_text()
         assert MIGRATION_MARKER in text
@@ -322,7 +322,7 @@ class TestMigrate:
         """Even with zero MCP servers, enabling the runtime should write the
         default permissions profile so users don't get prompted on every
         write attempt. This is the fix for quirk #2."""
-        report = migrate({}, codex_home=tmp_path, discover_plugins=False, expose_hermes_tools=False)
+        report = migrate({}, codex_home=tmp_path, discover_plugins=False, expose_newroz_tools=False)
         assert report.written
         text = (tmp_path / "config.toml").read_text()
         # Codex's schema: top-level `default_permissions` keying a built-in
@@ -335,7 +335,7 @@ class TestMigrate:
         report = migrate({"mcp_servers": {"x": {"command": "y"}}},
                          codex_home=tmp_path,
                          discover_plugins=False,
-                         default_permission_profile=None, expose_hermes_tools=False)
+                         default_permission_profile=None, expose_newroz_tools=False)
         text = (tmp_path / "config.toml").read_text()
         assert "default_permissions" not in text
         assert "[permissions]" not in text
@@ -344,7 +344,7 @@ class TestMigrate:
     def test_plugin_discovery_writes_plugin_blocks(self, tmp_path, monkeypatch):
         """Discovered curated plugins land as [plugins."<name>@<marketplace>"]
         blocks. This is what OpenClaw calls 'migrate native codex plugins.'"""
-        from hermes_cli import codex_runtime_plugin_migration as crpm
+        from newroz_cli import codex_runtime_plugin_migration as crpm
 
         def fake_query(codex_home=None, timeout=8.0):
             return [
@@ -368,7 +368,7 @@ class TestMigrate:
         be skipped — they're broken/uninstallable on codex's side, so
         migrating them would write config that fails at activation
         time. Cf. openclaw#80815."""
-        from hermes_cli.codex_runtime_plugin_migration import _query_codex_plugins
+        from newroz_cli.codex_runtime_plugin_migration import _query_codex_plugins
         from unittest.mock import patch
 
         # Fake a plugin/list response where one plugin is unavailable
@@ -414,14 +414,14 @@ class TestMigrate:
     def test_plugin_discovery_failure_non_fatal(self, tmp_path, monkeypatch):
         """If codex isn't installed or RPC fails, MCP migration still
         completes. The error surfaces in the report but doesn't abort."""
-        from hermes_cli import codex_runtime_plugin_migration as crpm
+        from newroz_cli import codex_runtime_plugin_migration as crpm
 
         def fake_query_fails(codex_home=None, timeout=8.0):
             return [], "codex CLI not available"
         monkeypatch.setattr(crpm, "_query_codex_plugins", fake_query_fails)
 
         report = migrate({"mcp_servers": {"x": {"command": "y"}}},
-                         codex_home=tmp_path, discover_plugins=True, expose_hermes_tools=False)
+                         codex_home=tmp_path, discover_plugins=True, expose_newroz_tools=False)
         assert report.written
         assert report.migrated == ["x"]
         assert report.plugin_query_error == "codex CLI not available"
@@ -430,7 +430,7 @@ class TestMigrate:
     def test_discover_plugins_false_skips_query(self, tmp_path, monkeypatch):
         """Tests and restricted environments can opt out of the subprocess
         spawn entirely."""
-        from hermes_cli import codex_runtime_plugin_migration as crpm
+        from newroz_cli import codex_runtime_plugin_migration as crpm
 
         called = {"yes": False}
         def boom(*a, **kw):
@@ -439,13 +439,13 @@ class TestMigrate:
         monkeypatch.setattr(crpm, "_query_codex_plugins", boom)
 
         migrate({"mcp_servers": {"x": {"command": "y"}}},
-                codex_home=tmp_path, discover_plugins=False, expose_hermes_tools=False)
+                codex_home=tmp_path, discover_plugins=False, expose_newroz_tools=False)
         assert called["yes"] is False
 
     def test_dry_run_skips_plugin_query(self, tmp_path, monkeypatch):
         """Dry run should never spawn codex. Even with discover_plugins=True
         the query is skipped because dry_run takes precedence."""
-        from hermes_cli import codex_runtime_plugin_migration as crpm
+        from newroz_cli import codex_runtime_plugin_migration as crpm
 
         called = {"yes": False}
         def boom(*a, **kw):
@@ -454,13 +454,13 @@ class TestMigrate:
         monkeypatch.setattr(crpm, "_query_codex_plugins", boom)
 
         migrate({"mcp_servers": {"x": {"command": "y"}}},
-                codex_home=tmp_path, dry_run=True, discover_plugins=True, expose_hermes_tools=False)
+                codex_home=tmp_path, dry_run=True, discover_plugins=True, expose_newroz_tools=False)
         assert called["yes"] is False
 
     def test_re_run_replaces_plugin_block(self, tmp_path, monkeypatch):
         """Plugin blocks are managed and re-runs should replace them
         cleanly — same idempotency contract as MCP servers."""
-        from hermes_cli import codex_runtime_plugin_migration as crpm
+        from newroz_cli import codex_runtime_plugin_migration as crpm
 
         # First run: only github
         monkeypatch.setattr(crpm, "_query_codex_plugins",
@@ -469,7 +469,7 @@ class TestMigrate:
                                 None,
                             ))
         migrate({}, codex_home=tmp_path, discover_plugins=True,
-                default_permission_profile=None, expose_hermes_tools=False)
+                default_permission_profile=None, expose_newroz_tools=False)
         first = (tmp_path / "config.toml").read_text()
         assert "github@openai-curated" in first
 
@@ -480,50 +480,50 @@ class TestMigrate:
                                 None,
                             ))
         migrate({}, codex_home=tmp_path, discover_plugins=True,
-                default_permission_profile=None, expose_hermes_tools=False)
+                default_permission_profile=None, expose_newroz_tools=False)
         second = (tmp_path / "config.toml").read_text()
         assert "github@openai-curated" not in second
         assert "canva@openai-curated" in second
 
-    def test_expose_hermes_tools_writes_callback_mcp_entry(self, tmp_path):
-        """When expose_hermes_tools=True (production default), an
-        [mcp_servers.hermes-tools] entry is written so codex calls back
-        into Hermes for browser/web/delegate_task/vision/memory tools.
+    def test_expose_newroz_tools_writes_callback_mcp_entry(self, tmp_path):
+        """When expose_newroz_tools=True (production default), an
+        [mcp_servers.newroz-tools] entry is written so codex calls back
+        into Newroz for browser/web/delegate_task/vision/memory tools.
 
         This is the fix for 'all other tools that codex doesn't provide
-        should be useable by hermes' — quirk #7."""
+        should be useable by newroz' — quirk #7."""
         report = migrate({}, codex_home=tmp_path,
                          discover_plugins=False,
                          default_permission_profile=None,
-                         expose_hermes_tools=True)
+                         expose_newroz_tools=True)
         text = (tmp_path / "config.toml").read_text()
-        assert "[mcp_servers.hermes-tools]" in text
-        assert "hermes_tools_mcp_server" in text
+        assert "[mcp_servers.newroz-tools]" in text
+        assert "newroz_tools_mcp_server" in text
         # Must include startup + tool timeouts so codex doesn't give up
         assert "startup_timeout_sec" in text
         assert "tool_timeout_sec" in text
         # And the entry is reported
-        assert "hermes-tools" in report.migrated
+        assert "newroz-tools" in report.migrated
 
-    def test_expose_hermes_tools_disabled_skips_entry(self, tmp_path):
-        """expose_hermes_tools=False suppresses the callback registration."""
+    def test_expose_newroz_tools_disabled_skips_entry(self, tmp_path):
+        """expose_newroz_tools=False suppresses the callback registration."""
         migrate({}, codex_home=tmp_path,
                 discover_plugins=False,
                 default_permission_profile=None,
-                expose_hermes_tools=False)
+                expose_newroz_tools=False)
         text = (tmp_path / "config.toml").read_text()
-        assert "[mcp_servers.hermes-tools]" not in text
-        assert "hermes_tools_mcp_server" not in text
+        assert "[mcp_servers.newroz-tools]" not in text
+        assert "newroz_tools_mcp_server" not in text
 
     def test_dry_run_doesnt_write(self, tmp_path):
         report = migrate({"mcp_servers": {"x": {"command": "y"}}},
-                         codex_home=tmp_path, dry_run=True, expose_hermes_tools=False)
+                         codex_home=tmp_path, dry_run=True, expose_newroz_tools=False)
         assert report.dry_run is True
         assert not (tmp_path / "config.toml").exists()
         assert "x" in report.migrated
 
     def test_full_migration_round_trip(self, tmp_path):
-        hermes_cfg = {
+        newroz_cfg = {
             "mcp_servers": {
                 "filesystem": {
                     "command": "npx",
@@ -535,7 +535,7 @@ class TestMigrate:
                 },
             }
         }
-        report = migrate(hermes_cfg, codex_home=tmp_path, expose_hermes_tools=False)
+        report = migrate(newroz_cfg, codex_home=tmp_path, expose_newroz_tools=False)
         assert report.written
         text = (tmp_path / "config.toml").read_text()
         assert "[mcp_servers.filesystem]" in text
@@ -545,11 +545,11 @@ class TestMigrate:
 
     def test_idempotent_re_run_replaces_managed_block(self, tmp_path):
         # First migration
-        migrate({"mcp_servers": {"a": {"command": "x"}}}, codex_home=tmp_path, expose_hermes_tools=False)
+        migrate({"mcp_servers": {"a": {"command": "x"}}}, codex_home=tmp_path, expose_newroz_tools=False)
         first_text = (tmp_path / "config.toml").read_text()
         assert "[mcp_servers.a]" in first_text
         # Second migration with different servers
-        migrate({"mcp_servers": {"b": {"command": "y"}}}, codex_home=tmp_path, expose_hermes_tools=False)
+        migrate({"mcp_servers": {"b": {"command": "y"}}}, codex_home=tmp_path, expose_newroz_tools=False)
         second_text = (tmp_path / "config.toml").read_text()
         assert "[mcp_servers.a]" not in second_text
         assert "[mcp_servers.b]" in second_text
@@ -563,7 +563,7 @@ class TestMigrate:
             "[providers.openai]\n"
             'api_key = "sk-test"\n'
         )
-        migrate({"mcp_servers": {"a": {"command": "x"}}}, codex_home=tmp_path, expose_hermes_tools=False)
+        migrate({"mcp_servers": {"a": {"command": "x"}}}, codex_home=tmp_path, expose_newroz_tools=False)
         new_text = target.read_text()
         # User's codex config preserved
         assert "[model]" in new_text
@@ -574,7 +574,7 @@ class TestMigrate:
         assert MIGRATION_MARKER in new_text
 
     def test_managed_root_keys_stay_top_level_when_config_ends_in_table(self, tmp_path):
-        """TOML has no explicit 'leave current table' syntax. If Hermes appends
+        """TOML has no explicit 'leave current table' syntax. If Newroz appends
         root keys like default_permissions after a user table such as [features],
         Codex parses them as features.default_permissions and rejects the config.
         The managed block must therefore be inserted before the first table."""
@@ -587,7 +587,7 @@ class TestMigrate:
             "[features]\n"
             "terminal_resize_reflow = true\n"
         )
-        migrate({}, codex_home=tmp_path, discover_plugins=False, expose_hermes_tools=False)
+        migrate({}, codex_home=tmp_path, discover_plugins=False, expose_newroz_tools=False)
         new_text = target.read_text()
         parsed = tomllib.loads(new_text)
         assert parsed["default_permissions"] == ":workspace"
@@ -596,7 +596,7 @@ class TestMigrate:
 
     def test_preserves_user_mcp_server_outside_managed_block(self, tmp_path):
         """Quirk #6: when a user adds their own MCP server entry directly
-        to ~/.codex/config.toml outside Hermes' managed block, re-running
+        to ~/.codex/config.toml outside Newroz' managed block, re-running
         migration must preserve it. Tested both above and below the
         managed block."""
         target = tmp_path / "config.toml"
@@ -606,9 +606,9 @@ class TestMigrate:
             'args = ["--above"]\n'
         )
         # First migrate — adds managed block below user content
-        migrate({"mcp_servers": {"hermes-mcp": {"command": "npx"}}},
+        migrate({"mcp_servers": {"newroz-mcp": {"command": "npx"}}},
                 codex_home=tmp_path, discover_plugins=False,
-                expose_hermes_tools=False)
+                expose_newroz_tools=False)
         text = target.read_text()
         assert "user-above" in text, "user MCP server above managed block got nuked"
         assert 'command = "/usr/bin/above-server"' in text
@@ -618,14 +618,14 @@ class TestMigrate:
             text + "\n[mcp_servers.user-below]\ncommand = \"below-server\"\n"
         )
         # Re-migrate — both should survive
-        migrate({"mcp_servers": {"hermes-mcp": {"command": "npx"}}},
+        migrate({"mcp_servers": {"newroz-mcp": {"command": "npx"}}},
                 codex_home=tmp_path, discover_plugins=False,
-                expose_hermes_tools=False)
+                expose_newroz_tools=False)
         final = target.read_text()
         assert "user-above" in final
         assert "user-below" in final
         # And our managed block is still there with the new content
-        assert "[mcp_servers.hermes-mcp]" in final
+        assert "[mcp_servers.newroz-mcp]" in final
 
     def test_skipped_keys_reported(self, tmp_path):
         report = migrate({
@@ -635,25 +635,25 @@ class TestMigrate:
                     "sampling": {"enabled": True},  # codex has no equivalent
                 }
             }
-        }, codex_home=tmp_path, expose_hermes_tools=False)
+        }, codex_home=tmp_path, expose_newroz_tools=False)
         assert "x" in report.skipped_keys_per_server
         assert any("sampling" in s for s in report.skipped_keys_per_server["x"])
 
     def test_invalid_mcp_servers_value(self, tmp_path):
-        report = migrate({"mcp_servers": "notadict"}, codex_home=tmp_path, expose_hermes_tools=False)
+        report = migrate({"mcp_servers": "notadict"}, codex_home=tmp_path, expose_newroz_tools=False)
         assert any("not a dict" in e for e in report.errors)
 
     def test_server_without_transport_skipped_with_error(self, tmp_path):
         report = migrate({
             "mcp_servers": {"broken": {"description": "no command/url"}}
-        }, codex_home=tmp_path, expose_hermes_tools=False)
+        }, codex_home=tmp_path, expose_newroz_tools=False)
         assert "broken" not in report.migrated
         assert any("broken" in e for e in report.errors)
 
     def test_summary_reports_migration_count(self, tmp_path):
         report = migrate({
             "mcp_servers": {"a": {"command": "x"}, "b": {"command": "y"}}
-        }, codex_home=tmp_path, expose_hermes_tools=False)
+        }, codex_home=tmp_path, expose_newroz_tools=False)
         summary = report.summary()
         assert "Migrated 2 MCP server(s)" in summary
         assert "- a" in summary
@@ -668,7 +668,7 @@ class TestStripUnmanagedPluginTables:
 
     When codex itself writes ``[plugins."<name>@<marketplace>"]`` tables
     (via the user running ``codex plugins enable`` directly), re-running
-    ``hermes codex-runtime migrate`` would re-emit them inside the managed
+    ``newroz codex-runtime migrate`` would re-emit them inside the managed
     block and the resulting duplicate-table-header would crash codex.
     """
 
@@ -752,10 +752,10 @@ class TestStripUnmanagedPluginTables:
             )
 
         monkeypatch.setattr(
-            "hermes_cli.codex_runtime_plugin_migration._query_codex_plugins",
+            "newroz_cli.codex_runtime_plugin_migration._query_codex_plugins",
             fake_query,
         )
-        migrate({}, codex_home=tmp_path, discover_plugins=True, expose_hermes_tools=False)
+        migrate({}, codex_home=tmp_path, discover_plugins=True, expose_newroz_tools=False)
         new_text = target.read_text()
         # Only ONE [plugins."tasks@openai-curated"] header should remain — inside
         # the managed block — not the original outside-the-block copy.
@@ -783,81 +783,81 @@ class TestStripUnmanagedPluginTables:
             return ([], "plugin/list query failed: codex not installed")
 
         monkeypatch.setattr(
-            "hermes_cli.codex_runtime_plugin_migration._query_codex_plugins",
+            "newroz_cli.codex_runtime_plugin_migration._query_codex_plugins",
             fake_query,
         )
-        migrate({}, codex_home=tmp_path, discover_plugins=True, expose_hermes_tools=False)
+        migrate({}, codex_home=tmp_path, discover_plugins=True, expose_newroz_tools=False)
         new_text = target.read_text()
         # User's plugin table preserved verbatim — we can't re-emit it.
         assert '[plugins."tasks@openai-curated"]' in new_text
 
 
-# ---- Bug C: HERMES_HOME tempdir leak into ~/.codex/config.toml ----
+# ---- Bug C: NEWROZ_HOME tempdir leak into ~/.codex/config.toml ----
 
 
-class TestHermesHomeLeakGuard:
+class TestNewrozHomeLeakGuard:
     """Regression tests for issue #26250 Bug C.
 
-    Previously ``_build_hermes_tools_mcp_entry()`` read ``HERMES_HOME``
+    Previously ``_build_newroz_tools_mcp_entry()`` read ``NEWROZ_HOME``
     directly from ``os.environ``, so a pytest ``monkeypatch.setenv`` would
     leak a transient tempdir path into the user's real ``~/.codex/config.toml``
-    once codex spawned the hermes-tools MCP subprocess.
+    once codex spawned the newroz-tools MCP subprocess.
     """
 
     def test_tempdir_detector_recognizes_pytest_paths(self):
         assert _looks_like_test_tempdir(
-            "/private/var/folders/abc/pytest-of-kshitij/pytest-137/popen-gw2/test_X/hermes_test"
+            "/private/var/folders/abc/pytest-of-kshitij/pytest-137/popen-gw2/test_X/newroz_test"
         )
         assert _looks_like_test_tempdir(
-            "/tmp/pytest-of-user/pytest-12/test_X/hermes"
+            "/tmp/pytest-of-user/pytest-12/test_X/newroz"
         )
         assert _looks_like_test_tempdir(
             "/private/var/folders/zz/T/pytest-of-bob/pytest-1"
         )
 
-    def test_tempdir_detector_accepts_real_hermes_home(self):
-        assert not _looks_like_test_tempdir("/Users/alice/.hermes")
-        assert not _looks_like_test_tempdir("/home/bob/.hermes")
-        assert not _looks_like_test_tempdir("/opt/hermes")
+    def test_tempdir_detector_accepts_real_newroz_home(self):
+        assert not _looks_like_test_tempdir("/Users/alice/.newroz")
+        assert not _looks_like_test_tempdir("/home/bob/.newroz")
+        assert not _looks_like_test_tempdir("/opt/newroz")
         assert not _looks_like_test_tempdir("")
 
     def test_pytest_tempdir_not_burned_into_mcp_env(self, monkeypatch):
-        """The headline regression: even when HERMES_HOME points at a pytest
-        tempdir, _build_hermes_tools_mcp_entry() must NOT propagate it."""
+        """The headline regression: even when NEWROZ_HOME points at a pytest
+        tempdir, _build_newroz_tools_mcp_entry() must NOT propagate it."""
         monkeypatch.setenv(
-            "HERMES_HOME",
-            "/private/var/folders/xx/pytest-of-user/pytest-99/test_x/hermes_test",
+            "NEWROZ_HOME",
+            "/private/var/folders/xx/pytest-of-user/pytest-99/test_x/newroz_test",
         )
-        entry = _build_hermes_tools_mcp_entry()
+        entry = _build_newroz_tools_mcp_entry()
         env = entry.get("env", {})
-        assert "HERMES_HOME" not in env, (
-            f"pytest-tempdir HERMES_HOME leaked into codex MCP entry: "
-            f"{env.get('HERMES_HOME')!r}"
+        assert "NEWROZ_HOME" not in env, (
+            f"pytest-tempdir NEWROZ_HOME leaked into codex MCP entry: "
+            f"{env.get('NEWROZ_HOME')!r}"
         )
 
-    def test_real_hermes_home_propagates(self, monkeypatch, tmp_path):
-        """A legitimate HERMES_HOME (not a tempdir path) DOES propagate so the
+    def test_real_newroz_home_propagates(self, monkeypatch, tmp_path):
+        """A legitimate NEWROZ_HOME (not a tempdir path) DOES propagate so the
         MCP subprocess sees the same config as the parent CLI."""
         # Use a path that looks real — under /Users or /home, not /var/folders.
         # We can't easily create one in the test, so just use a stable path
         # outside any tempdir-detector needle. The detector checks for tempdir
         # markers, not for path existence.
-        real_path = "/Users/alice/.hermes"
-        monkeypatch.setenv("HERMES_HOME", real_path)
-        entry = _build_hermes_tools_mcp_entry()
+        real_path = "/Users/alice/.newroz"
+        monkeypatch.setenv("NEWROZ_HOME", real_path)
+        entry = _build_newroz_tools_mcp_entry()
         env = entry.get("env", {})
-        assert env.get("HERMES_HOME") == real_path
+        assert env.get("NEWROZ_HOME") == real_path
 
-    def test_unset_hermes_home_omits_env_key(self, monkeypatch):
-        """When HERMES_HOME is unset in the environment, the MCP entry MUST
+    def test_unset_newroz_home_omits_env_key(self, monkeypatch):
+        """When NEWROZ_HOME is unset in the environment, the MCP entry MUST
         NOT bake in a resolved-default path. The codex subprocess should
-        inherit whatever HERMES_HOME its launcher (systemd, gateway, shell)
+        inherit whatever NEWROZ_HOME its launcher (systemd, gateway, shell)
         sets at runtime, rather than being pinned to migrate-time defaults.
         Regression guard for issue #26250 follow-up review."""
-        monkeypatch.delenv("HERMES_HOME", raising=False)
-        entry = _build_hermes_tools_mcp_entry()
+        monkeypatch.delenv("NEWROZ_HOME", raising=False)
+        entry = _build_newroz_tools_mcp_entry()
         env = entry.get("env", {})
-        assert "HERMES_HOME" not in env, (
-            f"HERMES_HOME should not be set when env var is unset, got: "
-            f"{env.get('HERMES_HOME')!r}"
+        assert "NEWROZ_HOME" not in env, (
+            f"NEWROZ_HOME should not be set when env var is unset, got: "
+            f"{env.get('NEWROZ_HOME')!r}"
         )

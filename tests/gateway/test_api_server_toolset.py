@@ -1,27 +1,27 @@
-"""Tests for hermes-api-server toolset and API server tool availability."""
+"""Tests for newroz-api-server toolset and API server tool availability."""
 from unittest.mock import patch, MagicMock
 
 
 from toolsets import resolve_toolset, get_toolset, validate_toolset
 
 
-class TestHermesApiServerToolset:
-    """Tests for the hermes-api-server toolset definition."""
+class TestNewrozApiServerToolset:
+    """Tests for the newroz-api-server toolset definition."""
 
     def test_toolset_exists(self):
-        ts = get_toolset("hermes-api-server")
+        ts = get_toolset("newroz-api-server")
         assert ts is not None
 
     def test_toolset_validates(self):
-        assert validate_toolset("hermes-api-server")
+        assert validate_toolset("newroz-api-server")
 
     def test_toolset_includes_web_tools(self):
-        tools = resolve_toolset("hermes-api-server")
+        tools = resolve_toolset("newroz-api-server")
         assert "web_search" in tools
         assert "web_extract" in tools
 
     def test_toolset_includes_core_tools(self):
-        tools = resolve_toolset("hermes-api-server")
+        tools = resolve_toolset("newroz-api-server")
         expected = [
             "terminal", "process",
             "read_file", "write_file", "patch", "search_files",
@@ -33,45 +33,45 @@ class TestHermesApiServerToolset:
             assert tool in tools, f"Missing expected tool: {tool}"
 
     def test_toolset_includes_browser_tools(self):
-        tools = resolve_toolset("hermes-api-server")
+        tools = resolve_toolset("newroz-api-server")
         for tool in ["browser_navigate", "browser_snapshot", "browser_click",
                       "browser_type", "browser_scroll", "browser_back",
                       "browser_press"]:
             assert tool in tools, f"Missing browser tool: {tool}"
 
     def test_toolset_includes_homeassistant_tools(self):
-        tools = resolve_toolset("hermes-api-server")
+        tools = resolve_toolset("newroz-api-server")
         for tool in ["ha_list_entities", "ha_get_state", "ha_list_services", "ha_call_service"]:
             assert tool in tools, f"Missing HA tool: {tool}"
 
     def test_toolset_excludes_clarify(self):
-        tools = resolve_toolset("hermes-api-server")
+        tools = resolve_toolset("newroz-api-server")
         assert "clarify" not in tools
 
     def test_toolset_excludes_send_message(self):
-        tools = resolve_toolset("hermes-api-server")
+        tools = resolve_toolset("newroz-api-server")
         assert "send_message" not in tools
 
     def test_toolset_excludes_text_to_speech(self):
-        tools = resolve_toolset("hermes-api-server")
+        tools = resolve_toolset("newroz-api-server")
         assert "text_to_speech" not in tools
 
 
 class TestApiServerPlatformConfig:
     def test_platforms_dict_includes_api_server(self):
-        from hermes_cli.tools_config import PLATFORMS
+        from newroz_cli.tools_config import PLATFORMS
         assert "api_server" in PLATFORMS
-        assert PLATFORMS["api_server"]["default_toolset"] == "hermes-api-server"
+        assert PLATFORMS["api_server"]["default_toolset"] == "newroz-api-server"
 
     def test_default_api_server_includes_terminal_toolset(self):
         """Regression #49622: desktop-only read_terminal is registered into the
         'terminal' toolset (ships in-repo), so resolve_toolset('terminal') grows
         to include it after discovery. read_terminal is NOT in the
-        hermes-api-server composite, so the old all-tools subset test dropped
+        newroz-api-server composite, so the old all-tools subset test dropped
         'terminal' entirely. Its static membership (terminal, process) IS in the
         composite, so it must stay enabled."""
         from tools.registry import discover_builtin_tools
-        from hermes_cli.tools_config import _get_platform_tools
+        from newroz_cli.tools_config import _get_platform_tools
         discover_builtin_tools()
         assert "terminal" in _get_platform_tools({}, "api_server")
 
@@ -81,7 +81,7 @@ class TestApiServerPlatformConfig:
         toolset from a platform whose composite lists the toolset's static
         tools. Synthetic registration keeps the test hermetic in CI."""
         from tools.registry import registry
-        from hermes_cli.tools_config import _get_platform_tools
+        from newroz_cli.tools_config import _get_platform_tools
 
         sentinel = "test_sentinel_delegation_tool"
         registry.register(
@@ -105,7 +105,7 @@ class TestApiServerPlatformConfig:
         enable default-off or platform-restricted toolsets."""
         import os
         from unittest.mock import patch
-        from hermes_cli.tools_config import _get_platform_tools
+        from newroz_cli.tools_config import _get_platform_tools
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("HASS_TOKEN", None)
             os.environ.pop("XAI_API_KEY", None)
@@ -134,7 +134,7 @@ class TestApiServerAdapterToolset:
                                         "provider": None, "api_mode": None,
                                         "command": None, "args": []}
             mock_model.return_value = "test/model"
-            # No platform_toolsets override — should fall back to hermes-api-server default
+            # No platform_toolsets override — should fall back to newroz-api-server default
             mock_config.return_value = {}
             mock_agent_cls.return_value = MagicMock()
 

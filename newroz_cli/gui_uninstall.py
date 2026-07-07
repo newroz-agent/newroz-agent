@@ -1,38 +1,38 @@
 """
-Hermes Desktop (Chat GUI) uninstaller.
+Newroz Desktop (Chat GUI) uninstaller.
 
 The desktop GUI ships in two shapes and this module knows how to find and
 remove the artifacts of both, on Linux, macOS, and Windows, WITHOUT touching
 the Python agent or the user's config/data:
 
-  1. Source-built GUI (``hermes desktop`` / ``hermes gui``)
-     Built inside the agent checkout under ``$HERMES_HOME/hermes-agent/``:
+  1. Source-built GUI (``newroz desktop`` / ``newroz gui``)
+     Built inside the agent checkout under ``$NEWROZ_HOME/newroz-agent/``:
        - ``apps/desktop/dist``      (compiled renderer)
        - ``apps/desktop/release``   (electron-builder unpacked app + installers)
        - ``apps/desktop/node_modules`` and the workspace-root ``node_modules``
          (Electron itself, ~200MB) — only removed on a GUI uninstall because
          the agent does not need them.
-       - ``$HERMES_HOME/desktop-build-stamp.json`` (the build freshness stamp)
+       - ``$NEWROZ_HOME/desktop-build-stamp.json`` (the build freshness stamp)
 
   2. Packaged distributable (DMG / NSIS / AppImage / deb / rpm)
      Installed by the OS to a standard application location and carrying its
      own bundled Electron + a per-user Electron ``userData`` directory:
-       - macOS:   ``/Applications/Hermes.app`` or ``~/Applications/Hermes.app``
-       - Windows: ``%LOCALAPPDATA%\\Programs\\Hermes`` (NSIS per-user)
+       - macOS:   ``/Applications/Newroz.app`` or ``~/Applications/Newroz.app``
+       - Windows: ``%LOCALAPPDATA%\\Programs\\Newroz`` (NSIS per-user)
        - Linux:   ``~/.local/share/applications`` .desktop entry + AppImage
 
 In both shapes the Electron runtime keeps a ``userData`` directory keyed on
-the app name ("Hermes"), separate from ``$HERMES_HOME``:
-  - macOS:   ``~/Library/Application Support/Hermes``
-  - Windows: ``%APPDATA%\\Hermes``
-  - Linux:   ``$XDG_CONFIG_HOME/Hermes`` (default ``~/.config/Hermes``)
+the app name ("Newroz"), separate from ``$NEWROZ_HOME``:
+  - macOS:   ``~/Library/Application Support/Newroz``
+  - Windows: ``%APPDATA%\\Newroz``
+  - Linux:   ``$XDG_CONFIG_HOME/Newroz`` (default ``~/.config/Newroz``)
 
 This holds the desktop's own ``connection.json`` / ``updates.json`` and
 Chromium cache — pure GUI state, safe to remove on a GUI uninstall.
 
 The functions here are deliberately import-light and side-effect-free at
 import time so the Electron main process can shell out to
-``hermes uninstall --gui`` (and friends) without paying for the full CLI.
+``newroz uninstall --gui`` (and friends) without paying for the full CLI.
 """
 
 import os
@@ -40,9 +40,9 @@ import shutil
 import sys
 from pathlib import Path
 
-from hermes_constants import get_hermes_home
+from newroz_constants import get_newroz_home
 
-from hermes_cli.colors import Colors, color
+from newroz_cli.colors import Colors, color
 
 
 def log_info(msg: str):
@@ -62,39 +62,39 @@ def log_warn(msg: str):
 # ---------------------------------------------------------------------------
 
 
-def _agent_root(hermes_home: Path) -> Path:
+def _agent_root(newroz_home: Path) -> Path:
     """The agent checkout root — same layout install.sh / install.ps1 use."""
-    return hermes_home / "hermes-agent"
+    return newroz_home / "newroz-agent"
 
 
 def desktop_userdata_dir() -> Path:
     """Return the Electron ``userData`` directory for the desktop app.
 
-    Mirrors Electron's ``app.getPath('userData')`` for an app named "Hermes"
+    Mirrors Electron's ``app.getPath('userData')`` for an app named "Newroz"
     on each platform. This is GUI-only state (connection.json, updates.json,
     Chromium cache) and never holds agent config or sessions.
     """
     home = Path.home()
     if sys.platform == "darwin":
-        return home / "Library" / "Application Support" / "Hermes"
+        return home / "Library" / "Application Support" / "Newroz"
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA")
         base = Path(appdata) if appdata else (home / "AppData" / "Roaming")
-        return base / "Hermes"
+        return base / "Newroz"
     # Linux / other POSIX — XDG config home.
     xdg = os.environ.get("XDG_CONFIG_HOME")
     base = Path(xdg) if xdg else (home / ".config")
-    return base / "Hermes"
+    return base / "Newroz"
 
 
-def source_built_gui_artifacts(hermes_home: Path) -> "list[Path]":
-    """GUI build artifacts produced by ``hermes desktop`` inside the checkout.
+def source_built_gui_artifacts(newroz_home: Path) -> "list[Path]":
+    """GUI build artifacts produced by ``newroz desktop`` inside the checkout.
 
     These are removable on a GUI uninstall without harming the agent: the
-    Python agent runs from ``hermes-agent/`` source + ``venv/`` and never
+    Python agent runs from ``newroz-agent/`` source + ``venv/`` and never
     needs the Electron build output or node_modules.
     """
-    agent_root = _agent_root(hermes_home)
+    agent_root = _agent_root(newroz_home)
     desktop_dir = agent_root / "apps" / "desktop"
     return [
         desktop_dir / "dist",
@@ -104,7 +104,7 @@ def source_built_gui_artifacts(hermes_home: Path) -> "list[Path]":
         # desktop workspace, ~200MB). The agent does not use any npm package,
         # so this is GUI tooling — safe to drop on a GUI uninstall.
         agent_root / "node_modules",
-        hermes_home / "desktop-build-stamp.json",
+        newroz_home / "desktop-build-stamp.json",
     ]
 
 
@@ -113,28 +113,28 @@ def packaged_gui_app_paths() -> "list[Path]":
 
     Returns every candidate for the current OS; the caller filters to those
     that actually exist. We never glob system-wide — only the well-known
-    electron-builder output locations for the "Hermes" product.
+    electron-builder output locations for the "Newroz" product.
     """
     home = Path.home()
     paths: list[Path] = []
     if sys.platform == "darwin":
         paths += [
-            Path("/Applications/Hermes.app"),
-            home / "Applications" / "Hermes.app",
+            Path("/Applications/Newroz.app"),
+            home / "Applications" / "Newroz.app",
         ]
     elif sys.platform == "win32":
         local = os.environ.get("LOCALAPPDATA")
         local_base = Path(local) if local else (home / "AppData" / "Local")
         paths += [
-            # NSIS per-user install (perMachine=false → Programs\Hermes).
-            local_base / "Programs" / "Hermes",
+            # NSIS per-user install (perMachine=false → Programs\Newroz).
+            local_base / "Programs" / "Newroz",
             # Older / alternate layout some builds used.
-            local_base / "hermes-desktop",
+            local_base / "newroz-desktop",
         ]
         program_files = os.environ.get("ProgramFiles")
         if program_files:
             # NSIS per-machine fallback (needs admin to remove).
-            paths.append(Path(program_files) / "Hermes")
+            paths.append(Path(program_files) / "Newroz")
     else:
         # Linux: AppImage is a single file the user placed somewhere; we can
         # only reliably clean the desktop entry + icon we know the name of.
@@ -145,32 +145,32 @@ def packaged_gui_app_paths() -> "list[Path]":
         data = os.environ.get("XDG_DATA_HOME")
         data_base = Path(data) if data else (home / ".local" / "share")
         paths += [
-            data_base / "applications" / "hermes.desktop",
-            data_base / "applications" / "Hermes.desktop",
+            data_base / "applications" / "newroz.desktop",
+            data_base / "applications" / "Newroz.desktop",
         ]
     return paths
 
 
-def agent_is_installed(hermes_home: Path) -> bool:
-    """Return True when a usable Python agent install exists under HERMES_HOME.
+def agent_is_installed(newroz_home: Path) -> bool:
+    """Return True when a usable Python agent install exists under NEWROZ_HOME.
 
     Used by the desktop UI to decide which uninstall options to offer: if the
     agent isn't present (a future "lite" GUI-only client), the "remove agent"
     options are hidden.
     """
-    agent_root = _agent_root(hermes_home)
+    agent_root = _agent_root(newroz_home)
     # A real install has the package source + a venv. Either signal alone is
     # enough — a source checkout without a venv is still "the agent is here".
-    if (agent_root / "hermes_cli").is_dir():
+    if (agent_root / "newroz_cli").is_dir():
         return True
     if (agent_root / "venv").is_dir() or (agent_root / ".venv").is_dir():
         return True
     return False
 
 
-def gui_is_installed(hermes_home: Path) -> bool:
+def gui_is_installed(newroz_home: Path) -> bool:
     """Return True when any desktop GUI artifact exists (built or packaged)."""
-    for p in source_built_gui_artifacts(hermes_home):
+    for p in source_built_gui_artifacts(newroz_home):
         if p.exists():
             return True
     for p in packaged_gui_app_paths():
@@ -181,21 +181,21 @@ def gui_is_installed(hermes_home: Path) -> bool:
     return False
 
 
-def gui_install_summary(hermes_home: "Path | None" = None) -> dict:
+def gui_install_summary(newroz_home: "Path | None" = None) -> dict:
     """Structured snapshot of what's installed, for the desktop UI to render.
 
     Returns JSON-serializable primitives so the Electron main process can
     forward it to the renderer via IPC (paths as strings, booleans for the
     high-level questions the UI gates options on).
     """
-    home: Path = hermes_home if hermes_home is not None else get_hermes_home()
+    home: Path = newroz_home if newroz_home is not None else get_newroz_home()
 
     source_artifacts = [p for p in source_built_gui_artifacts(home) if p.exists()]
     packaged = [p for p in packaged_gui_app_paths() if p.exists()]
     userdata = desktop_userdata_dir()
 
     return {
-        "hermes_home": str(home),
+        "newroz_home": str(home),
         "agent_installed": agent_is_installed(home),
         "gui_installed": gui_is_installed(home),
         "source_built_artifacts": [str(p) for p in source_artifacts],
@@ -225,7 +225,7 @@ def _remove_path(path: Path) -> bool:
     return False
 
 
-def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = True) -> "list[Path]":
+def uninstall_gui(newroz_home: "Path | None" = None, *, remove_userdata: bool = True) -> "list[Path]":
     """Remove the desktop GUI's artifacts, leaving the agent + user data intact.
 
     Removes:
@@ -234,12 +234,12 @@ def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = 
         system package manager and are reported, not force-removed)
       - the Electron ``userData`` directory (unless ``remove_userdata=False``)
 
-    Never touches ``hermes-agent/hermes_cli`` (agent source), ``venv/``, or any
-    config / sessions / .env under ``$HERMES_HOME``.
+    Never touches ``newroz-agent/newroz_cli`` (agent source), ``venv/``, or any
+    config / sessions / .env under ``$NEWROZ_HOME``.
 
     Returns the list of paths actually removed.
     """
-    home: Path = hermes_home if hermes_home is not None else get_hermes_home()
+    home: Path = newroz_home if newroz_home is not None else get_newroz_home()
 
     removed: list[Path] = []
 
@@ -277,8 +277,8 @@ def uninstall_gui(hermes_home: "Path | None" = None, *, remove_userdata: bool = 
     if sys.platform.startswith("linux"):
         log_info(
             "If you installed the desktop via a .deb / .rpm package, remove it "
-            "with your package manager (e.g. 'sudo apt remove hermes' or "
-            "'sudo dnf remove hermes'). AppImage builds are a single file you "
+            "with your package manager (e.g. 'sudo apt remove newroz' or "
+            "'sudo dnf remove newroz'). AppImage builds are a single file you "
             "can delete from wherever you saved it."
         )
 

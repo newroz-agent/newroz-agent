@@ -2,11 +2,11 @@
 
 The slash-command worker is spawned as ``-m tui_gateway.slash_worker`` and
 inherits the user's CWD. A local package (e.g. ``utils/``) in that CWD shadows
-the installed hermes ``utils`` module and crashes the worker on ``import cli``
+the installed newroz ``utils`` module and crashes the worker on ``import cli``
 (``ImportError: cannot import name 'atomic_replace' from 'utils'``).
 
 #51693 added this guard to the sibling entrypoints ``tui_gateway/entry.py`` and
-``acp_adapter/entry.py`` (via the shared ``hermes_bootstrap.harden_import_path``
+``acp_adapter/entry.py`` (via the shared ``newroz_bootstrap.harden_import_path``
 helper) but missed this child, so the crash still reproduced. slash_worker.py
 must run the guard before its first non-stdlib import.
 """
@@ -28,7 +28,7 @@ def test_slash_worker_imports_from_cwd_with_colliding_utils(tmp_path):
         (tmp_path / pkg).mkdir()
         (tmp_path / pkg / "__init__.py").write_text("")  # no atomic_replace, etc.
 
-    env = {k: v for k, v in os.environ.items() if k != "HERMES_PYTHON_SRC_ROOT"}
+    env = {k: v for k, v in os.environ.items() if k != "NEWROZ_PYTHON_SRC_ROOT"}
     # Keep the source importable via PYTHONPATH; CWD ('') still precedes it on
     # sys.path for ``-c``, so the shadow (and thus the guard) is still exercised.
     env["PYTHONPATH"] = str(PROJECT_ROOT)
@@ -52,7 +52,7 @@ def test_slash_worker_imports_from_cwd_with_colliding_utils(tmp_path):
 def test_sys_path_guard_runs_before_cli_import():
     """The guard must execute before ``import cli`` — reordering it below the
     import would re-introduce the shadowing crash. Assert via AST that the
-    ``hermes_bootstrap.harden_import_path()`` call precedes ``import cli``."""
+    ``newroz_bootstrap.harden_import_path()`` call precedes ``import cli``."""
     src = (PROJECT_ROOT / "tui_gateway" / "slash_worker.py").read_text()
     tree = ast.parse(src)
 
@@ -71,7 +71,7 @@ def test_sys_path_guard_runs_before_cli_import():
                 cli_import_line = node.lineno
 
     assert harden_call_line is not None, (
-        "slash_worker.py must call hermes_bootstrap.harden_import_path()"
+        "slash_worker.py must call newroz_bootstrap.harden_import_path()"
     )
     assert cli_import_line is not None, "slash_worker.py must 'import cli'"
     assert harden_call_line < cli_import_line, (
@@ -84,9 +84,9 @@ def test_guard_delegates_to_shared_helper_not_inline():
     old inline ``{"", "."}`` sys.path filter that #51693 replaced."""
     src = (PROJECT_ROOT / "tui_gateway" / "slash_worker.py").read_text()
     assert '{"", "."}' not in src and "{'', '.'}" not in src, (
-        "slash_worker.py should delegate to hermes_bootstrap.harden_import_path, "
+        "slash_worker.py should delegate to newroz_bootstrap.harden_import_path, "
         "not re-implement the guard inline"
     )
-    assert "hermes_bootstrap.harden_import_path()" in src, (
-        "slash_worker.py must call the shared hermes_bootstrap.harden_import_path guard"
+    assert "newroz_bootstrap.harden_import_path()" in src, (
+        "slash_worker.py must call the shared newroz_bootstrap.harden_import_path guard"
     )

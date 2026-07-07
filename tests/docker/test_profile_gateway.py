@@ -1,6 +1,6 @@
 """Harness: per-profile gateway start/stop inside the container.
 
-Phase 4 wires `hermes -p <profile> gateway start/stop` through the s6
+Phase 4 wires `newroz -p <profile> gateway start/stop` through the s6
 ServiceManager dispatch path inside the container — so the lifecycle
 commands now bring up an s6-supervised gateway rather than refusing
 with the pre-Phase-4 informational message.
@@ -17,7 +17,7 @@ want up``). Both states are valid "user asked for gateway up" results
 the supervised process's health. ``s6-svc -u`` records ``want up`` in
 the supervise/status file regardless of the run-script outcome.
 
-Every ``docker exec`` here runs as the unprivileged ``hermes`` user
+Every ``docker exec`` here runs as the unprivileged ``newroz`` user
 (via :func:`docker_exec_sh` in conftest); see the conftest module
 docstring.
 """
@@ -71,14 +71,14 @@ def test_profile_create_then_gateway_start(
 ) -> None:
     start_container(built_image, container_name, cmd="sleep 120")
 
-    r = _sh(container_name, f"hermes profile create {PROFILE}")
+    r = _sh(container_name, f"newroz profile create {PROFILE}")
     assert r.returncode == 0, f"profile create failed: {r.stderr}"
 
     # Profile create's s6-register hook should have produced a service slot.
     r = _sh(container_name, f"test -d /run/service/gateway-{PROFILE}")
     assert r.returncode == 0, "s6 service slot not created on profile create"
 
-    r = _sh(container_name, f"hermes -p {PROFILE} gateway start", timeout=60)
+    r = _sh(container_name, f"newroz -p {PROFILE} gateway start", timeout=60)
     assert r.returncode == 0, (
         f"gateway start failed: stderr={r.stderr!r} stdout={r.stdout!r}"
     )
@@ -94,7 +94,7 @@ def test_profile_create_then_gateway_start(
         f"{_svstat(container_name)!r}"
     )
 
-    r = _sh(container_name, f"hermes -p {PROFILE} gateway stop", timeout=30)
+    r = _sh(container_name, f"newroz -p {PROFILE} gateway stop", timeout=30)
     assert r.returncode == 0
 
     time.sleep(2)
@@ -111,13 +111,13 @@ def test_profile_delete_stops_gateway(
     service slot."""
     start_container(built_image, container_name, cmd="sleep 120")
 
-    _sh(container_name, f"hermes profile create {PROFILE}")
-    _sh(container_name, f"hermes -p {PROFILE} gateway start", timeout=60)
+    _sh(container_name, f"newroz profile create {PROFILE}")
+    _sh(container_name, f"newroz -p {PROFILE} gateway start", timeout=60)
     time.sleep(3)
 
     r = _sh(
         container_name,
-        f"hermes profile delete {PROFILE} --yes",
+        f"newroz profile delete {PROFILE} --yes",
         timeout=30,
     )
     assert r.returncode == 0, f"profile delete failed: {r.stderr}"

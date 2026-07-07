@@ -12,7 +12,7 @@ import pytest
 
 from gateway.config import GatewayConfig, Platform, PlatformConfig
 from gateway.platforms.base import MessageEvent
-from hermes_state import AsyncSessionDB
+from newroz_state import AsyncSessionDB
 from gateway.session import (
     SessionContext,
     SessionEntry,
@@ -207,9 +207,9 @@ async def test_matrix_project_context_survives_concurrent_messages():
         try:
             await asyncio.sleep(0)
             return SimpleNamespace(
-                chat_id=get_session_env("HERMES_SESSION_CHAT_ID"),
-                chat_name=get_session_env("HERMES_SESSION_CHAT_NAME"),
-                session_key=get_session_env("HERMES_SESSION_KEY"),
+                chat_id=get_session_env("NEWROZ_SESSION_CHAT_ID"),
+                chat_name=get_session_env("NEWROZ_SESSION_CHAT_NAME"),
+                session_key=get_session_env("NEWROZ_SESSION_KEY"),
             )
         finally:
             runner._clear_session_env(tokens)

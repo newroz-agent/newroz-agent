@@ -25,7 +25,7 @@ except ImportError:
     web = None  # type: ignore[assignment]
     AIOHTTP_AVAILABLE = False
 
-from hermes_cli.proxy.adapters.base import UpstreamAdapter, UpstreamCredential
+from newroz_cli.proxy.adapters.base import UpstreamAdapter, UpstreamCredential
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +89,8 @@ def create_app(adapter: UpstreamAdapter) -> "web.Application":
     """Build the aiohttp application bound to a specific upstream adapter."""
     if not AIOHTTP_AVAILABLE:
         raise RuntimeError(
-            "aiohttp is required for `hermes proxy`. Install with: "
-            "pip install 'hermes-agent[messaging]' or `pip install aiohttp`."
+            "aiohttp is required for `newroz proxy`. Install with: "
+            "pip install 'newroz-agent[messaging]' or `pip install aiohttp`."
         )
 
     app = web.Application(client_max_size=MAX_REQUEST_BYTES)
@@ -256,8 +256,8 @@ async def run_server(
     """
     if not AIOHTTP_AVAILABLE:
         raise RuntimeError(
-            "aiohttp is required for `hermes proxy`. Install with: "
-            "pip install 'hermes-agent[messaging]' or `pip install aiohttp`."
+            "aiohttp is required for `newroz proxy`. Install with: "
+            "pip install 'newroz-agent[messaging]' or `pip install aiohttp`."
         )
 
     app = create_app(adapter)

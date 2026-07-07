@@ -1,13 +1,13 @@
-"""Tests for MCP tools interactive configuration in hermes_cli.tools_config."""
+"""Tests for MCP tools interactive configuration in newroz_cli.tools_config."""
 
 from unittest.mock import patch
 
-from hermes_cli.tools_config import _configure_mcp_tools_interactive
+from newroz_cli.tools_config import _configure_mcp_tools_interactive
 
 # Patch targets: imports happen inside the function body, so patch at source
 _PROBE = "tools.mcp_tool.probe_mcp_server_tools"
-_CHECKLIST = "hermes_cli.curses_ui.curses_checklist"
-_SAVE = "hermes_cli.tools_config.save_config"
+_CHECKLIST = "newroz_cli.curses_ui.curses_checklist"
+_SAVE = "newroz_cli.tools_config.save_config"
 
 
 def test_no_mcp_servers_prints_info(capsys):
@@ -71,7 +71,7 @@ def test_disabling_tool_writes_include_list(capsys):
     """Unchecking a tool produces an include list of the still-chosen tools.
 
     Standardized on tools.include (whitelist) across the codebase — the
-    catalog flow, `hermes mcp configure`, and this UI all write the same
+    catalog flow, `newroz mcp configure`, and this UI all write the same
     shape so users don\'t see config drift across UIs.
     """
     config = {

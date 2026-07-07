@@ -38,7 +38,7 @@ class ProviderField:
     A field is stored in exactly one place, decided by ``kind``:
 
     * ``text`` / ``select`` — persisted to the provider's JSON config file
-      (``<hermes_home>/<provider>/config.json``) under ``key``.
+      (``<newroz_home>/<provider>/config.json``) under ``key``.
     * ``secret`` — persisted to the env store under ``env_key`` and never read
       back out over the API (only an ``is_set`` flag is surfaced).
 
@@ -83,7 +83,7 @@ HINDSIGHT = MemoryProvider(
             label="Mode",
             kind=KIND_SELECT,
             default="cloud",
-            description="How Hermes connects to Hindsight.",
+            description="How Newroz connects to Hindsight.",
             options=(
                 ProviderFieldOption(
                     "cloud",
@@ -117,7 +117,7 @@ HINDSIGHT = MemoryProvider(
             key="bank_id",
             label="Bank ID",
             kind=KIND_TEXT,
-            default="hermes",
+            default="newroz",
             aliases=("bankId",),
         ),
         ProviderField(

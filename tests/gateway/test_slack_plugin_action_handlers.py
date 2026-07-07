@@ -64,7 +64,7 @@ _slack_mod.SLACK_AVAILABLE = True
 from gateway.config import PlatformConfig  # noqa: E402
 from plugins.platforms.slack.adapter import SlackAdapter  # noqa: E402
 
-from hermes_cli.plugins import (  # noqa: E402
+from newroz_cli.plugins import (  # noqa: E402
     PluginContext,
     PluginManager,
     PluginManifest,
@@ -247,7 +247,7 @@ def _connect_with_recording_app(
          patch.dict(os.environ, {"SLACK_APP_TOKEN": "xapp-fake"}), \
          patch("gateway.status.acquire_scoped_lock", return_value=(True, None)), \
          patch("gateway.status.release_scoped_lock"), \
-         patch("hermes_cli.plugins.get_plugin_manager", return_value=fake_mgr), \
+         patch("newroz_cli.plugins.get_plugin_manager", return_value=fake_mgr), \
          patch("asyncio.create_task"):
         result = asyncio.run(adapter.connect())
 
@@ -272,8 +272,8 @@ class TestSlackAdapterPluginActionWiring:
         assert result is True
         action_ids = [aid for aid, _cb in registered]
         # Built-in approval buttons remain registered…
-        assert "hermes_approve_once" in action_ids
-        assert "hermes_deny" in action_ids
+        assert "newroz_approve_once" in action_ids
+        assert "newroz_deny" in action_ids
         # …and the plugin's action_id was added.
         assert "inbox_sweep_approve" in action_ids
 
@@ -288,7 +288,7 @@ class TestSlackAdapterPluginActionWiring:
         assert result is True
         # Built-ins still wired
         action_ids = [aid for aid, _cb in registered]
-        assert "hermes_approve_once" in action_ids
+        assert "newroz_approve_once" in action_ids
 
     def test_plugin_exception_does_not_propagate_to_slack(self):
         """A misbehaving plugin handler must NOT crash slack_bolt's dispatch.
@@ -412,7 +412,7 @@ class TestSlackAdapterPluginActionWiring:
              patch.dict(os.environ, {"SLACK_APP_TOKEN": "xapp-fake"}), \
              patch("gateway.status.acquire_scoped_lock", return_value=(True, None)), \
              patch("gateway.status.release_scoped_lock"), \
-             patch("hermes_cli.plugins.get_plugin_manager",
+             patch("newroz_cli.plugins.get_plugin_manager",
                    side_effect=RuntimeError("plugins broken")), \
              patch("asyncio.create_task"):
             result = asyncio.run(adapter.connect())
@@ -420,4 +420,4 @@ class TestSlackAdapterPluginActionWiring:
         assert result is True
         # Built-ins still wired even when plugin loader failed.
         action_ids = [aid for aid, _cb in registered_actions]
-        assert "hermes_approve_once" in action_ids
+        assert "newroz_approve_once" in action_ids

@@ -7,9 +7,9 @@
  * the top-level `await Promise.all([...])` in src/entry.tsx — the user
  * sees only 141 bytes of ANSI reset sequences and a blank screen forever.
  *
- * Root cause: re-exporting `ink-text-input` from `@hermes/ink`'s
+ * Root cause: re-exporting `ink-text-input` from `@newroz/ink`'s
  * entry-exports drags the upstream `ink` package into the bundle. That
- * `ink` graph and our in-tree `@hermes/ink` graph reference each other
+ * `ink` graph and our in-tree `@newroz/ink` graph reference each other
  * via React/`ink-text-input`, producing the circular async cycle that
  * `__esm` cannot resolve.
  *
@@ -43,7 +43,7 @@ function bundleIsFresh(): boolean {
   try {
     const bundleMtime = statSync(bundlePath).mtimeMs
     const sourceMtime = statSync(
-      resolve(uiTuiRoot, 'packages/hermes-ink/src/entry-exports.ts'),
+      resolve(uiTuiRoot, 'packages/newroz-ink/src/entry-exports.ts'),
     ).mtimeMs
     return bundleMtime >= sourceMtime
   } catch {
@@ -84,16 +84,16 @@ describe('TUI bundle (issue #31227)', () => {
 
   it('does not bundle the upstream ink package or ink-text-input', () => {
     // Pulling either of these in re-creates the circular async chain
-    // that #31227 was about. The in-tree fork at @hermes/ink replaces
+    // that #31227 was about. The in-tree fork at @newroz/ink replaces
     // all of `ink`; nothing in ui-tui imports `TextInput` from
-    // `@hermes/ink` so the re-export is unused dead weight.
+    // `@newroz/ink` so the re-export is unused dead weight.
     expect(bundleSrc.includes('node_modules/ink/build/index.js')).toBe(false)
     expect(bundleSrc.includes('node_modules/ink-text-input/build/index.js')).toBe(false)
   })
 
-  it('has the @hermes/ink entry-exports module compiled to sync init', () => {
-    // Sanity check that the alias swap to packages/hermes-ink/src/entry-exports.ts
+  it('has the @newroz/ink entry-exports module compiled to sync init', () => {
+    // Sanity check that the alias swap to packages/newroz-ink/src/entry-exports.ts
     // is still active and producing the expected synchronous init shape.
-    expect(bundleSrc).toMatch(/var init_entry_exports = __esm\(\{\s*"packages\/hermes-ink\/src\/entry-exports\.ts"\(\)/)
+    expect(bundleSrc).toMatch(/var init_entry_exports = __esm\(\{\s*"packages\/newroz-ink\/src\/entry-exports\.ts"\(\)/)
   })
 })

@@ -15,11 +15,11 @@ from agent.skill_utils import (
 )
 
 
-def test_metadata_as_dict_with_hermes():
-    """Normal case: metadata is a dict containing hermes keys."""
+def test_metadata_as_dict_with_newroz():
+    """Normal case: metadata is a dict containing newroz keys."""
     frontmatter = {
         "metadata": {
-            "hermes": {
+            "newroz": {
                 "fallback_for_toolsets": ["toolset_a"],
                 "requires_toolsets": ["toolset_b"],
                 "fallback_for_tools": ["tool_x"],
@@ -112,11 +112,11 @@ def test_skill_config_helpers_share_raw_config_parse_cache(tmp_path, monkeypatch
     """Repeated skill config helpers should parse config.yaml only once."""
     from agent import skill_utils
 
-    hermes_home = tmp_path / ".hermes"
-    hermes_home.mkdir()
+    newroz_home = tmp_path / ".newroz"
+    newroz_home.mkdir()
     external = tmp_path / "external-skills"
     external.mkdir()
-    config_path = hermes_home / "config.yaml"
+    config_path = newroz_home / "config.yaml"
     config_path.write_text(
         f"""
 skills:
@@ -138,7 +138,7 @@ skills:
         parse_count += 1
         return real_yaml_load(text)
 
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
     skill_utils._external_dirs_cache_clear()
     getattr(skill_utils, "_raw_config_cache_clear", lambda: None)()
     monkeypatch.setattr(skill_utils, "yaml_load", counting_yaml_load)
@@ -155,12 +155,12 @@ def test_skill_config_raw_cache_invalidates_on_config_edit(tmp_path, monkeypatch
     """Editing config.yaml should invalidate the shared raw config cache."""
     from agent import skill_utils
 
-    hermes_home = tmp_path / ".hermes"
-    hermes_home.mkdir()
-    config_path = hermes_home / "config.yaml"
+    newroz_home = tmp_path / ".newroz"
+    newroz_home.mkdir()
+    config_path = newroz_home / "config.yaml"
     config_path.write_text("skills:\n  disabled: [old-skill]\n", encoding="utf-8")
 
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
     skill_utils._external_dirs_cache_clear()
     assert get_disabled_skill_names() == {"old-skill"}
 
@@ -174,17 +174,17 @@ def test_skill_config_raw_cache_invalidates_on_config_edit(tmp_path, monkeypatch
 def test_is_external_skill_path_matches_configured_external_dir(tmp_path, monkeypatch):
     from agent import skill_utils
 
-    hermes_home = tmp_path / ".hermes"
-    local_skills = hermes_home / "skills"
+    newroz_home = tmp_path / ".newroz"
+    local_skills = newroz_home / "skills"
     external = tmp_path / "external-skills"
     local_skills.mkdir(parents=True)
     external.mkdir()
-    (hermes_home / "config.yaml").write_text(
+    (newroz_home / "config.yaml").write_text(
         f"skills:\n  external_dirs:\n    - {external}\n",
         encoding="utf-8",
     )
 
-    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
     skill_utils._external_dirs_cache_clear()
 
     assert is_external_skill_path(external / "team-skill" / "SKILL.md") is True

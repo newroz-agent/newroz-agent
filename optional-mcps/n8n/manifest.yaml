@@ -5,17 +5,17 @@
 manifest_version: 1
 
 name: n8n
-description: Manage and inspect n8n workflows from Hermes (stdio bridge, no public port).
-source: https://github.com/CyberSamuraiX/hermes-n8n-mcp
+description: Manage and inspect n8n workflows from Newroz (stdio bridge, no public port).
+source: https://github.com/CyberSamuraiX/newroz-n8n-mcp
 
 # How to launch the server once installed. The keys here map 1:1 to the
-# `mcp_servers.<name>` block written into ~/.hermes/config.yaml by the
-# existing `_save_mcp_server()` helper in hermes_cli/mcp_config.py.
+# `mcp_servers.<name>` block written into ~/.newroz/config.yaml by the
+# existing `_save_mcp_server()` helper in newroz_cli/mcp_config.py.
 transport:
   type: stdio
   # For git-installed servers, ${INSTALL_DIR} is substituted at install time
   # with the path the catalog cloned the repo into. The catalog never
-  # auto-updates: the user re-runs `hermes mcp install official/n8n` to
+  # auto-updates: the user re-runs `newroz mcp install official/n8n` to
   # refresh.
   command: "${INSTALL_DIR}/.venv/bin/python"
   args:
@@ -26,7 +26,7 @@ transport:
 # + dependency install.
 install:
   type: git
-  url: https://github.com/CyberSamuraiX/hermes-n8n-mcp.git
+  url: https://github.com/CyberSamuraiX/newroz-n8n-mcp.git
   # Pin to a commit/tag. Required — manifests do not float HEAD.
   ref: main
   # Bootstrap commands run inside the cloned directory after clone.
@@ -35,7 +35,7 @@ install:
     - ".venv/bin/pip install -r requirements.txt"
 
 # Authentication. Three shapes:
-#   type: api_key  — prompt for env vars, write to ~/.hermes/.env
+#   type: api_key  — prompt for env vars, write to ~/.newroz/.env
 #   type: oauth    — provider-mediated or remote MCP native OAuth (case 1/2)
 #   type: none     — no credentials needed
 auth:
@@ -74,4 +74,4 @@ post_install: |
   Workflow activate/deactivate calls are real mutations against your live n8n.
   Treat them carefully.
 
-  Start a new Hermes session to load the n8n tools.
+  Start a new Newroz session to load the n8n tools.

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import argparse
 
-from hermes_cli.subcommands.gateway import build_gateway_parser
-from hermes_cli.subcommands.profile import build_profile_parser
+from newroz_cli.subcommands.gateway import build_gateway_parser
+from newroz_cli.subcommands.profile import build_profile_parser
 
 
 def _h_gateway(args):  # pragma: no cover - identity only
@@ -29,14 +29,14 @@ def _h_profile(args):  # pragma: no cover - identity only
 
 
 def _profile_parser():
-    p = argparse.ArgumentParser(prog="hermes")
+    p = argparse.ArgumentParser(prog="newroz")
     sub = p.add_subparsers(dest="command")
     build_profile_parser(sub, cmd_profile=_h_profile)
     return p
 
 
 def _gateway_parser():
-    p = argparse.ArgumentParser(prog="hermes")
+    p = argparse.ArgumentParser(prog="newroz")
     sub = p.add_subparsers(dest="command")
     build_gateway_parser(
         sub,

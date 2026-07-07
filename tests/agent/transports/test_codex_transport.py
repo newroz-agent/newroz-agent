@@ -322,7 +322,7 @@ class TestCodexBuildKwargs:
         already-requested client ``web_search`` — NOT an additive grant.  A
         turn whose toolset has no ``web_search`` (user never enabled the web
         toolset) must not get Grok server-side search force-injected, which
-        would silently bypass Hermes's web-provider config and tool-trace
+        would silently bypass Newroz's web-provider config and tool-trace
         plumbing for every xai-oauth turn.
         """
         messages = [{"role": "user", "content": "Read this file."}]

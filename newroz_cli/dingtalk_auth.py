@@ -163,7 +163,7 @@ def _ensure_qrcode_installed() -> bool:
 
     import subprocess
 
-    # Try uv first (Hermes convention), then pip
+    # Try uv first (Newroz convention), then pip
     for cmd in (
         [sys.executable, "-m", "uv", "pip", "install", "qrcode"],
         [sys.executable, "-m", "pip", "install", "-q", "qrcode"],
@@ -233,7 +233,7 @@ def dingtalk_qr_auth() -> Optional[Tuple[str, str]]:
     Returns (client_id, client_secret) on success, or None if the user
     cancelled or the flow failed.
     """
-    from hermes_cli.setup import print_info, print_success, print_warning, print_error
+    from newroz_cli.setup import print_info, print_success, print_warning, print_error
 
     print()
     print_info("  Initializing DingTalk device authorization...")

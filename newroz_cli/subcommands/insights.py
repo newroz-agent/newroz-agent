@@ -1,6 +1,6 @@
-"""``hermes insights`` subcommand parser.
+"""``newroz insights`` subcommand parser.
 
-Extracted from ``hermes_cli/main.py:main()`` (god-file Phase 2 follow-up).
+Extracted from ``newroz_cli/main.py:main()`` (god-file Phase 2 follow-up).
 Handler injected to avoid importing ``main``.
 """
 

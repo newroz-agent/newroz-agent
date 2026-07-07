@@ -1,6 +1,6 @@
-"""``hermes config`` subcommand parser.
+"""``newroz config`` subcommand parser.
 
-Extracted verbatim from ``hermes_cli/main.py:main()`` (god-file Phase 2).
+Extracted verbatim from ``newroz_cli/main.py:main()`` (god-file Phase 2).
 Handler injected to avoid importing ``main``.
 """
 
@@ -17,7 +17,7 @@ def build_config_parser(subparsers, *, cmd_config: Callable) -> None:
     config_parser = subparsers.add_parser(
         "config",
         help="View and edit configuration",
-        description="Manage Hermes Agent configuration",
+        description="Manage Newroz Agent configuration",
     )
     config_subparsers = config_parser.add_subparsers(dest="config_command")
 

@@ -3,8 +3,8 @@
 import os
 from unittest.mock import patch
 
-import hermes_cli.providers as providers_mod
-from hermes_cli.model_switch import list_authenticated_providers
+import newroz_cli.providers as providers_mod
+from newroz_cli.model_switch import list_authenticated_providers
 
 
 def test_opencode_zen_lists_all_models_while_other_providers_remain_capped(monkeypatch):
@@ -23,9 +23,9 @@ def test_opencode_zen_lists_all_models_while_other_providers_remain_capped(monke
         "agent.models_dev.fetch_models_dev",
         lambda: {"opencode": {}, "deepseek": {}},
     )
-    monkeypatch.setattr(providers_mod, "HERMES_OVERLAYS", {})
+    monkeypatch.setattr(providers_mod, "NEWROZ_OVERLAYS", {})
     monkeypatch.setattr(
-        "hermes_cli.models.cached_provider_model_ids",
+        "newroz_cli.models.cached_provider_model_ids",
         lambda provider: {
             "opencode-zen": zen_models,
             "deepseek": deepseek_models,

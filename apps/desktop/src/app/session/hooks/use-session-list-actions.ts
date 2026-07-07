@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 
-import { getCronJobs, listAllProfileSessions, type SessionInfo } from '@/hermes'
+import { getCronJobs, listAllProfileSessions, type SessionInfo } from '@/newroz'
 import {
   isMessagingSource,
   LOCAL_SESSION_SOURCE_IDS,

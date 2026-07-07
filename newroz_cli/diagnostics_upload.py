@@ -1,6 +1,6 @@
-"""Client for uploading ``hermes debug share`` bundles to Nous-internal S3.
+"""Client for uploading ``newroz debug share`` bundles to Nous-internal S3.
 
-This is the opt-in (``--nous``) destination for ``hermes debug share``.
+This is the opt-in (``--nous``) destination for ``newroz debug share``.
 Unlike the public paste.rs path, bundles uploaded here go to a Nous-owned
 S3 bucket via a short-lived signed URL minted by the Nous account service
 (NAS).  The bucket auto-expires objects after 14 days, and the contents are
@@ -28,7 +28,7 @@ import urllib.request
 # Overridable via env so the feature can be pointed at staging / a local dev
 # NAS instance during testing.
 NAS_BASE = os.environ.get(
-    "HERMES_DIAGNOSTICS_BASE_URL", "https://portal.nousresearch.com"
+    "NEWROZ_DIAGNOSTICS_BASE_URL", "https://portal.nousresearch.com"
 )
 
 # Network timeout for each request (seconds). The upload itself can be larger
@@ -36,7 +36,7 @@ NAS_BASE = os.environ.get(
 _REQUEST_TIMEOUT = 30
 _UPLOAD_TIMEOUT = 120
 
-_USER_AGENT = "hermes-agent/debug-share"
+_USER_AGENT = "newroz-agent/debug-share"
 
 
 def request_upload_url(

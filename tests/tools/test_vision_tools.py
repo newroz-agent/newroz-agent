@@ -274,7 +274,7 @@ class TestHandleVisionAnalyze:
                 return_value=False,
             ),
             patch(
-                "hermes_cli.config.load_config",
+                "newroz_cli.config.load_config",
                 return_value={"auxiliary": {"vision": {"model": "qwen3.7-plus"}}},
             ),
             patch.dict(os.environ, {"AUXILIARY_VISION_MODEL": "env-model"}),
@@ -299,7 +299,7 @@ class TestHandleVisionAnalyze:
                 return_value=False,
             ),
             patch(
-                "hermes_cli.config.load_config",
+                "newroz_cli.config.load_config",
                 return_value={"auxiliary": {"vision": {}}},
             ),
             patch.dict(os.environ, {"AUXILIARY_VISION_MODEL": "fallback-model"}),
@@ -433,7 +433,7 @@ class TestVisionConfig:
         mock_response.choices = [mock_choice]
 
         with (
-            patch("hermes_cli.config.load_config", return_value={
+            patch("newroz_cli.config.load_config", return_value={
                 "auxiliary": {"vision": {"temperature": 1, "timeout": 77}}
             }),
             patch(
@@ -463,7 +463,7 @@ class TestVisionConfig:
         mock_response.choices = [mock_choice]
 
         with (
-            patch("hermes_cli.config.load_config", return_value={"auxiliary": {"vision": {}}}),
+            patch("newroz_cli.config.load_config", return_value={"auxiliary": {"vision": {}}}),
             patch(
                 "tools.vision_tools._image_to_base64_data_url",
                 return_value="data:image/png;base64,abc",
@@ -598,7 +598,7 @@ class TestVisionRequirements:
         assert isinstance(result, bool)
 
     def test_check_requirements_accepts_codex_auth(self, monkeypatch, tmp_path):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         (tmp_path / "auth.json").write_text(
             '{"active_provider":"openai-codex","providers":{"openai-codex":{"tokens":{"access_token":"codex-access-token","refresh_token":"codex-refresh-token"}}}}'
         )
@@ -1176,9 +1176,9 @@ class TestVisionCpuBurstCap:
         with (
             patch.dict(os.environ, {}, clear=False),
             patch("tools.vision_tools._detect_host_cpus", return_value=64),
-            patch("hermes_cli.config.load_config", side_effect=Exception),
+            patch("newroz_cli.config.load_config", side_effect=Exception),
         ):
-            os.environ.pop("HERMES_VISION_MAX_CONCURRENCY", None)
+            os.environ.pop("NEWROZ_VISION_MAX_CONCURRENCY", None)
             # No fixed ceiling: a 64-core host gets 64 encode workers. The cap
             # tracks the actual resource (cores), not a magic number.
             assert vt._resolve_vision_cpu_workers() == 64
@@ -1189,15 +1189,15 @@ class TestVisionCpuBurstCap:
         with (
             patch.dict(os.environ, {}, clear=False),
             patch("tools.vision_tools._detect_host_cpus", return_value=2),
-            patch("hermes_cli.config.load_config", side_effect=Exception),
+            patch("newroz_cli.config.load_config", side_effect=Exception),
         ):
-            os.environ.pop("HERMES_VISION_MAX_CONCURRENCY", None)
+            os.environ.pop("NEWROZ_VISION_MAX_CONCURRENCY", None)
             assert vt._resolve_vision_cpu_workers() == 2
 
     def test_resolver_env_override(self):
         from tools import vision_tools as vt
 
-        with patch.dict(os.environ, {"HERMES_VISION_MAX_CONCURRENCY": "16"}):
+        with patch.dict(os.environ, {"NEWROZ_VISION_MAX_CONCURRENCY": "16"}):
             # Explicit override is honored verbatim — including ABOVE core count,
             # so operators can raise it for heavy multi-image workloads.
             assert vt._resolve_vision_cpu_workers() == 16
@@ -1206,9 +1206,9 @@ class TestVisionCpuBurstCap:
         from tools import vision_tools as vt
 
         with (
-            patch.dict(os.environ, {"HERMES_VISION_MAX_CONCURRENCY": "0"}),
+            patch.dict(os.environ, {"NEWROZ_VISION_MAX_CONCURRENCY": "0"}),
             patch("tools.vision_tools._detect_host_cpus", return_value=2),
-            patch("hermes_cli.config.load_config", side_effect=Exception),
+            patch("newroz_cli.config.load_config", side_effect=Exception),
         ):
             # 0 is ignored (cap can never be disabled) → falls back to host cores.
             assert vt._resolve_vision_cpu_workers() == 2

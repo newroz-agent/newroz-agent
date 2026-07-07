@@ -1,4 +1,4 @@
-"""Tests for hermes_cli configuration management."""
+"""Tests for newroz_cli configuration management."""
 
 import os
 from pathlib import Path
@@ -7,11 +7,11 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from hermes_cli.config import (
+from newroz_cli.config import (
     DEFAULT_CONFIG,
     check_config_version,
-    get_hermes_home,
-    ensure_hermes_home,
+    get_newroz_home,
+    ensure_newroz_home,
     get_compatible_custom_providers,
     _explicit_config_paths,
     _normalize_max_turns_config,
@@ -30,86 +30,86 @@ from hermes_cli.config import (
 )
 
 
-class TestGetHermesHome:
+class TestGetNewrozHome:
     def test_default_path(self):
         with patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("HERMES_HOME", None)
-            home = get_hermes_home()
-            assert home == Path.home() / ".hermes"
+            os.environ.pop("NEWROZ_HOME", None)
+            home = get_newroz_home()
+            assert home == Path.home() / ".newroz"
 
     def test_env_override(self):
-        with patch.dict(os.environ, {"HERMES_HOME": "/custom/path"}):
-            home = get_hermes_home()
+        with patch.dict(os.environ, {"NEWROZ_HOME": "/custom/path"}):
+            home = get_newroz_home()
             assert home == Path("/custom/path")
 
 
-class TestEnsureHermesHome:
+class TestEnsureNewrozHome:
     def test_creates_subdirs(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
-            ensure_hermes_home()
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
+            ensure_newroz_home()
             assert (tmp_path / "cron").is_dir()
             assert (tmp_path / "sessions").is_dir()
             assert (tmp_path / "logs").is_dir()
             assert (tmp_path / "memories").is_dir()
 
     def test_creates_default_soul_md_if_missing(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
-            ensure_hermes_home()
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
+            ensure_newroz_home()
             soul_path = tmp_path / "SOUL.md"
             assert soul_path.exists()
             assert soul_path.read_text(encoding="utf-8").strip() != ""
 
     def test_does_not_overwrite_existing_soul_md(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             soul_path = tmp_path / "SOUL.md"
             soul_path.write_text("custom soul", encoding="utf-8")
-            ensure_hermes_home()
+            ensure_newroz_home()
             assert soul_path.read_text(encoding="utf-8") == "custom soul"
 
     def test_upgrades_legacy_template_soul_md(self, tmp_path):
         # Older installers seeded a comment-only scaffold that shadowed the
         # runtime default. A SOUL.md still matching that scaffold carries no
         # user persona and should be upgraded in place to DEFAULT_SOUL_MD.
-        from hermes_cli.default_soul import DEFAULT_SOUL_MD, _LEGACY_TEMPLATE_SOULS
+        from newroz_cli.default_soul import DEFAULT_SOUL_MD, _LEGACY_TEMPLATE_SOULS
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             soul_path = tmp_path / "SOUL.md"
             soul_path.write_text(_LEGACY_TEMPLATE_SOULS[0] + "\n", encoding="utf-8")
-            ensure_hermes_home()
+            ensure_newroz_home()
             assert soul_path.read_text(encoding="utf-8") == DEFAULT_SOUL_MD
 
     def test_preserves_legacy_template_with_user_persona(self, tmp_path):
         # If the user typed a persona alongside the scaffold, the content no
         # longer matches the known empty template — leave it untouched.
-        from hermes_cli.default_soul import _LEGACY_TEMPLATE_SOULS
+        from newroz_cli.default_soul import _LEGACY_TEMPLATE_SOULS
 
         mixed = _LEGACY_TEMPLATE_SOULS[0] + "\nYou are a helpful pirate."
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             soul_path = tmp_path / "SOUL.md"
             soul_path.write_text(mixed, encoding="utf-8")
-            ensure_hermes_home()
+            ensure_newroz_home()
             assert soul_path.read_text(encoding="utf-8") == mixed
 
     def test_existing_named_profile_still_bootstraps_subdirs(self, tmp_path):
-        profile_home = tmp_path / ".hermes" / "profiles" / "coder"
+        profile_home = tmp_path / ".newroz" / "profiles" / "coder"
         profile_home.mkdir(parents=True)
-        with patch.dict(os.environ, {"HERMES_HOME": str(profile_home)}):
-            ensure_hermes_home()
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(profile_home)}):
+            ensure_newroz_home()
             assert (profile_home / "cron").is_dir()
             assert (profile_home / "sessions").is_dir()
             assert (profile_home / "memories").is_dir()
 
     def test_missing_named_profile_is_not_recreated(self, tmp_path):
-        profile_home = tmp_path / ".hermes" / "profiles" / "coder"
-        with patch.dict(os.environ, {"HERMES_HOME": str(profile_home)}):
+        profile_home = tmp_path / ".newroz" / "profiles" / "coder"
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(profile_home)}):
             with pytest.raises(FileNotFoundError, match="Named profile home does not exist"):
-                ensure_hermes_home()
+                ensure_newroz_home()
         assert not profile_home.exists()
 
 
 class TestLoadConfigDefaults:
     def test_returns_defaults_when_no_file(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             config = load_config()
             assert config["model"] == DEFAULT_CONFIG["model"]
             assert config["agent"]["max_turns"] == DEFAULT_CONFIG["agent"]["max_turns"]
@@ -119,7 +119,7 @@ class TestLoadConfigDefaults:
             assert config["display"]["interim_assistant_messages"] is True
 
     def test_legacy_root_level_max_turns_migrates_to_agent_config(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             config_path = tmp_path / "config.yaml"
             config_path.write_text("max_turns: 42\n")
 
@@ -134,7 +134,7 @@ class TestLoadConfigParseFailure:
     Before issue #23570 this was a single ``print(...)`` that scrolled past
     on the first invocation — users saw aux-fallback misbehavior with no clue
     their config.yaml was being ignored. The helper must:
-      * log at WARNING (so ``hermes logs`` surfaces it)
+      * log at WARNING (so ``newroz logs`` surfaces it)
       * also write to stderr (so it's visible at startup even before
         ``setup_logging()`` has wired up file handlers)
       * dedup on (path, mtime_ns, size) so concurrent loads don't spam
@@ -144,14 +144,14 @@ class TestLoadConfigParseFailure:
     def test_logs_and_warns_on_parse_failure(self, tmp_path, caplog, capsys):
         # Reset the dedup cache so this test isn't affected by other tests
         # that may have warned about a different broken config.
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
         cfg_mod._CONFIG_PARSE_WARNED.clear()
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             (tmp_path / "config.yaml").write_text("\tbroken tab indent:\n")
 
             import logging
-            with caplog.at_level(logging.WARNING, logger="hermes_cli.config"):
+            with caplog.at_level(logging.WARNING, logger="newroz_cli.config"):
                 config = load_config()
 
             # Falls back to defaults — confirms the silent-fallback we're warning about
@@ -165,21 +165,21 @@ class TestLoadConfigParseFailure:
             ), f"expected WARNING log, got: {[r.message for r in caplog.records]}"
 
             # stderr also got a user-visible message (with the ⚠️ marker so it
-            # stands out at hermes startup before logging is configured)
+            # stands out at newroz startup before logging is configured)
             captured = capsys.readouterr()
-            assert "hermes config:" in captured.err
+            assert "newroz config:" in captured.err
             assert str(tmp_path / "config.yaml") in captured.err
 
     def test_dedup_on_repeated_load_same_file(self, tmp_path, capsys):
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
         cfg_mod._CONFIG_PARSE_WARNED.clear()
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             (tmp_path / "config.yaml").write_text("\tbroken:\n")
 
             load_config()
             first = capsys.readouterr().err
-            assert "hermes config:" in first
+            assert "newroz config:" in first
 
             load_config()
             second = capsys.readouterr().err
@@ -187,10 +187,10 @@ class TestLoadConfigParseFailure:
 
     def test_rewarns_after_file_edit(self, tmp_path, capsys):
         import time
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
         cfg_mod._CONFIG_PARSE_WARNED.clear()
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             (tmp_path / "config.yaml").write_text("\tbroken:\n")
             load_config()
             capsys.readouterr()  # discard first warning
@@ -200,7 +200,7 @@ class TestLoadConfigParseFailure:
             (tmp_path / "config.yaml").write_text("\tstill broken differently:\n")
             load_config()
             after_edit = capsys.readouterr().err
-            assert "hermes config:" in after_edit, "edited file should re-warn"
+            assert "newroz config:" in after_edit, "edited file should re-warn"
 
     def test_corrupt_config_is_backed_up(self, tmp_path, capsys):
         """A broken config.yaml is snapshotted to a timestamped .bak so the
@@ -209,10 +209,10 @@ class TestLoadConfigParseFailure:
         Ported from google-gemini/gemini-cli#21541 (policy-file TOML recovery),
         adapted: we back up but deliberately do NOT reset config.yaml.
         """
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
         cfg_mod._CONFIG_PARSE_WARNED.clear()
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             broken = "\tmodel: test/custom\nbroken indent:\n"
             (tmp_path / "config.yaml").write_text(broken)
 
@@ -231,10 +231,10 @@ class TestLoadConfigParseFailure:
     def test_backup_skips_when_same_size_bak_exists(self, tmp_path, capsys):
         """Don't churn backups: if a corrupt backup of the same size already
         exists (same corruption already preserved), skip making another."""
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
         cfg_mod._CONFIG_PARSE_WARNED.clear()
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             broken = "\tbroken:\n"
             cfg = tmp_path / "config.yaml"
             cfg.write_text(broken)
@@ -253,10 +253,10 @@ class TestLoadConfigParseFailure:
         import sys as _sys
         if _sys.platform == "win32":
             pytest.skip("symlink creation requires privileges on Windows")
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
         cfg_mod._CONFIG_PARSE_WARNED.clear()
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             real = tmp_path / "real_config.yaml"
             real.write_text("\tbroken:\n")
             link = tmp_path / "config.yaml"
@@ -280,7 +280,7 @@ class TestSaveAndLoadRoundtrip:
         return fake_open
 
     def test_roundtrip(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             config = load_config()
             config["model"] = "test/custom-model"
             config["agent"]["max_turns"] = 42
@@ -299,7 +299,7 @@ class TestSaveAndLoadRoundtrip:
         original = "model: test/original\n"
         config_path.write_text(original, encoding="utf-8")
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             with patch("builtins.open", side_effect=self._deny_config_reads(config_path)):
                 with pytest.raises(RuntimeError, match="Refusing to overwrite"):
                     save_config({"model": "test/replacement"})
@@ -311,7 +311,7 @@ class TestSaveAndLoadRoundtrip:
         original = "model:\n  provider: openrouter\n"
         config_path.write_text(original, encoding="utf-8")
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             with patch("builtins.open", side_effect=self._deny_config_reads(config_path)):
                 with pytest.raises(RuntimeError, match="Refusing to overwrite"):
                     set_config_value("model.provider", "openai")
@@ -323,7 +323,7 @@ class TestSaveAndLoadRoundtrip:
         fail closed on an unreadable existing config.yaml — this locks in the
         whole bug class (gateway slash commands, doctor --fix, yuanbao/telegram
         auto-sethome, tui_gateway _save_cfg), not just the three named paths."""
-        from hermes_cli.config import atomic_config_write
+        from newroz_cli.config import atomic_config_write
 
         config_path = tmp_path / "config.yaml"
         original = "model:\n  provider: openrouter\n"
@@ -338,7 +338,7 @@ class TestSaveAndLoadRoundtrip:
     def test_atomic_config_write_creates_new_file(self, tmp_path):
         """A genuinely absent config.yaml must still be created — the guard
         only refuses to clobber an existing-but-unreadable file."""
-        from hermes_cli.config import atomic_config_write
+        from newroz_cli.config import atomic_config_write
 
         config_path = tmp_path / "config.yaml"
         assert not config_path.exists()
@@ -347,7 +347,7 @@ class TestSaveAndLoadRoundtrip:
         assert "openrouter" in config_path.read_text(encoding="utf-8")
 
     def test_save_config_normalizes_legacy_root_level_max_turns(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_config({"model": "test/custom-model", "max_turns": 37})
 
             saved = yaml.safe_load((tmp_path / "config.yaml").read_text())
@@ -355,7 +355,7 @@ class TestSaveAndLoadRoundtrip:
             assert "max_turns" not in saved
 
     def test_nested_values_preserved(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             config = load_config()
             config["terminal"]["timeout"] = 999
             save_config(config)
@@ -364,7 +364,7 @@ class TestSaveAndLoadRoundtrip:
             assert reloaded["terminal"]["timeout"] == 999
 
     def test_write_platform_config_field_coerces_nested_platform_maps(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             (tmp_path / "config.yaml").write_text(
                 "model: test/custom-model\nplatforms: not-a-map\n",
                 encoding="utf-8",
@@ -384,7 +384,7 @@ class TestSaveAndLoadRoundtrip:
 
 class TestSaveEnvValueSecure:
     def test_save_env_value_writes_without_stdout(self, tmp_path, capsys):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_env_value("TENOR_API_KEY", "sk-test-secret")
             captured = capsys.readouterr()
             assert captured.out == ""
@@ -394,7 +394,7 @@ class TestSaveEnvValueSecure:
             assert env_values["TENOR_API_KEY"] == "sk-test-secret"
 
     def test_secure_save_returns_metadata_only(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             result = save_env_value_secure("GITHUB_TOKEN", "ghp_test_secret")
             assert result == {
                 "success": True,
@@ -404,7 +404,7 @@ class TestSaveEnvValueSecure:
             assert "secret" not in str(result).lower()
 
     def test_save_env_value_updates_process_environment(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}, clear=False):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}, clear=False):
             os.environ.pop("TENOR_API_KEY", None)
             save_env_value("TENOR_API_KEY", "sk-test-secret")
             assert os.environ["TENOR_API_KEY"] == "sk-test-secret"
@@ -413,7 +413,7 @@ class TestSaveEnvValueSecure:
         if os.name == "nt":
             return
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_env_value("TENOR_API_KEY", "sk-test-secret")
             env_mode = (tmp_path / ".env").stat().st_mode & 0o777
             assert env_mode == 0o600
@@ -431,7 +431,7 @@ class TestSaveEnvValueSecure:
         env_path.write_text("EXISTING=value\n")
         os.chmod(env_path, 0o640)
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_env_value("TENOR_API_KEY", "sk-test-secret")
 
         env_mode = env_path.stat().st_mode & 0o777
@@ -441,7 +441,7 @@ class TestSaveEnvValueSecure:
         """Regression test for #30355."""
         from dotenv import dotenv_values
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}, clear=False):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}, clear=False):
             os.environ.pop("ANTHROPIC_TOKEN", None)
             token = "sk-ant-oat01-abc#xyz#more"
             save_env_value("ANTHROPIC_TOKEN", token)
@@ -456,7 +456,7 @@ class TestSaveEnvValueSecure:
     def test_save_env_value_hash_value_round_trips_quotes_and_backslashes(self, tmp_path):
         from dotenv import dotenv_values
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}, clear=False):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}, clear=False):
             os.environ.pop("ANTHROPIC_TOKEN", None)
             token = 'abc"def\\ghi#jkl'
             save_env_value("ANTHROPIC_TOKEN", token)
@@ -471,7 +471,7 @@ class TestSaveEnvValueSecure:
     def test_save_env_value_updates_hash_value_with_quotes(self, tmp_path):
         from dotenv import dotenv_values
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}, clear=False):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}, clear=False):
             os.environ.pop("ANTHROPIC_TOKEN", None)
             save_env_value("ANTHROPIC_TOKEN", "old-token")
 
@@ -491,7 +491,7 @@ class TestRemoveEnvValue:
     def test_removes_key_from_env_file(self, tmp_path):
         env_path = tmp_path / ".env"
         env_path.write_text("KEY_A=value_a\nKEY_B=value_b\nKEY_C=value_c\n")
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path), "KEY_B": "value_b"}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path), "KEY_B": "value_b"}):
             result = remove_env_value("KEY_B")
             assert result is True
             content = env_path.read_text()
@@ -502,21 +502,21 @@ class TestRemoveEnvValue:
     def test_clears_os_environ(self, tmp_path):
         env_path = tmp_path / ".env"
         env_path.write_text("MY_KEY=my_value\n")
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path), "MY_KEY": "my_value"}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path), "MY_KEY": "my_value"}):
             remove_env_value("MY_KEY")
             assert "MY_KEY" not in os.environ
 
     def test_returns_false_when_key_not_found(self, tmp_path):
         env_path = tmp_path / ".env"
         env_path.write_text("OTHER_KEY=value\n")
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             result = remove_env_value("MISSING_KEY")
             assert result is False
             # File should be untouched
             assert env_path.read_text() == "OTHER_KEY=value\n"
 
     def test_handles_missing_env_file(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path), "GHOST_KEY": "ghost"}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path), "GHOST_KEY": "ghost"}):
             result = remove_env_value("GHOST_KEY")
             assert result is False
             # os.environ should still be cleared
@@ -525,7 +525,7 @@ class TestRemoveEnvValue:
     def test_clears_os_environ_even_when_not_in_file(self, tmp_path):
         env_path = tmp_path / ".env"
         env_path.write_text("OTHER=stuff\n")
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path), "ORPHAN_KEY": "orphan"}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path), "ORPHAN_KEY": "orphan"}):
             remove_env_value("ORPHAN_KEY")
             assert "ORPHAN_KEY" not in os.environ
 
@@ -543,7 +543,7 @@ class TestRemoveEnvValue:
         env_path.write_text("KEEP=value\nDROP=gone\n")
         os.chmod(env_path, 0o640)
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path), "DROP": "gone"}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path), "DROP": "gone"}):
             removed = remove_env_value("DROP")
 
         assert removed is True
@@ -557,7 +557,7 @@ class TestSaveConfigAtomicity:
 
     def test_no_partial_write_on_crash(self, tmp_path):
         """If save_config crashes mid-write, the previous file stays intact."""
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             # Write an initial config
             config = load_config()
             config["model"] = "original-model"
@@ -581,7 +581,7 @@ class TestSaveConfigAtomicity:
 
     def test_no_leftover_temp_files(self, tmp_path):
         """Failed writes must clean up their temp files."""
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             config = load_config()
             save_config(config)
 
@@ -597,7 +597,7 @@ class TestSaveConfigAtomicity:
 
     def test_atomic_write_creates_valid_yaml(self, tmp_path):
         """The written file must be valid YAML matching the input."""
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             config = load_config()
             config["model"] = "test/atomic-model"
             config["agent"]["max_turns"] = 77
@@ -717,7 +717,7 @@ class TestSanitizeEnvLines:
             "ANTHROPIC_API_KEY=sk-antOPENAI_BASE_URL=https://api.openai.com/v1\n"
             "FAL_KEY=existing\n"
         )
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_env_value("MESSAGING_CWD", "/tmp")
 
             content = env_file.read_text()
@@ -735,7 +735,7 @@ class TestSanitizeEnvLines:
             "FAL_KEY=good\n"
             "OPENROUTER_API_KEY=valFIRECRAWL_API_KEY=val2\n"
         )
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             fixes = sanitize_env_file()
             assert fixes > 0
 
@@ -748,7 +748,7 @@ class TestSanitizeEnvLines:
         """No changes when file is already clean."""
         env_file = tmp_path / ".env"
         env_file.write_text("GOOD_KEY=good\nOTHER_KEY=other\n")
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             fixes = sanitize_env_file()
             assert fixes == 0
 
@@ -758,49 +758,49 @@ class TestOptionalEnvVarsRegistry:
 
     def test_tavily_api_key_registered(self):
         """TAVILY_API_KEY is listed in OPTIONAL_ENV_VARS."""
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         assert "TAVILY_API_KEY" in OPTIONAL_ENV_VARS
 
     def test_tavily_api_key_is_tool_category(self):
         """TAVILY_API_KEY is in the 'tool' category."""
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         assert OPTIONAL_ENV_VARS["TAVILY_API_KEY"]["category"] == "tool"
 
     def test_tavily_api_key_is_password(self):
         """TAVILY_API_KEY is marked as password."""
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         assert OPTIONAL_ENV_VARS["TAVILY_API_KEY"]["password"] is True
 
     def test_tavily_api_key_has_url(self):
         """TAVILY_API_KEY has a URL."""
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         assert OPTIONAL_ENV_VARS["TAVILY_API_KEY"]["url"] == "https://app.tavily.com/home"
 
     def test_tavily_in_env_vars_by_version(self):
         """TAVILY_API_KEY is listed in ENV_VARS_BY_VERSION."""
-        from hermes_cli.config import ENV_VARS_BY_VERSION
+        from newroz_cli.config import ENV_VARS_BY_VERSION
         all_vars = []
         for vars_list in ENV_VARS_BY_VERSION.values():
             all_vars.extend(vars_list)
         assert "TAVILY_API_KEY" in all_vars
 
     def test_max_iterations_not_offered_as_env_var(self):
-        """HERMES_MAX_ITERATIONS must NOT be in OPTIONAL_ENV_VARS (issue #17534).
+        """NEWROZ_MAX_ITERATIONS must NOT be in OPTIONAL_ENV_VARS (issue #17534).
 
-        Offering it as an editable env var (dashboard, `hermes setup`) lets a
+        Offering it as an editable env var (dashboard, `newroz setup`) lets a
         user write it to .env, recreating the stale ghost that shadows
         config.yaml's agent.max_turns. The iteration budget is configured ONLY
-        via config.yaml; HERMES_MAX_ITERATIONS remains a read-only backward-compat
+        via config.yaml; NEWROZ_MAX_ITERATIONS remains a read-only backward-compat
         fallback in the gateway/CLI, never a promoted write target.
         """
-        from hermes_cli.config import OPTIONAL_ENV_VARS
-        assert "HERMES_MAX_ITERATIONS" not in OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
+        assert "NEWROZ_MAX_ITERATIONS" not in OPTIONAL_ENV_VARS
 
 
 class TestMemoryProviderEnvVarsRegistry:
     """Every memory provider that reads an API key from the environment must
     have that key catalogued in OPTIONAL_ENV_VARS so the dashboard Keys page
-    and `hermes setup` surface it (previously only Honcho was listed, leaving
+    and `newroz setup` surface it (previously only Honcho was listed, leaving
     Hindsight/Supermemory/Mem0/RetainDB/ByteRover/OpenViking invisible).
 
     This is a behavior contract, not a snapshot: it asserts each provider's
@@ -820,29 +820,29 @@ class TestMemoryProviderEnvVarsRegistry:
     }
 
     def test_memory_provider_keys_are_catalogued(self):
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         missing = [k for k in self.MEMORY_PROVIDER_KEYS if k not in OPTIONAL_ENV_VARS]
         assert not missing, f"memory provider keys missing from OPTIONAL_ENV_VARS: {missing}"
 
     def test_memory_provider_keys_are_tool_category(self):
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         for key in self.MEMORY_PROVIDER_KEYS:
             assert OPTIONAL_ENV_VARS[key]["category"] == "tool", key
 
     def test_memory_provider_keys_are_password_masked(self):
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         for key in self.MEMORY_PROVIDER_KEYS:
             assert OPTIONAL_ENV_VARS[key].get("password") is True, key
 
     def test_memory_provider_keys_advertise_their_tool(self):
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
         for key, tool in self.MEMORY_PROVIDER_KEYS.items():
             assert tool in OPTIONAL_ENV_VARS[key].get("tools", []), key
 
 
 class TestConfigMigrationSecretPrompts:
     def test_required_secret_env_prompt_uses_masked_prompt(self, tmp_path, monkeypatch):
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
 
         saved = {}
 
@@ -875,7 +875,7 @@ class TestConfigMigrationSecretPrompts:
             lambda name, value: saved.update({name: value}),
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             results = cfg_mod.migrate_config(interactive=True, quiet=True)
 
         assert saved["prompt"] == "  Test API key: "
@@ -888,19 +888,19 @@ class TestConfigVersionDetection:
         config_path = tmp_path / "config.yaml"
         config_path.write_text("model: {}\n", encoding="utf-8")
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             assert load_config()["_config_version"] == DEFAULT_CONFIG["_config_version"]
             assert check_config_version() == (0, DEFAULT_CONFIG["_config_version"])
 
     def test_check_config_version_treats_missing_file_as_current(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             latest = DEFAULT_CONFIG["_config_version"]
             assert check_config_version() == (latest, latest)
 
     def test_check_config_version_does_not_migrate_invalid_yaml(self, tmp_path):
         (tmp_path / "config.yaml").write_text("model: [unterminated\n", encoding="utf-8")
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             latest = DEFAULT_CONFIG["_config_version"]
             assert check_config_version() == (latest, latest)
 
@@ -918,7 +918,7 @@ class TestAnthropicTokenMigration:
         self._write_config_version(tmp_path, 8)
         (tmp_path / ".env").write_text("ANTHROPIC_TOKEN=old-token\n")
         with patch.dict(os.environ, {
-            "HERMES_HOME": str(tmp_path),
+            "NEWROZ_HOME": str(tmp_path),
             "ANTHROPIC_TOKEN": "old-token",
         }):
             migrate_config(interactive=False, quiet=True)
@@ -929,7 +929,7 @@ class TestAnthropicTokenMigration:
         self._write_config_version(tmp_path, 9)
         (tmp_path / ".env").write_text("ANTHROPIC_TOKEN=current-token\n")
         with patch.dict(os.environ, {
-            "HERMES_HOME": str(tmp_path),
+            "NEWROZ_HOME": str(tmp_path),
             "ANTHROPIC_TOKEN": "current-token",
         }):
             migrate_config(interactive=False, quiet=True)
@@ -966,11 +966,11 @@ class TestCustomProviderCompatibility:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
-        from hermes_cli.config import DEFAULT_CONFIG
+        from newroz_cli.config import DEFAULT_CONFIG
         assert raw["_config_version"] == DEFAULT_CONFIG["_config_version"]
         assert raw["providers"]["openai-direct"] == {
             "api": "https://api.openai.com/v1",
@@ -1018,7 +1018,7 @@ class TestCustomProviderCompatibility:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
             compatible = get_compatible_custom_providers(raw)
@@ -1069,7 +1069,7 @@ class TestCustomProviderCompatibility:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             compatible = get_compatible_custom_providers()
 
         assert len(compatible) == 1
@@ -1098,7 +1098,7 @@ class TestCustomProviderCompatibility:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             compatible = get_compatible_custom_providers()
 
         assert compatible == [
@@ -1135,7 +1135,7 @@ class TestCustomProviderCompatibility:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             compatible = get_compatible_custom_providers()
 
         assert len(compatible) == 1
@@ -1159,7 +1159,7 @@ class TestCustomProviderCompatibility:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             compatible = get_compatible_custom_providers()
 
         assert len(compatible) == 3
@@ -1180,12 +1180,12 @@ class TestInterimAssistantMessageConfig:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
             loaded = load_config()
 
-        from hermes_cli.config import DEFAULT_CONFIG
+        from newroz_cli.config import DEFAULT_CONFIG
         assert raw["_config_version"] == DEFAULT_CONFIG["_config_version"]
         # The user's explicit non-default value is preserved on disk.
         assert raw["display"]["tool_progress"] == "off"
@@ -1218,11 +1218,11 @@ class TestDiscordChannelPromptsConfig:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
-        from hermes_cli.config import DEFAULT_CONFIG
+        from newroz_cli.config import DEFAULT_CONFIG
         assert raw["_config_version"] == DEFAULT_CONFIG["_config_version"]
         assert raw["discord"]["auto_thread"] is True
         # channel_prompts is a DEFAULT_CONFIG value that should NOT be expanded
@@ -1251,7 +1251,7 @@ class TestDiscordChannelPromptsConfig:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
@@ -1281,24 +1281,24 @@ class TestUserMessagePreviewConfig:
 class TestEnvWriteDenylist:
     """``save_env_value`` refuses to persist env-var names that
     influence how subprocesses execute — ``LD_PRELOAD``, ``PYTHONPATH``,
-    ``PATH``, ``EDITOR``, etc. — or any ``HERMES_*`` runtime flag.
+    ``PATH``, ``EDITOR``, etc. — or any ``NEWROZ_*`` runtime flag.
 
     The dashboard exposes ``PUT /api/env`` to any authed caller (and
     the session token lives in the SPA's HTML where any future plugin
     XSS or local process could exfiltrate it). Without this gate, an
     attacker who steals the token could plant
-    ``LD_PRELOAD=/tmp/evil.so`` in ``.env`` and own the next Hermes
+    ``LD_PRELOAD=/tmp/evil.so`` in ``.env`` and own the next Newroz
     process on next startup via the dotenv → ``os.environ`` chain in
-    ``hermes_cli/env_loader.py``.
+    ``newroz_cli/env_loader.py``.
 
     Regression test for the dashboard pentest finding filed alongside
     the ``web-pentest`` skill (PR #32265 / issue #32267).
     """
 
     @pytest.fixture(autouse=True)
-    def _hermes_home(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-        ensure_hermes_home()
+    def _newroz_home(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+        ensure_newroz_home()
 
     @pytest.mark.parametrize(
         "denied_key",
@@ -1321,10 +1321,10 @@ class TestEnvWriteDenylist:
             "BROWSER",
             "GIT_SSH_COMMAND",
             "GIT_EXEC_PATH",
-            "HERMES_HOME",
-            "HERMES_PROFILE",
-            "HERMES_CONFIG",
-            "HERMES_ENV",
+            "NEWROZ_HOME",
+            "NEWROZ_PROFILE",
+            "NEWROZ_CONFIG",
+            "NEWROZ_ENV",
         ],
     )
     def test_denylisted_keys_rejected(self, denied_key):
@@ -1340,16 +1340,16 @@ class TestEnvWriteDenylist:
     @pytest.mark.parametrize(
         "allowed_key",
         [
-            "HERMES_LANGFUSE_PUBLIC_KEY",
-            "HERMES_SPOTIFY_CLIENT_ID",
-            "HERMES_QWEN_BASE_URL",
-            "HERMES_MAX_ITERATIONS",
+            "NEWROZ_LANGFUSE_PUBLIC_KEY",
+            "NEWROZ_SPOTIFY_CLIENT_ID",
+            "NEWROZ_QWEN_BASE_URL",
+            "NEWROZ_MAX_ITERATIONS",
         ],
     )
-    def test_hermes_integration_keys_still_writable(self, allowed_key):
-        """``HERMES_*`` overall is NOT blocked — only the four runtime
+    def test_newroz_integration_keys_still_writable(self, allowed_key):
+        """``NEWROZ_*`` overall is NOT blocked — only the four runtime
         location names (HOME/PROFILE/CONFIG/ENV) are. Integration
-        credentials following the ``HERMES_*`` convention must keep
+        credentials following the ``NEWROZ_*`` convention must keep
         working or we'd regress every provider setup wizard that
         currently writes one of these (auth.py, Spotify, Langfuse, …)."""
         save_env_value(allowed_key, "test-value-123")
@@ -1364,7 +1364,7 @@ class TestEnvWriteDenylist:
 
     def test_arbitrary_user_key_still_works(self):
         """Plugin / user-defined env vars (anything outside the
-        denylist and outside ``HERMES_*``) keep working. The denylist
+        denylist and outside ``NEWROZ_*``) keep working. The denylist
         is narrow on purpose."""
         save_env_value("MY_PLUGIN_TOKEN", "plugin-secret-123")
         env = load_env()
@@ -1405,7 +1405,7 @@ class TestWriteApprovalMigration:
         (tmp_path / "config.yaml").write_text(body)
 
     def test_approve_maps_to_true(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path,
                         "_config_version: 28\nmemory:\n  write_mode: approve\n"
                         "skills:\n  write_mode: approve\n")
@@ -1417,7 +1417,7 @@ class TestWriteApprovalMigration:
             assert "write_mode" not in raw["skills"]
 
     def test_on_and_off_map_to_false(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             # YAML 1.1 parses bare on/off as bools — write_mode could be either
             # the string or the bool; both legacy "not gating" values → False.
             self._write(tmp_path,
@@ -1436,7 +1436,7 @@ class TestWriteApprovalMigration:
             assert loaded["skills"]["write_approval"] is False
 
     def test_unset_key_defaults_to_false(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 28\nmemory:\n  memory_enabled: true\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
@@ -1463,7 +1463,7 @@ class TestMigrationWriteInvariant:
         writes must go through _persist_migration()."""
         import ast
         import inspect
-        from hermes_cli import config as cfg_mod
+        from newroz_cli import config as cfg_mod
 
         src = inspect.getsource(cfg_mod.migrate_config)
         tree = ast.parse(src.lstrip())
@@ -1500,7 +1500,7 @@ class TestMigrationWriteInvariant:
             }, sort_keys=False),
             encoding="utf-8",
         )
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
             loaded = load_config()
@@ -1531,14 +1531,14 @@ class TestVerifyOnStopMigration:
         (tmp_path / "config.yaml").write_text(body, encoding="utf-8")
 
     def test_auto_sentinel_flipped_to_false(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 30\nagent:\n  verify_on_stop: auto\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
             assert raw["agent"]["verify_on_stop"] is False
 
     def test_missing_key_seeded_false(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 30\nagent:\n  max_turns: 5\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
@@ -1546,7 +1546,7 @@ class TestVerifyOnStopMigration:
             assert raw["agent"]["max_turns"] == 5
 
     def test_no_agent_section_seeded_false(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 30\nmodel:\n  provider: openrouter\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
@@ -1557,7 +1557,7 @@ class TestVerifyOnStopMigration:
         # as the silent default (config v30). It was never a user choice, so the
         # v31→v32 migration flips it off. v31's block preserved it (the bug this
         # fixes); v32 catches the whole stranded population.
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 30\nagent:\n  verify_on_stop: true\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
@@ -1567,7 +1567,7 @@ class TestVerifyOnStopMigration:
         # Teknium's case: a v30 install that already ran the v31 migration kept
         # its baked-in literal `true` (v31 preserved explicit bools). v32 flips
         # it off.
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 31\nagent:\n  verify_on_stop: true\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
@@ -1576,9 +1576,9 @@ class TestVerifyOnStopMigration:
     def test_post_v32_explicit_true_preserved(self, tmp_path):
         # A `true` the user sets AFTER v32 (config already at current version) is
         # a deliberate opt-in and must never be flipped.
-        from hermes_cli.config import DEFAULT_CONFIG
+        from newroz_cli.config import DEFAULT_CONFIG
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(
                 tmp_path,
                 f"_config_version: {DEFAULT_CONFIG['_config_version']}\n"
@@ -1589,16 +1589,16 @@ class TestVerifyOnStopMigration:
             assert raw["agent"]["verify_on_stop"] is True
 
     def test_explicit_false_preserved(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 30\nagent:\n  verify_on_stop: false\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
             assert raw["agent"]["verify_on_stop"] is False
 
     def test_already_current_version_is_noop(self, tmp_path):
-        from hermes_cli.config import DEFAULT_CONFIG
+        from newroz_cli.config import DEFAULT_CONFIG
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(
                 tmp_path,
                 f"_config_version: {DEFAULT_CONFIG['_config_version']}\n"
@@ -1615,7 +1615,7 @@ class TestDelegationCapUnificationMigration:
         (tmp_path / "config.yaml").write_text(body, encoding="utf-8")
 
     def test_stale_default_key_removed(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(
                 tmp_path,
                 "_config_version: 32\ndelegation:\n  max_async_children: 3\n"
@@ -1628,7 +1628,7 @@ class TestDelegationCapUnificationMigration:
         assert raw["delegation"]["max_concurrent_children"] == 15
 
     def test_raised_async_cap_folded_into_children_cap(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(
                 tmp_path,
                 "_config_version: 32\ndelegation:\n  max_async_children: 20\n"
@@ -1640,7 +1640,7 @@ class TestDelegationCapUnificationMigration:
         assert raw["delegation"]["max_concurrent_children"] == 20
 
     def test_higher_children_cap_wins(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(
                 tmp_path,
                 "_config_version: 32\ndelegation:\n  max_async_children: 8\n"
@@ -1652,7 +1652,7 @@ class TestDelegationCapUnificationMigration:
         assert raw["delegation"]["max_concurrent_children"] == 15
 
     def test_no_delegation_section_is_noop(self, tmp_path):
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             self._write(tmp_path, "_config_version: 32\nmodel:\n  provider: openrouter\n")
             migrate_config(interactive=False, quiet=True)
             raw = yaml.safe_load((tmp_path / "config.yaml").read_text())
@@ -1678,7 +1678,7 @@ class TestConfigNormalizationDoesNotOverwriteUserValues:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_config(load_config())
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
@@ -1698,7 +1698,7 @@ class TestConfigNormalizationDoesNotOverwriteUserValues:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_config(load_config())
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
@@ -1712,7 +1712,7 @@ class TestConfigNormalizationDoesNotOverwriteUserValues:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_config(load_config())
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
@@ -1732,7 +1732,7 @@ class TestConfigNormalizationDoesNotOverwriteUserValues:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             save_config(load_config())
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
@@ -1745,7 +1745,7 @@ class TestConfigNormalizationDoesNotOverwriteUserValues:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             config = load_config()
             config.setdefault("agent", {})["max_turns"] = DEFAULT_CONFIG["agent"]["max_turns"]
             save_config(config, preserve_keys={("agent", "max_turns")})
@@ -1772,7 +1772,7 @@ class TestConfigNormalizationDoesNotOverwriteUserValues:
             encoding="utf-8",
         )
 
-        with patch.dict(os.environ, {"HERMES_HOME": str(tmp_path)}):
+        with patch.dict(os.environ, {"NEWROZ_HOME": str(tmp_path)}):
             raw_paths = _explicit_config_paths(read_raw_config())
 
         assert ("memory", "user_char_limit") in raw_paths

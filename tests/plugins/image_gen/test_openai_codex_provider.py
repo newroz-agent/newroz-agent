@@ -33,8 +33,8 @@ def _b64_png() -> str:
 
 
 @pytest.fixture(autouse=True)
-def _tmp_hermes_home(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+def _tmp_newroz_home(tmp_path, monkeypatch):
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     yield tmp_path
 
 

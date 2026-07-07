@@ -10,7 +10,7 @@ blocks two high-signal abuse shapes seen in the wild:
    interpreter whose inline script writes to OS persistence surfaces
    (``~/.ssh/authorized_keys``, ``/etc/ssh``, ``/etc/pam.d``, ``sudoers``,
    crontab, shell rc files). The campaign planted ``command: bash`` MCP entries
-   whose payload appended an attacker SSH key to ``authorized_keys``; Hermes
+   whose payload appended an attacker SSH key to ``authorized_keys``; Newroz
    re-executed them on every cron tick / startup, re-installing the backdoor.
 
 3. A hardcoded indicator-of-compromise (IOC) blocklist for that campaign — the
@@ -76,7 +76,7 @@ _PERSISTENCE_PATTERN = re.compile(
 # ── Indicators of compromise: June 2026 hermes-0day campaign ──────────────────
 # Hardcoded so a pre-planted config.yaml (written by any vector) is refused at
 # both save and spawn time. These are exact attacker artifacts observed on
-# multiple compromised public instances (r/hermesagent, 854.media).
+# multiple compromised public instances (r/newrozagent, 854.media).
 _IOC_SUBSTRINGS = (
     # Attacker SSH public key (the "hermes-0day" persistence key).
     "AAAAC3NzaC1lZDI1NTE5AAAAICBoh1oDC4DnsO1m5mJ4yfEKrQebaFh",

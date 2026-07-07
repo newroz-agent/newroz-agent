@@ -10,24 +10,24 @@ Server-side LLM fact extraction with semantic search and hybrid multi-signal ret
 ## Setup
 
 ```bash
-hermes memory setup    # select "mem0"
+newroz memory setup    # select "mem0"
 ```
 
 Or manually:
 ```bash
-hermes config set memory.provider mem0
-echo "MEM0_API_KEY=your-key" >> ~/.hermes/.env
+newroz config set memory.provider mem0
+echo "MEM0_API_KEY=your-key" >> ~/.newroz/.env
 ```
 
 ## Config
 
-Behavioral settings live in `$HERMES_HOME/mem0.json` (set them via `hermes memory setup`). Only the secret `MEM0_API_KEY` belongs in `~/.hermes/.env`.
+Behavioral settings live in `$NEWROZ_HOME/mem0.json` (set them via `newroz memory setup`). Only the secret `MEM0_API_KEY` belongs in `~/.newroz/.env`.
 
 | Key | Default | Description |
 |-----|---------|-------------|
 | `mode` | `platform` | `platform` (Mem0 Cloud) or `oss` (self-hosted) |
-| `user_id` | `hermes-user` | User identifier on Mem0 |
-| `agent_id` | `hermes` | Agent identifier |
+| `user_id` | `newroz-user` | User identifier on Mem0 |
+| `agent_id` | `newroz` | Agent identifier |
 | `rerank` | `true` | Rerank search results for relevance (platform mode only) |
 
 ## OSS (Self-Hosted) Mode
@@ -37,7 +37,7 @@ Run Mem0 locally with your own LLM, embedder, and vector store.
 ### Interactive Setup
 
 ```bash
-hermes memory setup
+newroz memory setup
 # Select "mem0" → "Open Source (self-hosted)"
 # Follow prompts for LLM, embedder, and vector store
 ```
@@ -45,7 +45,7 @@ hermes memory setup
 ### Agent-Driven Setup (Flags)
 
 ```bash
-hermes memory setup mem0 --mode oss \
+newroz memory setup mem0 --mode oss \
   --oss-llm openai --oss-llm-key sk-... \
   --oss-vector qdrant
 ```
@@ -75,17 +75,17 @@ hermes memory setup mem0 --mode oss \
 ### Platform to OSS
 
 ```bash
-hermes memory setup mem0 --mode oss --oss-llm-key sk-...
+newroz memory setup mem0 --mode oss --oss-llm-key sk-...
 ```
 
-Or edit `$HERMES_HOME/mem0.json` directly:
+Or edit `$NEWROZ_HOME/mem0.json` directly:
 ```json
 {
   "mode": "oss",
   "oss": {
     "llm": {"provider": "openai", "config": {"model": "gpt-5-mini"}},
     "embedder": {"provider": "openai", "config": {"model": "text-embedding-3-small"}},
-    "vector_store": {"provider": "qdrant", "config": {"path": "~/.hermes/mem0_qdrant"}}
+    "vector_store": {"provider": "qdrant", "config": {"path": "~/.newroz/mem0_qdrant"}}
   }
 }
 ```
@@ -93,13 +93,13 @@ Or edit `$HERMES_HOME/mem0.json` directly:
 ### OSS to Platform
 
 ```bash
-hermes memory setup mem0 --mode platform --api-key sk-...
+newroz memory setup mem0 --mode platform --api-key sk-...
 ```
 
 ### Dry Run (preview without writing)
 
 ```bash
-hermes memory setup mem0 --mode oss --oss-llm-key sk-... --dry-run
+newroz memory setup mem0 --mode oss --oss-llm-key sk-... --dry-run
 ```
 
 ## Tools
@@ -125,7 +125,7 @@ Circuit breaker tripped after 5 consecutive failures. Resets after 2 minutes.
 
 ```bash
 # If using local Qdrant, check the storage path is writable:
-ls -la ~/.hermes/mem0_qdrant
+ls -la ~/.newroz/mem0_qdrant
 
 # If using Qdrant server, check it's reachable:
 curl http://localhost:6333/healthz
@@ -149,4 +149,4 @@ curl http://localhost:11434/api/tags
 
 - `mem0_add` stores verbatim (no extraction). Use `sync_turn` for LLM extraction.
 - Search uses semantic matching — try broader queries.
-- Check `user_id` matches between sessions (`$HERMES_HOME/mem0.json`).
+- Check `user_id` matches between sessions (`$NEWROZ_HOME/mem0.json`).

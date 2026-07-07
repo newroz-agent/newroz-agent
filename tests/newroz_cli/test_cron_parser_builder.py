@@ -1,4 +1,4 @@
-"""Unit tests for the extracted ``hermes cron`` parser builder.
+"""Unit tests for the extracted ``newroz cron`` parser builder.
 
 Confirms ``build_cron_parser`` wires up the same subactions, aliases, options,
 and ``func=cmd_cron`` dispatch that lived inline in ``main()`` before the
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import argparse
 
-from hermes_cli.subcommands.cron import build_cron_parser
+from newroz_cli.subcommands.cron import build_cron_parser
 
 
 def _sentinel_handler(args):  # pragma: no cover - only identity is asserted
@@ -17,7 +17,7 @@ def _sentinel_handler(args):  # pragma: no cover - only identity is asserted
 
 
 def _build():
-    parser = argparse.ArgumentParser(prog="hermes")
+    parser = argparse.ArgumentParser(prog="newroz")
     subparsers = parser.add_subparsers(dest="command")
     build_cron_parser(subparsers, cmd_cron=_sentinel_handler)
     return parser

@@ -1,14 +1,14 @@
-"""Regression test: `hermes dashboard --tui` must not hard-crash.
+"""Regression test: `newroz dashboard --tui` must not hard-crash.
 
-Older Hermes desktop app shells (<= 0.15.x) spawn the backend as::
+Older Newroz desktop app shells (<= 0.15.x) spawn the backend as::
 
-    hermes dashboard --no-open --tui --host 127.0.0.1 --port <PORT>
+    newroz dashboard --no-open --tui --host 127.0.0.1 --port <PORT>
 
 The ``--tui`` flag was removed from the ``dashboard`` subcommand in cae6b5486
 (embedded chat is always on now). When a user's CLI updates past that commit
 but their desktop app binary has not, argparse used to reject the unknown flag
 with ``error: unrecognized arguments: --tui`` and ``exit(2)`` — the backend
-died before it became ready and the desktop GUI showed only "Hermes couldn't
+died before it became ready and the desktop GUI showed only "Newroz couldn't
 start" with no actionable cause.
 
 The fix adds a hidden, deprecated, accepted-and-ignored ``--tui`` flag to the
@@ -26,7 +26,7 @@ REPO_ROOT = os.path.abspath(
 
 
 def _run_cli(args, timeout=60):
-    """Invoke the real hermes_cli.main parser in a subprocess.
+    """Invoke the real newroz_cli.main parser in a subprocess.
 
     Uses ``--status`` so the dashboard command exits immediately after parsing
     (it scans the process table and returns) instead of starting a server.
@@ -35,7 +35,7 @@ def _run_cli(args, timeout=60):
     env = dict(os.environ)
     env["PYTHONPATH"] = REPO_ROOT + os.pathsep + env.get("PYTHONPATH", "")
     return subprocess.run(
-        [sys.executable, "-m", "hermes_cli.main", *args],
+        [sys.executable, "-m", "newroz_cli.main", *args],
         cwd=REPO_ROOT,
         env=env,
         capture_output=True,

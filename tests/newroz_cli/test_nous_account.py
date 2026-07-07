@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from hermes_cli.nous_account import (
+from newroz_cli.nous_account import (
     NousPaidServiceAccessInfo,
     NousPortalAccountInfo,
     format_nous_portal_entitlement_message,
@@ -31,7 +31,7 @@ def _state(token: str) -> dict[str, Any]:
     return {
         "access_token": token,
         "portal_base_url": "https://portal.example.test",
-        "client_id": "hermes-cli",
+        "client_id": "newroz-cli",
     }
 
 
@@ -85,15 +85,15 @@ def test_valid_jwt_with_paid_access_true(monkeypatch):
         {
             "sub": "user_123",
             "org_id": "org_123",
-            "client_id": "hermes-cli",
-            "product_id": "nous-hermes-agent",
-            "nous_client": "hermes-agent",
+            "client_id": "newroz-cli",
+            "product_id": "nous-newroz-agent",
+            "nous_client": "newroz-agent",
             "exp": int(time.time()) + 900,
             "paid_access": True,
             "subscription_tier": 2,
         }
     )
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
 
     info = get_nous_portal_account_info()
 
@@ -102,7 +102,7 @@ def test_valid_jwt_with_paid_access_true(monkeypatch):
     assert info.logged_in is True
     assert info.user_id == "user_123"
     assert info.org_id == "org_123"
-    assert info.product_id == "nous-hermes-agent"
+    assert info.product_id == "nous-newroz-agent"
     assert info.paid_service_access is True
     assert info.is_paid is True
     assert info.is_free_tier is False
@@ -117,7 +117,7 @@ def test_valid_jwt_with_paid_access_false(monkeypatch):
             "paid_access": False,
         }
     )
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
 
     info = get_nous_portal_account_info()
 
@@ -135,7 +135,7 @@ def test_valid_jwt_missing_paid_access_is_unknown_not_paid(monkeypatch):
             "exp": int(time.time()) + 900,
         }
     )
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
 
     info = get_nous_portal_account_info()
 
@@ -167,9 +167,9 @@ def test_expired_jwt_falls_back_to_fresh_account(monkeypatch):
         subscription_credits=12.25,
         purchased_credits=7.75,
     )
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
-    monkeypatch.setattr("hermes_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
-    monkeypatch.setattr("hermes_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
+    monkeypatch.setattr("newroz_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
 
     info = get_nous_portal_account_info()
 
@@ -239,9 +239,9 @@ def test_expired_jwt_falls_back_to_fresh_account(monkeypatch):
 )
 def test_fresh_account_payload_normalization(monkeypatch, payload, expected_paid):
     token = _jwt({"sub": "user_123", "org_id": "org_123", "exp": int(time.time()) + 900})
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
-    monkeypatch.setattr("hermes_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
-    monkeypatch.setattr("hermes_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
+    monkeypatch.setattr("newroz_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
 
     info = get_nous_portal_account_info(force_fresh=True)
 
@@ -271,9 +271,9 @@ def test_force_fresh_uses_account_api_even_when_jwt_is_valid(monkeypatch):
         subscription_credits=0,
         purchased_credits=5,
     )
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
-    monkeypatch.setattr("hermes_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
-    monkeypatch.setattr("hermes_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
+    monkeypatch.setattr("newroz_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
 
     info = get_nous_portal_account_info(force_fresh=True)
 
@@ -282,7 +282,7 @@ def test_force_fresh_uses_account_api_even_when_jwt_is_valid(monkeypatch):
 
 
 def test_no_oauth_token_reports_inference_key_present(monkeypatch):
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: {})
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: {})
 
     class _Entry:
         label = "manual-nous"
@@ -325,12 +325,12 @@ def test_pool_oauth_entry_uses_jwt_snapshot(monkeypatch):
         {
             "sub": "user_123",
             "org_id": "org_123",
-            "client_id": "hermes-cli",
+            "client_id": "newroz-cli",
             "exp": int(time.time()) + 900,
             "paid_access": True,
         }
     )
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: {})
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: {})
 
     class _Entry:
         label = "dashboard device_code"
@@ -385,8 +385,8 @@ def test_pool_oauth_entry_force_fresh_uses_account_api(monkeypatch):
         subscription_credits=0,
         purchased_credits=3,
     )
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: {})
-    monkeypatch.setattr("hermes_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: {})
+    monkeypatch.setattr("newroz_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
 
     class _Entry:
         label = "dashboard device_code"
@@ -456,7 +456,7 @@ def test_entitlement_message_for_inference_key_without_portal_login():
     assert message is not None
     assert "Nous inference credentials are configured" in message
     assert "cannot verify your Nous Portal paid access" in message
-    assert "Log in with `hermes model`" in message
+    assert "Log in with `newroz model`" in message
 
 
 def test_entitlement_message_for_active_paid_subscription_with_no_credits():
@@ -527,7 +527,7 @@ def test_entitlement_message_for_unknown_entitlement_is_explicit():
     assert message is not None
     assert "could not verify" in message
     assert "account_api_timeout" in message
-    assert "Run `hermes model`" in message
+    assert "Run `newroz model`" in message
 
 
 def test_entitlement_message_for_account_missing():
@@ -558,9 +558,9 @@ def test_account_payload_parses_org_slug_and_name(monkeypatch):
         "organisation": {"id": "org_123", "slug": "acme", "name": "Acme Inc"},
         "paid_service_access": {"allowed": True, "paid_access": True},
     }
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
-    monkeypatch.setattr("hermes_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
-    monkeypatch.setattr("hermes_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
+    monkeypatch.setattr("newroz_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
 
     info = get_nous_portal_account_info(force_fresh=True)
 
@@ -577,9 +577,9 @@ def test_account_payload_org_without_slug_leaves_fields_none(monkeypatch):
         "organisation": {"id": "org_123"},
         "paid_service_access": {"allowed": True, "paid_access": True},
     }
-    monkeypatch.setattr("hermes_cli.auth.get_provider_auth_state", lambda provider: _state(token))
-    monkeypatch.setattr("hermes_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
-    monkeypatch.setattr("hermes_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
+    monkeypatch.setattr("newroz_cli.auth.get_provider_auth_state", lambda provider: _state(token))
+    monkeypatch.setattr("newroz_cli.auth.resolve_nous_access_token", lambda: "fresh-token")
+    monkeypatch.setattr("newroz_cli.nous_account._fetch_nous_account_info", lambda *a, **kw: payload)
 
     info = get_nous_portal_account_info(force_fresh=True)
 

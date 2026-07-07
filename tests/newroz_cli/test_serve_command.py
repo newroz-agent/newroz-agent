@@ -1,4 +1,4 @@
-"""Contract for the headless ``hermes serve`` backend command.
+"""Contract for the headless ``newroz serve`` backend command.
 
 ``serve`` is what the desktop app and remote backends launch — the same gateway
 as ``dashboard`` (shared handler) but always headless, and decoupled in name so
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 
-from hermes_cli.subcommands.dashboard import build_dashboard_parser
+from newroz_cli.subcommands.dashboard import build_dashboard_parser
 
 
 def _dash(args):  # sentinel handler — identity-compared, never invoked

@@ -7,8 +7,8 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _ensure_redaction_enabled(monkeypatch):
-    """Ensure redaction is active regardless of host HERMES_REDACT_SECRETS."""
-    monkeypatch.delenv("HERMES_REDACT_SECRETS", raising=False)
+    """Ensure redaction is active regardless of host NEWROZ_REDACT_SECRETS."""
+    monkeypatch.delenv("NEWROZ_REDACT_SECRETS", raising=False)
     monkeypatch.setattr("agent.redact._REDACT_ENABLED", True)
 
 
@@ -128,7 +128,7 @@ class TestWebExtractSecretExfil:
 
         for url in (
             "https://leetcode.com/problems/two-sum/?code=twosum",
-            "https://github.com/search?q=hermes&code=1",
+            "https://github.com/search?q=newroz&code=1",
             "https://example.com/blog?session=summer",
         ):
             result = await web_extract_tool(urls=[url])

@@ -40,7 +40,7 @@ import { clearSessionSubagents, pruneDelegateFallbackSubagents, upsertSubagent }
 import { clearActiveSessionTodos } from '@/store/todos'
 import { recordToolDiff } from '@/store/tool-diffs'
 import { notifyWorkspaceChanged, toolMayMutateFiles } from '@/store/workspace-events'
-import type { RpcEvent } from '@/types/hermes'
+import type { RpcEvent } from '@/types/newroz'
 
 import type { ClientSessionState } from '../../../types'
 
@@ -57,7 +57,7 @@ interface GatewayEventDeps {
   failAssistantMessage: (sessionId: string, errorMessage: string) => void
   flushQueuedDeltas: (sessionId?: string) => void
   queryClient: QueryClient
-  refreshHermesConfig: () => Promise<void>
+  refreshNewrozConfig: () => Promise<void>
   sessionInterrupted: (sessionId: string) => boolean
   updateSessionState: (
     sessionId: string,
@@ -85,7 +85,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
     failAssistantMessage,
     flushQueuedDeltas,
     queryClient,
-    refreshHermesConfig,
+    refreshNewrozConfig,
     sessionInterrupted,
     updateSessionState,
     upsertToolCall
@@ -216,7 +216,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
           requestDesktopOnboarding(payload.credential_warning)
         }
 
-        void refreshHermesConfig()
+        void refreshNewrozConfig()
 
         if (modelChanged || providerChanged) {
           void queryClient.invalidateQueries({
@@ -584,7 +584,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
           }))
         }
       } else if (event.type === 'error') {
-        const errorMessage = payload?.message || 'Hermes reported an error'
+        const errorMessage = payload?.message || 'Newroz reported an error'
         const looksLikeProviderSetup = isProviderSetupErrorMessage(errorMessage)
 
         // A turn that errors out has also ended — drop any open blocking prompt
@@ -620,7 +620,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
           notify({
             id: `gateway-error:${errorMessage}`,
             kind: 'error',
-            title: 'Hermes error',
+            title: 'Newroz error',
             message: errorMessage
           })
         }
@@ -646,7 +646,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
       lastCwdInfoSessionRef,
       nativeSubagentSessionsRef,
       queryClient,
-      refreshHermesConfig,
+      refreshNewrozConfig,
       sessionInterrupted,
       updateSessionState,
       upsertToolCall

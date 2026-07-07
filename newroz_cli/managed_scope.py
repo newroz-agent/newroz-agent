@@ -1,10 +1,10 @@
 """Managed scope — IT-pushed, user-immutable config & env layer.
 
-A system-level directory (default ``/etc/hermes``, root-owned and not
+A system-level directory (default ``/etc/newroz``, root-owned and not
 user-writable) supplies ``config.yaml`` and ``.env`` values that WIN over the
-user's ``~/.hermes/config.yaml`` and ``~/.hermes/.env`` on a per-leaf-key basis.
+user's ``~/.newroz/config.yaml`` and ``~/.newroz/.env`` on a per-leaf-key basis.
 
-This is DISTINCT from ``hermes_cli.config.is_managed()`` / ``HERMES_MANAGED``,
+This is DISTINCT from ``newroz_cli.config.is_managed()`` / ``NEWROZ_MANAGED``,
 which is a coarse package-manager write-lock (declarative-distro / formula
 installs). That lock blocks all mutation; this layer injects specific immutable
 values. The two are independent and may coexist.
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # POSIX default. Other-platform locations are a deliberate v2 item; when added,
 # they belong ONLY inside get_managed_dir().
-_DEFAULT_MANAGED_DIR = Path("/etc/hermes")
+_DEFAULT_MANAGED_DIR = Path("/etc/newroz")
 
 _CACHE_LOCK = threading.Lock()
 # path_key -> (mtime_ns, size, parsed)
@@ -41,9 +41,9 @@ _ENV_CACHE: Dict[str, tuple] = {}
 def _under_pytest() -> bool:
     """True when running inside the test suite.
 
-    Used to ignore the system default ``/etc/hermes`` during tests so a real
+    Used to ignore the system default ``/etc/newroz`` during tests so a real
     managed scope on a developer/CI box can't leak policy into the suite. Tests
-    that exercise managed scope set ``HERMES_MANAGED_DIR`` explicitly, which is
+    that exercise managed scope set ``NEWROZ_MANAGED_DIR`` explicitly, which is
     still honored (the override path below runs before this guard takes effect).
     """
     return "PYTEST_CURRENT_TEST" in os.environ
@@ -53,16 +53,16 @@ def get_managed_dir() -> Optional[Path]:
     """Resolve the managed-scope directory, or None when no scope is present.
 
     Resolution (highest priority first):
-      1. ``$HERMES_MANAGED_DIR`` — deployment/bootstrap path override (IT-only;
+      1. ``$NEWROZ_MANAGED_DIR`` — deployment/bootstrap path override (IT-only;
          never persisted to any .env). Honored only when set to a non-empty value
          AND the directory exists.
-      2. ``/etc/hermes`` — POSIX default, when it exists. Ignored under pytest so
+      2. ``/etc/newroz`` — POSIX default, when it exists. Ignored under pytest so
          a real system managed scope can't leak into the test suite.
 
     A non-existent directory at either tier resolves to None (no managed scope),
     which is the common case and must be cheap + side-effect-free.
     """
-    override = os.environ.get("HERMES_MANAGED_DIR", "").strip()
+    override = os.environ.get("NEWROZ_MANAGED_DIR", "").strip()
     if override:
         p = Path(override)
         return p if p.is_dir() else None
@@ -138,8 +138,8 @@ def apply_managed_overlay(config: dict) -> dict:
     """Overlay administrator-pinned config values on top of an already-built dict.
 
     The single, shared way for any config loader that builds its own dict
-    (rather than going through hermes_cli.config.load_config) to honor managed
-    scope. Mirrors hermes_cli.config._load_config_impl's managed merge exactly:
+    (rather than going through newroz_cli.config.load_config) to honor managed
+    scope. Mirrors newroz_cli.config._load_config_impl's managed merge exactly:
 
       * expand the managed config's ``${VAR}`` refs against the PROCESS env only
         (never user-config-defined refs), so a user cannot shadow a managed
@@ -159,7 +159,7 @@ def apply_managed_overlay(config: dict) -> dict:
         if not managed:
             return config
         # Imported lazily to avoid an import cycle (config imports managed_scope).
-        from hermes_cli.config import _deep_merge, _expand_env_vars, _normalize_root_model_keys
+        from newroz_cli.config import _deep_merge, _expand_env_vars, _normalize_root_model_keys
 
         managed_expanded = _normalize_root_model_keys(_expand_env_vars(managed))
         # A bare ``model: x/y`` string in the managed file must merge as

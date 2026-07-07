@@ -16,7 +16,7 @@ network or auth state is required.
 """
 
 import pytest
-from hermes_cli import model_switch
+from newroz_cli import model_switch
 
 
 def _make_provider(slug, name=None, models=None, *, is_current=False,
@@ -45,7 +45,7 @@ def test_openrouter_models_replaced_with_live_catalog(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: list(live))
 
     result = model_switch.list_picker_providers(max_models=50)
@@ -67,7 +67,7 @@ def test_openrouter_falls_back_to_base_models_on_fetch_failure(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models", _raise)
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models", _raise)
 
     result = model_switch.list_picker_providers(max_models=50)
 
@@ -81,7 +81,7 @@ def test_openrouter_empty_live_catalog_drops_row(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: [])
 
     result = model_switch.list_picker_providers(max_models=50)
@@ -99,7 +99,7 @@ def test_non_openrouter_rows_passed_through_unchanged(monkeypatch):
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
     # fetch_openrouter_models must not be consulted when there's no openrouter row
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: pytest.fail("should not be called"))
 
     result = model_switch.list_picker_providers(max_models=50)
@@ -124,8 +124,8 @@ def test_include_moa_adds_virtual_provider_with_named_presets(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.config.load_config", lambda: moa_config)
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.config.load_config", lambda: moa_config)
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: pytest.fail("should not be called"))
 
     result = model_switch.list_picker_providers(
@@ -152,7 +152,7 @@ def test_empty_models_row_dropped(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: [("openai/gpt-5.4", "recommended")])
 
     result = model_switch.list_picker_providers(max_models=50)
@@ -174,7 +174,7 @@ def test_custom_endpoint_with_api_url_kept_when_models_empty(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: [])
 
     result = model_switch.list_picker_providers(max_models=50)
@@ -196,7 +196,7 @@ def test_user_defined_without_api_url_and_empty_models_dropped(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: [])
 
     result = model_switch.list_picker_providers(max_models=50)
@@ -211,7 +211,7 @@ def test_max_models_caps_openrouter_live_output(monkeypatch):
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers",
                         lambda **kw: list(base))
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: list(live))
 
     result = model_switch.list_picker_providers(max_models=5)
@@ -237,7 +237,7 @@ def test_passthrough_kwargs_to_base(monkeypatch):
         return []
 
     monkeypatch.setattr(model_switch, "list_authenticated_providers", _capture)
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: [])
 
     model_switch.list_picker_providers(
@@ -261,8 +261,8 @@ def test_current_custom_endpoint_passthrough_marks_current_row(monkeypatch):
     """Interactive picker should preserve current custom endpoint semantics."""
     monkeypatch.setattr("agent.models_dev.fetch_models_dev", lambda: {})
     monkeypatch.setattr("agent.models_dev.PROVIDER_TO_MODELS_DEV", {})
-    monkeypatch.setattr("hermes_cli.providers.HERMES_OVERLAYS", {})
-    monkeypatch.setattr("hermes_cli.models.fetch_openrouter_models",
+    monkeypatch.setattr("newroz_cli.providers.NEWROZ_OVERLAYS", {})
+    monkeypatch.setattr("newroz_cli.models.fetch_openrouter_models",
                         lambda *a, **kw: [])
 
     result = model_switch.list_picker_providers(

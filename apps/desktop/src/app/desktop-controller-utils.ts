@@ -1,4 +1,4 @@
-import type { SessionInfo } from '@/hermes'
+import type { SessionInfo } from '@/newroz'
 
 // Cheap signature compare so a poll only swaps the atom (and re-renders the
 // sidebar) when the visible rows actually changed.

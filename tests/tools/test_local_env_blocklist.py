@@ -1,8 +1,8 @@
 """Tests for subprocess env sanitization in LocalEnvironment.
 
-Verifies that Hermes-managed provider, tool, and gateway env vars are
+Verifies that Newroz-managed provider, tool, and gateway env vars are
 stripped from subprocess environments so external CLIs are not silently
-misrouted or handed Hermes secrets.
+misrouted or handed Newroz secrets.
 
 See: https://github.com/NousResearch/hermes-agent/issues/1002
 See: https://github.com/NousResearch/hermes-agent/issues/1264
@@ -16,8 +16,8 @@ import pytest
 
 from tools.environments.local import (
     LocalEnvironment,
-    _HERMES_PROVIDER_ENV_BLOCKLIST,
-    _HERMES_PROVIDER_ENV_FORCE_PREFIX,
+    _NEWROZ_PROVIDER_ENV_BLOCKLIST,
+    _NEWROZ_PROVIDER_ENV_FORCE_PREFIX,
 )
 
 
@@ -59,7 +59,7 @@ def _run_with_env(extra_os_env=None, self_env=None):
 
 
 class TestProviderEnvBlocklist:
-    """Provider env vars loaded from ~/.hermes/.env must not leak."""
+    """Provider env vars loaded from ~/.newroz/.env must not leak."""
 
     def test_blocked_vars_are_stripped(self):
         """OPENAI_BASE_URL and other provider vars must not appear in subprocess env."""
@@ -95,14 +95,14 @@ class TestProviderEnvBlocklist:
             assert var not in result_env, f"{var} leaked into subprocess env"
 
     def test_bedrock_bearer_token_is_stripped(self):
-        """The Bedrock-specific bearer token is a Hermes inference secret
+        """The Bedrock-specific bearer token is a Newroz inference secret
         (analogous to OPENAI_API_KEY) and must not leak into subprocesses.
 
         Regression for #32314: AWS_BEARER_TOKEN_BEDROCK leaked into terminal /
         execute_code children because the ``bedrock`` ProviderConfig declares
         ``api_key_env_vars=()`` (auth_type="aws_sdk") and the blocklist builder
         only consulted that field. The reporter caught it when ``opencode
-        models`` run inside a Hermes terminal enumerated the entire Bedrock
+        models`` run inside a Newroz terminal enumerated the entire Bedrock
         catalog off the leaked bearer token.
         """
         result_env = _run_with_env(extra_os_env={
@@ -146,9 +146,9 @@ class TestProviderEnvBlocklist:
         Stripping these would (a) break every user who does AWS work in the
         agent terminal — not just Bedrock users, since the registry is iterated
         unconditionally — and (b) be unrecoverable, because env_passthrough.py
-        refuses to re-allow anything in _HERMES_PROVIDER_ENV_BLOCKLIST
+        refuses to re-allow anything in _NEWROZ_PROVIDER_ENV_BLOCKLIST
         (GHSA-rhgp-j443-p4rf). Only the Bedrock inference bearer token is
-        Hermes-managed; the rest belongs to the user.
+        Newroz-managed; the rest belongs to the user.
         """
         general_chain = {
             "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
@@ -200,7 +200,7 @@ class TestProviderEnvBlocklist:
             "HASS_TOKEN": "ha-secret",
             "EMAIL_PASSWORD": "email-secret",
             "FIRECRAWL_API_KEY": "fc-secret",
-            "HERMES_DASHBOARD_SESSION_TOKEN": "dashboard-session-secret",
+            "NEWROZ_DASHBOARD_SESSION_TOKEN": "dashboard-session-secret",
             "BROWSERBASE_PROJECT_ID": "bb-project",
             "ELEVENLABS_API_KEY": "el-secret",
             "GITHUB_TOKEN": "ghp_secret",
@@ -238,24 +238,24 @@ class TestProviderEnvBlocklist:
 
 
 class TestForceEnvOptIn:
-    """Callers can opt in to passing a blocked var via _HERMES_FORCE_ prefix."""
+    """Callers can opt in to passing a blocked var via _NEWROZ_FORCE_ prefix."""
 
     def test_force_prefix_passes_blocked_var(self):
-        """_HERMES_FORCE_OPENAI_API_KEY in self.env should inject OPENAI_API_KEY."""
+        """_NEWROZ_FORCE_OPENAI_API_KEY in self.env should inject OPENAI_API_KEY."""
         result_env = _run_with_env(self_env={
-            f"{_HERMES_PROVIDER_ENV_FORCE_PREFIX}OPENAI_API_KEY": "sk-explicit",
+            f"{_NEWROZ_PROVIDER_ENV_FORCE_PREFIX}OPENAI_API_KEY": "sk-explicit",
         })
 
         assert "OPENAI_API_KEY" in result_env
         assert result_env["OPENAI_API_KEY"] == "sk-explicit"
         # The force-prefixed key itself must not appear
-        assert f"{_HERMES_PROVIDER_ENV_FORCE_PREFIX}OPENAI_API_KEY" not in result_env
+        assert f"{_NEWROZ_PROVIDER_ENV_FORCE_PREFIX}OPENAI_API_KEY" not in result_env
 
     def test_force_prefix_overrides_os_environ_block(self):
         """Force-prefix in self.env wins even when os.environ has the blocked var."""
         result_env = _run_with_env(
             extra_os_env={"OPENAI_BASE_URL": "http://leaked/v1"},
-            self_env={f"{_HERMES_PROVIDER_ENV_FORCE_PREFIX}OPENAI_BASE_URL": "http://intended/v1"},
+            self_env={f"{_NEWROZ_PROVIDER_ENV_FORCE_PREFIX}OPENAI_BASE_URL": "http://intended/v1"},
         )
 
         assert result_env["OPENAI_BASE_URL"] == "http://intended/v1"
@@ -268,21 +268,21 @@ class TestActiveVenvMarkerStripping:
     VIRTUAL_ENV (and possibly CONDA_PREFIX). If those leak into commands the
     agent runs against ANOTHER Python project, ``uv``/``poetry`` treat the
     inherited value as the active environment and build that project's deps
-    into the Hermes venv path instead of the project's own ``.venv`` —
-    silently clobbering the Hermes environment (and, when the other project
-    pins a different Python, breaking the gateway outright). The Hermes venv
+    into the Newroz venv path instead of the project's own ``.venv`` —
+    silently clobbering the Newroz environment (and, when the other project
+    pins a different Python, breaking the gateway outright). The Newroz venv
     stays reachable via PATH, so stripping the markers is safe.
     """
 
     def test_virtualenv_marker_stripped_end_to_end(self):
         result_env = _run_with_env(extra_os_env={
-            "VIRTUAL_ENV": "/home/user/.hermes/hermes-agent/venv",
+            "VIRTUAL_ENV": "/home/user/.newroz/newroz-agent/venv",
         })
         assert "VIRTUAL_ENV" not in result_env
 
     def test_conda_prefix_marker_stripped_end_to_end(self):
         result_env = _run_with_env(extra_os_env={
-            "CONDA_PREFIX": "/opt/conda/envs/hermes",
+            "CONDA_PREFIX": "/opt/conda/envs/newroz",
         })
         assert "CONDA_PREFIX" not in result_env
 
@@ -321,41 +321,41 @@ class TestBlocklistCoverage:
             "ANTHROPIC_API_KEY",
             "LLM_MODEL",
         }
-        assert must_block.issubset(_HERMES_PROVIDER_ENV_BLOCKLIST)
+        assert must_block.issubset(_NEWROZ_PROVIDER_ENV_BLOCKLIST)
 
     def test_registry_vars_are_in_blocklist(self):
         """Every api_key_env_var and base_url_env_var from PROVIDER_REGISTRY
         must appear in the blocklist — ensures no drift.
 
         CLAUDE_CODE_OAUTH_TOKEN is the one deliberate exemption: it is owned
-        by the user's Claude Code install, not Hermes (#55878).
+        by the user's Claude Code install, not Newroz (#55878).
         """
-        from hermes_cli.auth import PROVIDER_REGISTRY
+        from newroz_cli.auth import PROVIDER_REGISTRY
 
         exempt = {"CLAUDE_CODE_OAUTH_TOKEN"}
         for pconfig in PROVIDER_REGISTRY.values():
             for var in pconfig.api_key_env_vars:
                 if var in exempt:
                     continue
-                assert var in _HERMES_PROVIDER_ENV_BLOCKLIST, (
+                assert var in _NEWROZ_PROVIDER_ENV_BLOCKLIST, (
                     f"Registry var {var} (provider={pconfig.id}) missing from blocklist"
                 )
             if pconfig.base_url_env_var:
-                assert pconfig.base_url_env_var in _HERMES_PROVIDER_ENV_BLOCKLIST, (
+                assert pconfig.base_url_env_var in _NEWROZ_PROVIDER_ENV_BLOCKLIST, (
                     f"Registry base_url_env_var {pconfig.base_url_env_var} "
                     f"(provider={pconfig.id}) missing from blocklist"
                 )
 
     def test_bedrock_bearer_token_is_in_blocklist(self):
-        """auth_type='aws_sdk' providers contribute their Hermes-managed
+        """auth_type='aws_sdk' providers contribute their Newroz-managed
         inference token (the Bedrock bearer) to the blocklist, keyed off
         auth_type so any future SDK-cred provider is covered automatically."""
-        assert "AWS_BEARER_TOKEN_BEDROCK" in _HERMES_PROVIDER_ENV_BLOCKLIST
+        assert "AWS_BEARER_TOKEN_BEDROCK" in _NEWROZ_PROVIDER_ENV_BLOCKLIST
 
     def test_general_aws_chain_not_in_blocklist(self):
         """The general AWS credential chain must NOT be in the blocklist —
         no-regression guard for #32314. These belong to the user's trusted
-        operator shell (SECURITY.md §3.2), not to Hermes, and blocklisting
+        operator shell (SECURITY.md §3.2), not to Newroz, and blocklisting
         them would be unrecoverable via env_passthrough (GHSA-rhgp-j443-p4rf).
         """
         general_chain = {
@@ -370,7 +370,7 @@ class TestBlocklistCoverage:
             "AWS_WEB_IDENTITY_TOKEN_FILE",
             "AWS_ROLE_ARN",
         }
-        leaked_block = general_chain & _HERMES_PROVIDER_ENV_BLOCKLIST
+        leaked_block = general_chain & _NEWROZ_PROVIDER_ENV_BLOCKLIST
         assert not leaked_block, (
             f"General AWS chain vars must stay inheritable, but these are "
             f"blocklisted: {sorted(leaked_block)} (capability regression, #32314)"
@@ -380,15 +380,15 @@ class TestBlocklistCoverage:
         """Non-registry auth vars (ANTHROPIC_TOKEN) must also be in the
         blocklist."""
         extras = {"ANTHROPIC_TOKEN"}
-        assert extras.issubset(_HERMES_PROVIDER_ENV_BLOCKLIST)
+        assert extras.issubset(_NEWROZ_PROVIDER_ENV_BLOCKLIST)
 
     def test_claude_code_oauth_token_is_inheritable(self):
         """CLAUDE_CODE_OAUTH_TOKEN is owned by the user's Claude Code install
-        (subscription OAuth), not a Hermes inference credential. Stripping it
+        (subscription OAuth), not a Newroz inference credential. Stripping it
         made agent-spawned ``claude`` fall through to the shared Keychain /
         ~/.claude credential store and clobber the user's interactive login
         on auth failure (#55878). It must stay inheritable."""
-        assert "CLAUDE_CODE_OAUTH_TOKEN" not in _HERMES_PROVIDER_ENV_BLOCKLIST
+        assert "CLAUDE_CODE_OAUTH_TOKEN" not in _NEWROZ_PROVIDER_ENV_BLOCKLIST
 
     def test_non_registry_provider_vars_are_in_blocklist(self):
         extras = {
@@ -403,20 +403,20 @@ class TestBlocklistCoverage:
             "XAI_API_KEY",
             "HELICONE_API_KEY",
         }
-        assert extras.issubset(_HERMES_PROVIDER_ENV_BLOCKLIST)
+        assert extras.issubset(_NEWROZ_PROVIDER_ENV_BLOCKLIST)
 
     def test_optional_tool_and_messaging_vars_are_in_blocklist(self):
         """Tool/messaging vars from OPTIONAL_ENV_VARS should stay covered."""
-        from hermes_cli.config import OPTIONAL_ENV_VARS
+        from newroz_cli.config import OPTIONAL_ENV_VARS
 
         for name, metadata in OPTIONAL_ENV_VARS.items():
             category = metadata.get("category")
             if category in {"tool", "messaging"}:
-                assert name in _HERMES_PROVIDER_ENV_BLOCKLIST, (
+                assert name in _NEWROZ_PROVIDER_ENV_BLOCKLIST, (
                     f"Optional env var {name} (category={category}) missing from blocklist"
                 )
             elif category == "setting" and metadata.get("password"):
-                assert name in _HERMES_PROVIDER_ENV_BLOCKLIST, (
+                assert name in _NEWROZ_PROVIDER_ENV_BLOCKLIST, (
                     f"Secret setting env var {name} missing from blocklist"
                 )
 
@@ -450,7 +450,7 @@ class TestBlocklistCoverage:
             "EMAIL_SMTP_HOST",
             "EMAIL_HOME_ADDRESS",
             "EMAIL_HOME_ADDRESS_NAME",
-            "HERMES_DASHBOARD_SESSION_TOKEN",
+            "NEWROZ_DASHBOARD_SESSION_TOKEN",
             "GATEWAY_ALLOWED_USERS",
             "GH_TOKEN",
             "GITHUB_APP_ID",
@@ -460,23 +460,23 @@ class TestBlocklistCoverage:
             "MODAL_TOKEN_SECRET",
             "DAYTONA_API_KEY",
         }
-        assert extras.issubset(_HERMES_PROVIDER_ENV_BLOCKLIST)
+        assert extras.issubset(_NEWROZ_PROVIDER_ENV_BLOCKLIST)
 
 
 class TestSanePathIncludesHomebrew:
     """Verify _SANE_PATH includes macOS Homebrew directories."""
 
     @pytest.fixture(autouse=True)
-    def _disable_hermes_bin_injection(self):
+    def _disable_newroz_bin_injection(self):
         """These tests assert the sane-path merge in isolation. Disable the
-        hermes-install-dir prepend (a separate concern, covered by
-        TestHermesBinDirOnPath) so a real ``hermes`` on the test runner's PATH
+        newroz-install-dir prepend (a separate concern, covered by
+        TestNewrozBinDirOnPath) so a real ``newroz`` on the test runner's PATH
         doesn't shift the asserted PATH layout."""
         from tools.environments import local as local_mod
-        saved = local_mod._HERMES_BIN_DIR
-        local_mod._HERMES_BIN_DIR = None  # resolved -> no dir to inject
+        saved = local_mod._NEWROZ_BIN_DIR
+        local_mod._NEWROZ_BIN_DIR = None  # resolved -> no dir to inject
         yield
-        local_mod._HERMES_BIN_DIR = saved
+        local_mod._NEWROZ_BIN_DIR = saved
 
     def test_sane_path_includes_homebrew_bin(self):
         from tools.environments.local import _SANE_PATH
@@ -572,38 +572,38 @@ class TestSanePathIncludesHomebrew:
         assert "PATH" not in result
 
 
-class TestHermesBinDirOnPath:
-    """The hermes install dir is reachable in the terminal subshell PATH.
+class TestNewrozBinDirOnPath:
+    """The newroz install dir is reachable in the terminal subshell PATH.
 
-    Plugins shelling out to bare ``hermes`` via the terminal tool must work
-    even when the gateway was launched without the hermes install dir on
+    Plugins shelling out to bare ``newroz`` via the terminal tool must work
+    even when the gateway was launched without the newroz install dir on
     PATH (systemd, service managers, cron). See the discussion that motivated
-    _resolve_hermes_bin_dir / _prepend_hermes_bin_dir.
+    _resolve_newroz_bin_dir / _prepend_newroz_bin_dir.
     """
 
     def _reset_cache(self):
         from tools.environments import local as local_mod
-        local_mod._HERMES_BIN_DIR = local_mod._SENTINEL
+        local_mod._NEWROZ_BIN_DIR = local_mod._SENTINEL
 
     def test_resolves_via_which(self, monkeypatch):
         from tools.environments import local as local_mod
         self._reset_cache()
         monkeypatch.setattr(local_mod.shutil, "which",
-                            lambda name: "/opt/hermes/bin/hermes" if name == "hermes" else None)
-        monkeypatch.setattr(local_mod.os.path, "isdir", lambda p: p == "/opt/hermes/bin")
-        assert local_mod._resolve_hermes_bin_dir() == "/opt/hermes/bin"
+                            lambda name: "/opt/newroz/bin/newroz" if name == "newroz" else None)
+        monkeypatch.setattr(local_mod.os.path, "isdir", lambda p: p == "/opt/newroz/bin")
+        assert local_mod._resolve_newroz_bin_dir() == "/opt/newroz/bin"
 
     def test_resolves_via_sys_executable_dir(self, monkeypatch, tmp_path):
         from tools.environments import local as local_mod
         self._reset_cache()
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
-        (venv_bin / "hermes").write_text("#!/bin/sh\n")
+        (venv_bin / "newroz").write_text("#!/bin/sh\n")
         monkeypatch.setattr(local_mod.shutil, "which", lambda name: None)
         monkeypatch.setattr(local_mod.sys, "argv", ["python"])
         monkeypatch.setattr(local_mod.sys, "executable", str(venv_bin / "python"))
         monkeypatch.setattr(local_mod, "_IS_WINDOWS", False)
-        assert local_mod._resolve_hermes_bin_dir() == str(venv_bin)
+        assert local_mod._resolve_newroz_bin_dir() == str(venv_bin)
 
     def test_returns_none_when_unresolvable(self, monkeypatch):
         from tools.environments import local as local_mod
@@ -611,50 +611,50 @@ class TestHermesBinDirOnPath:
         monkeypatch.setattr(local_mod.shutil, "which", lambda name: None)
         monkeypatch.setattr(local_mod.sys, "argv", ["python"])
         monkeypatch.setattr(local_mod.sys, "executable", "/nonexistent/python")
-        assert local_mod._resolve_hermes_bin_dir() is None
+        assert local_mod._resolve_newroz_bin_dir() is None
 
     def test_prepend_adds_missing_dir_at_front(self, monkeypatch):
         from tools.environments import local as local_mod
         self._reset_cache()
-        local_mod._HERMES_BIN_DIR = "/opt/hermes/bin"
-        out = local_mod._prepend_hermes_bin_dir("/usr/bin:/bin")
-        assert out.split(os.pathsep)[0] == "/opt/hermes/bin"
+        local_mod._NEWROZ_BIN_DIR = "/opt/newroz/bin"
+        out = local_mod._prepend_newroz_bin_dir("/usr/bin:/bin")
+        assert out.split(os.pathsep)[0] == "/opt/newroz/bin"
         assert "/usr/bin" in out.split(os.pathsep)
 
     def test_prepend_is_idempotent(self, monkeypatch):
         from tools.environments import local as local_mod
         self._reset_cache()
-        local_mod._HERMES_BIN_DIR = "/opt/hermes/bin"
-        once = local_mod._prepend_hermes_bin_dir("/usr/bin:/bin")
-        twice = local_mod._prepend_hermes_bin_dir(once)
+        local_mod._NEWROZ_BIN_DIR = "/opt/newroz/bin"
+        once = local_mod._prepend_newroz_bin_dir("/usr/bin:/bin")
+        twice = local_mod._prepend_newroz_bin_dir(once)
         assert twice == once
-        assert once.split(os.pathsep).count("/opt/hermes/bin") == 1
+        assert once.split(os.pathsep).count("/opt/newroz/bin") == 1
 
     def test_prepend_noop_when_unresolved(self, monkeypatch):
         from tools.environments import local as local_mod
         self._reset_cache()
-        local_mod._HERMES_BIN_DIR = None
-        assert local_mod._prepend_hermes_bin_dir("/usr/bin:/bin") == "/usr/bin:/bin"
+        local_mod._NEWROZ_BIN_DIR = None
+        assert local_mod._prepend_newroz_bin_dir("/usr/bin:/bin") == "/usr/bin:/bin"
 
-    def test_make_run_env_injects_hermes_bin_dir(self, monkeypatch):
-        """A gateway env missing the hermes dir gets it back in the subshell PATH."""
+    def test_make_run_env_injects_newroz_bin_dir(self, monkeypatch):
+        """A gateway env missing the newroz dir gets it back in the subshell PATH."""
         from tools.environments import local as local_mod
         from tools.environments.local import _make_run_env
         self._reset_cache()
-        local_mod._HERMES_BIN_DIR = "/opt/hermes/bin"
+        local_mod._NEWROZ_BIN_DIR = "/opt/newroz/bin"
         monkeypatch.setattr(local_mod, "_IS_WINDOWS", False)
         with patch.dict(os.environ, {"PATH": "/usr/bin:/bin"}, clear=True):
             result = _make_run_env({})
         entries = result["PATH"].split(os.pathsep)
-        assert entries[0] == "/opt/hermes/bin"
+        assert entries[0] == "/opt/newroz/bin"
         assert "/usr/bin" in entries
 
 
-class TestHermesInternalDynamicSecrets:
-    """Dynamically-named Hermes secrets injected at gateway/CLI startup must
+class TestNewrozInternalDynamicSecrets:
+    """Dynamically-named Newroz secrets injected at gateway/CLI startup must
     not leak into terminal subprocesses.
 
-    The static ``_HERMES_PROVIDER_ENV_BLOCKLIST`` is name-based and derived
+    The static ``_NEWROZ_PROVIDER_ENV_BLOCKLIST`` is name-based and derived
     from provider/tool registries, so it cannot enumerate:
 
     - ``AUXILIARY_<TASK>_API_KEY`` / ``AUXILIARY_<TASK>_BASE_URL`` — per-task
@@ -663,43 +663,43 @@ class TestHermesInternalDynamicSecrets:
     - ``GATEWAY_RELAY_*_SECRET`` / ``_KEY`` / ``_TOKEN`` — relay-auth material
       provisioned by ``gateway/relay``.
 
-    ``_is_hermes_internal_secret`` is the single source of truth; every spawn
+    ``_is_newroz_internal_secret`` is the single source of truth; every spawn
     path (``_sanitize_subprocess_env``, ``_make_run_env``,
-    ``hermes_subprocess_env``, Docker forward filter, ``env_passthrough``)
+    ``newroz_subprocess_env``, Docker forward filter, ``env_passthrough``)
     consults it. These tests exercise the terminal execute path + predicate.
     """
 
     def test_predicate_matches_auxiliary_api_key(self):
-        from tools.environments.local import _is_hermes_internal_secret
-        assert _is_hermes_internal_secret("AUXILIARY_VISION_API_KEY")
-        assert _is_hermes_internal_secret("AUXILIARY_WEB_EXTRACT_API_KEY")
-        assert _is_hermes_internal_secret("AUXILIARY_APPROVAL_API_KEY")
+        from tools.environments.local import _is_newroz_internal_secret
+        assert _is_newroz_internal_secret("AUXILIARY_VISION_API_KEY")
+        assert _is_newroz_internal_secret("AUXILIARY_WEB_EXTRACT_API_KEY")
+        assert _is_newroz_internal_secret("AUXILIARY_APPROVAL_API_KEY")
         # plugin-registered task names are covered by the pattern
-        assert _is_hermes_internal_secret("AUXILIARY_MY_PLUGIN_TASK_API_KEY")
+        assert _is_newroz_internal_secret("AUXILIARY_MY_PLUGIN_TASK_API_KEY")
 
     def test_predicate_matches_auxiliary_base_url(self):
-        from tools.environments.local import _is_hermes_internal_secret
-        assert _is_hermes_internal_secret("AUXILIARY_VISION_BASE_URL")
-        assert _is_hermes_internal_secret("AUXILIARY_COMPRESSION_BASE_URL")
+        from tools.environments.local import _is_newroz_internal_secret
+        assert _is_newroz_internal_secret("AUXILIARY_VISION_BASE_URL")
+        assert _is_newroz_internal_secret("AUXILIARY_COMPRESSION_BASE_URL")
 
     def test_predicate_matches_gateway_relay_auth(self):
-        from tools.environments.local import _is_hermes_internal_secret
-        assert _is_hermes_internal_secret("GATEWAY_RELAY_SECRET")
-        assert _is_hermes_internal_secret("GATEWAY_RELAY_DELIVERY_KEY")
-        assert _is_hermes_internal_secret("GATEWAY_RELAY_SESSION_TOKEN")
+        from tools.environments.local import _is_newroz_internal_secret
+        assert _is_newroz_internal_secret("GATEWAY_RELAY_SECRET")
+        assert _is_newroz_internal_secret("GATEWAY_RELAY_DELIVERY_KEY")
+        assert _is_newroz_internal_secret("GATEWAY_RELAY_SESSION_TOKEN")
 
     def test_predicate_allows_auxiliary_non_secrets(self):
         """AUXILIARY_*_PROVIDER / _MODEL and GATEWAY_RELAY_* routing hints are
         NOT secrets and must remain visible so tooling that reads them works."""
-        from tools.environments.local import _is_hermes_internal_secret
-        assert not _is_hermes_internal_secret("AUXILIARY_VISION_PROVIDER")
-        assert not _is_hermes_internal_secret("AUXILIARY_VISION_MODEL")
-        assert not _is_hermes_internal_secret("GATEWAY_RELAY_URL")
-        assert not _is_hermes_internal_secret("GATEWAY_RELAY_PLATFORMS")
-        assert not _is_hermes_internal_secret("GATEWAY_RELAY_ID")  # not a secret suffix
+        from tools.environments.local import _is_newroz_internal_secret
+        assert not _is_newroz_internal_secret("AUXILIARY_VISION_PROVIDER")
+        assert not _is_newroz_internal_secret("AUXILIARY_VISION_MODEL")
+        assert not _is_newroz_internal_secret("GATEWAY_RELAY_URL")
+        assert not _is_newroz_internal_secret("GATEWAY_RELAY_PLATFORMS")
+        assert not _is_newroz_internal_secret("GATEWAY_RELAY_ID")  # not a secret suffix
         # unrelated vars pass through
-        assert not _is_hermes_internal_secret("PATH")
-        assert not _is_hermes_internal_secret("MY_APP_KEY")
+        assert not _is_newroz_internal_secret("PATH")
+        assert not _is_newroz_internal_secret("MY_APP_KEY")
 
     def test_auxiliary_secrets_stripped_from_subprocess(self):
         """AUXILIARY_*_API_KEY / _BASE_URL injected into os.environ must not
@@ -758,6 +758,6 @@ class TestHermesInternalDynamicSecrets:
     def test_gateway_relay_static_names_in_blocklist(self):
         """The static relay names are also added to the name-based blocklist so
         the exact-match path catches them independently of the predicate."""
-        assert "GATEWAY_RELAY_SECRET" in _HERMES_PROVIDER_ENV_BLOCKLIST
-        assert "GATEWAY_RELAY_DELIVERY_KEY" in _HERMES_PROVIDER_ENV_BLOCKLIST
-        assert "GATEWAY_RELAY_ID" in _HERMES_PROVIDER_ENV_BLOCKLIST
+        assert "GATEWAY_RELAY_SECRET" in _NEWROZ_PROVIDER_ENV_BLOCKLIST
+        assert "GATEWAY_RELAY_DELIVERY_KEY" in _NEWROZ_PROVIDER_ENV_BLOCKLIST
+        assert "GATEWAY_RELAY_ID" in _NEWROZ_PROVIDER_ENV_BLOCKLIST

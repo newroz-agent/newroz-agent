@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.security_advisories.
+"""Tests for newroz_cli.security_advisories.
 
 The advisory module is the user-facing detection / remediation surface
 for supply-chain attacks (e.g. the Mini Shai-Hulud worm of May 2026 that
@@ -14,7 +14,7 @@ from typing import Iterator
 
 import pytest
 
-import hermes_cli.security_advisories as adv
+import newroz_cli.security_advisories as adv
 
 
 # ---------------------------------------------------------------------------
@@ -44,12 +44,12 @@ def fake_advisory() -> adv.Advisory:
 
 @pytest.fixture
 def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Redirect HERMES_HOME so banner cache and config writes are sandboxed."""
-    home = tmp_path / ".hermes"
+    """Redirect NEWROZ_HOME so banner cache and config writes are sandboxed."""
+    home = tmp_path / ".newroz"
     home.mkdir()
     (home / "cache").mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     return home
 
 
@@ -114,7 +114,7 @@ class TestAck:
     def test_get_acked_ids_empty_when_no_config(self, monkeypatch):
         # load_config raises → returns empty set, doesn't crash.
         monkeypatch.setattr(
-            "hermes_cli.config.load_config",
+            "newroz_cli.config.load_config",
             lambda: (_ for _ in ()).throw(RuntimeError("boom")),
         )
         assert adv.get_acked_ids() == set()
@@ -141,13 +141,13 @@ class TestAck:
 
     def test_ack_advisory_persists_id(self, isolated_home, monkeypatch):
         # Stub the config layer end-to-end with a tiny in-memory store so we
-        # don't depend on the full hermes_cli.config bootstrap.
+        # don't depend on the full newroz_cli.config bootstrap.
         store: dict = {"security": {}}
         monkeypatch.setattr(
-            "hermes_cli.config.load_config", lambda: store
+            "newroz_cli.config.load_config", lambda: store
         )
         monkeypatch.setattr(
-            "hermes_cli.config.save_config",
+            "newroz_cli.config.save_config",
             lambda cfg: store.update(cfg) or None,
         )
         assert adv.ack_advisory("test-advisory-2026-99") is True
@@ -249,7 +249,7 @@ class TestRendering:
         assert fake_advisory.id in joined
         assert fake_advisory.title in joined
         assert "fake-malicious-pkg==6.6.6" in joined
-        assert "hermes doctor" in joined
+        assert "newroz doctor" in joined
 
     def test_full_remediation_text_contains_all_steps(self, fake_advisory):
         hit = adv.AdvisoryHit(

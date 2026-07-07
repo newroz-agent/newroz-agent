@@ -1,7 +1,7 @@
 """Regression: auxiliary-client keepalive httpx client must honor custom CA bundles.
 
 The main OpenAI client resolves per-provider ``ssl_ca_cert`` / ``ssl_verify`` and
-``HERMES_CA_BUNDLE`` via ``agent.ssl_verify.resolve_httpx_verify``. Auxiliary calls
+``NEWROZ_CA_BUNDLE`` via ``agent.ssl_verify.resolve_httpx_verify``. Auxiliary calls
 (compression, vision, web_extract, title generation, session_search) build their own
 keepalive client through ``agent.process_bootstrap.build_keepalive_http_client`` and must
 apply the same TLS settings — otherwise an HTTPS custom_providers endpoint signed by a
@@ -16,7 +16,7 @@ import pytest
 
 from agent.process_bootstrap import build_keepalive_http_client
 
-_CA_ENV_VARS = ("HERMES_CA_BUNDLE", "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "HTTPS_PROXY")
+_CA_ENV_VARS = ("NEWROZ_CA_BUNDLE", "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE", "HTTPS_PROXY")
 
 
 @pytest.fixture
@@ -45,11 +45,11 @@ def test_build_keepalive_http_client_default_verify_true(clean_tls_env):
 
 def test_resolve_aux_verify_uses_per_provider_ssl_ca_cert(clean_tls_env, monkeypatch):
     """_resolve_aux_verify should mirror the main-client resolution for a matched base_url."""
-    import hermes_cli.config as cfg
+    import newroz_cli.config as cfg
     from agent import auxiliary_client
 
     # get_custom_provider_tls_settings is imported inside the function from
-    # hermes_cli.config, so patch it at the source module.
+    # newroz_cli.config, so patch it at the source module.
     monkeypatch.setattr(
         cfg,
         "get_custom_provider_tls_settings",
@@ -60,7 +60,7 @@ def test_resolve_aux_verify_uses_per_provider_ssl_ca_cert(clean_tls_env, monkeyp
 
 
 def test_resolve_aux_verify_ssl_verify_false(clean_tls_env, monkeypatch):
-    import hermes_cli.config as cfg
+    import newroz_cli.config as cfg
     from agent import auxiliary_client
 
     monkeypatch.setattr(
@@ -72,7 +72,7 @@ def test_resolve_aux_verify_ssl_verify_false(clean_tls_env, monkeypatch):
 
 
 def test_resolve_aux_verify_no_match_defaults_true(clean_tls_env, monkeypatch):
-    import hermes_cli.config as cfg
+    import newroz_cli.config as cfg
     from agent import auxiliary_client
 
     monkeypatch.setattr(cfg, "get_custom_provider_tls_settings", lambda *a, **k: {})

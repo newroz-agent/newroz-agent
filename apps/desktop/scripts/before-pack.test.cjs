@@ -7,7 +7,7 @@ const test = require('node:test')
 const { cleanStaleAppOutDir } = require('../scripts/before-pack.cjs')
 
 test('cleanStaleAppOutDir removes a populated unpacked directory', () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-before-pack-'))
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-before-pack-'))
   try {
     const appOutDir = path.join(tempRoot, 'linux-unpacked')
     fs.mkdirSync(appOutDir, { recursive: true })
@@ -28,7 +28,7 @@ test('cleanStaleAppOutDir removes a populated unpacked directory', () => {
 })
 
 test('cleanStaleAppOutDir is a no-op when the directory is absent', () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-before-pack-'))
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-before-pack-'))
   try {
     const missing = path.join(tempRoot, 'does-not-exist')
     assert.equal(cleanStaleAppOutDir(missing), false)

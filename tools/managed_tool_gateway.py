@@ -11,7 +11,7 @@ from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
-from hermes_constants import get_hermes_home
+from newroz_constants import get_newroz_home
 from tools.tool_backend_helpers import managed_nous_tools_enabled
 
 _DEFAULT_TOOL_GATEWAY_DOMAIN = "nousresearch.com"
@@ -28,8 +28,8 @@ class ManagedToolGatewayConfig:
 
 
 def auth_json_path():
-    """Return the Hermes auth store path, respecting HERMES_HOME overrides."""
-    return get_hermes_home() / "auth.json"
+    """Return the Newroz auth store path, respecting NEWROZ_HOME overrides."""
+    return get_newroz_home() / "auth.json"
 
 
 def _read_nous_provider_state() -> Optional[dict]:
@@ -75,7 +75,7 @@ def _access_token_is_expiring(expires_at: object, skew_seconds: int) -> bool:
 def peek_nous_access_token() -> Optional[str]:
     """Cheap probe for a Nous gateway token without triggering refresh.
 
-    Availability scans (`hermes tools`, banner/status paint, provider
+    Availability scans (`newroz tools`, banner/status paint, provider
     `is_available()` checks) must stay off the synchronous OAuth refresh path.
     This helper therefore only inspects the explicit env override and the
     cached auth-store token, without checking expiry and without making any
@@ -108,7 +108,7 @@ def read_nous_access_token() -> Optional[str]:
         return cached_token
 
     try:
-        from hermes_cli.auth import resolve_nous_access_token
+        from newroz_cli.auth import resolve_nous_access_token
 
         refreshed_token = resolve_nous_access_token(
             refresh_skew_seconds=_NOUS_ACCESS_TOKEN_REFRESH_SKEW_SECONDS,

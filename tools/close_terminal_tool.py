@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Close a read-only agent terminal tab in the Hermes desktop GUI.
+"""Close a read-only agent terminal tab in the Newroz desktop GUI.
 
 Each ``terminal(background=true)`` process is mirrored as a read-only tab in the
 desktop's terminal pane. This tool lets the agent drop a tab it no longer needs
@@ -8,7 +8,7 @@ The output keeps buffering and the user can reopen the tab from the status stack
 
 It routes through the process registry's ``on_close`` sink, which the desktop
 gateway wires to emit a ``terminal.close`` event the renderer handles. Like
-``read_terminal`` it is gated on ``HERMES_DESKTOP`` so it never appears outside
+``read_terminal`` it is gated on ``NEWROZ_DESKTOP`` so it never appears outside
 the GUI.
 """
 
@@ -31,15 +31,15 @@ def close_terminal_tool(process_id: str) -> str:
 
 
 def check_close_terminal_requirements() -> bool:
-    """Desktop GUI only — HERMES_DESKTOP is set on the gateway the app spawns."""
-    return env_var_enabled("HERMES_DESKTOP")
+    """Desktop GUI only — NEWROZ_DESKTOP is set on the gateway the app spawns."""
+    return env_var_enabled("NEWROZ_DESKTOP")
 
 
 CLOSE_TERMINAL_SCHEMA = {
     "name": "close_terminal",
     "description": (
         "Close the read-only terminal tab for one of your background processes in "
-        "the Hermes desktop GUI (the tabs mirroring terminal(background=true) runs). "
+        "the Newroz desktop GUI (the tabs mirroring terminal(background=true) runs). "
         "This does NOT kill the process — it only drops the tab/view; the output "
         "keeps buffering and the user can reopen it from the status stack. Use it "
         "to tidy up when a background process's live terminal is no longer worth "

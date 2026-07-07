@@ -318,7 +318,7 @@ class TestRateLimiting:
             json.dumps("15551234567@s.whatsapp.net"),
             encoding="utf-8",
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
 
         with patch("gateway.pairing.PAIRING_DIR", tmp_path):
             store = PairingStore()
@@ -427,7 +427,7 @@ class TestApprovalFlow:
             json.dumps("15551234567@s.whatsapp.net"),
             encoding="utf-8",
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
 
         with patch("gateway.pairing.PAIRING_DIR", tmp_path):
             store = PairingStore()
@@ -449,7 +449,7 @@ class TestApprovalFlow:
             json.dumps("15551234567@s.whatsapp.net"),
             encoding="utf-8",
         )
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
 
         approved_path = tmp_path / "whatsapp-approved.json"
         approved_path.write_text(
@@ -694,7 +694,7 @@ class TestUnreadablePairingFile:
         # And the warning should include actionable advice
         msgs = " ".join(rec.getMessage() for rec in caplog.records)
         assert "docker exec" in msgs
-        assert "-u hermes" in msgs
+        assert "-u newroz" in msgs
 
     def test_is_approved_returns_false_when_file_unreadable(self, tmp_path, caplog):
         """End-to-end: an unreadable approved.json must not crash the gateway,

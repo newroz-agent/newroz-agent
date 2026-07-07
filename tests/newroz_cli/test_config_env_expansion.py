@@ -1,7 +1,7 @@
 """Tests for ${ENV_VAR} substitution in config.yaml values."""
 
 import pytest
-from hermes_cli.config import _expand_env_vars, load_config
+from newroz_cli.config import _expand_env_vars, load_config
 
 
 class TestExpandEnvVars:
@@ -71,7 +71,7 @@ class TestLoadConfigExpansion:
         monkeypatch.setenv("GOOGLE_API_KEY", "gsk-test-key")
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "1234567:ABC-token")
         # Patch the imported function's own globals. Other tests may reload
-        # hermes_cli.config, making string-target monkeypatches hit a different
+        # newroz_cli.config, making string-target monkeypatches hit a different
         # module object than this collection-time imported load_config().
         monkeypatch.setitem(load_config.__globals__, "get_config_path", lambda: config_file)
 
@@ -96,7 +96,7 @@ class TestLoadConfigExpansion:
 
 class TestLoadConfigCacheEnvStaleness:
     """The load_config() cache must not pin expansions made against a stale
-    environment (#58514): a load before load_hermes_dotenv() runs, or an env
+    environment (#58514): a load before load_newroz_dotenv() runs, or an env
     var rotated in-process, must not keep serving the old expansion."""
 
     def test_env_var_appearing_after_first_load_invalidates_cache(self, tmp_path, monkeypatch):
@@ -160,8 +160,8 @@ class TestLoadCliConfigExpansion:
         config_file.write_text(config_yaml)
 
         monkeypatch.setenv("TEST_VISION_KEY_XYZ", "vis-key-123")
-        # Patch the hermes home so load_cli_config finds our test config
-        monkeypatch.setattr("cli._hermes_home", tmp_path)
+        # Patch the newroz home so load_cli_config finds our test config
+        monkeypatch.setattr("cli._newroz_home", tmp_path)
 
         from cli import load_cli_config
         config = load_cli_config()
@@ -178,7 +178,7 @@ class TestLoadCliConfigExpansion:
         config_file.write_text(config_yaml)
 
         monkeypatch.delenv("UNSET_CLI_VAR_ABC", raising=False)
-        monkeypatch.setattr("cli._hermes_home", tmp_path)
+        monkeypatch.setattr("cli._newroz_home", tmp_path)
 
         from cli import load_cli_config
         config = load_cli_config()

@@ -1,4 +1,4 @@
-"""Surfacing tests — managed scope shown in `config show` and `hermes doctor`."""
+"""Surfacing tests — managed scope shown in `config show` and `newroz doctor`."""
 import pytest
 
 
@@ -8,14 +8,14 @@ def homes(tmp_path, monkeypatch):
     home.mkdir()
     managed = tmp_path / "managed"
     managed.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_MANAGED_DIR", str(managed))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_MANAGED_DIR", str(managed))
     (home / "config.yaml").write_text("model:\n  default: user/model\n", encoding="utf-8")
     (managed / "config.yaml").write_text(
         "model:\n  default: managed/model\n", encoding="utf-8"
     )
-    import hermes_cli.config as cfg
-    from hermes_cli import managed_scope
+    import newroz_cli.config as cfg
+    from newroz_cli import managed_scope
 
     cfg._LOAD_CONFIG_CACHE.clear()
     cfg._RAW_CONFIG_CACHE.clear()
@@ -24,7 +24,7 @@ def homes(tmp_path, monkeypatch):
 
 
 def test_config_show_flags_managed(homes, capsys):
-    from hermes_cli.config import show_config
+    from newroz_cli.config import show_config
 
     show_config()
     out = capsys.readouterr().out.lower()
@@ -37,16 +37,16 @@ def test_config_show_no_managed_scope_silent(tmp_path, monkeypatch, capsys):
     """With no managed scope, the managed header must not appear."""
     home = tmp_path / "home"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_MANAGED_DIR", str(tmp_path / "nope"))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_MANAGED_DIR", str(tmp_path / "nope"))
     (home / "config.yaml").write_text("model:\n  default: user/model\n", encoding="utf-8")
-    import hermes_cli.config as cfg
-    from hermes_cli import managed_scope
+    import newroz_cli.config as cfg
+    from newroz_cli import managed_scope
 
     cfg._LOAD_CONFIG_CACHE.clear()
     cfg._RAW_CONFIG_CACHE.clear()
     managed_scope.invalidate_managed_cache()
-    from hermes_cli.config import show_config
+    from newroz_cli.config import show_config
 
     show_config()
     out = capsys.readouterr().out.lower()
@@ -55,7 +55,7 @@ def test_config_show_no_managed_scope_silent(tmp_path, monkeypatch, capsys):
 
 def test_doctor_reports_managed_scope(homes, capsys):
     # homes fixture has 1 managed config key (model.default) and 0 managed env keys.
-    from hermes_cli import doctor
+    from newroz_cli import doctor
 
     doctor.managed_scope_check()
     out = capsys.readouterr().out.lower()
@@ -65,8 +65,8 @@ def test_doctor_reports_managed_scope(homes, capsys):
 
 
 def test_doctor_silent_with_no_managed_scope(tmp_path, monkeypatch, capsys):
-    monkeypatch.setenv("HERMES_MANAGED_DIR", str(tmp_path / "nope"))
-    from hermes_cli import managed_scope, doctor
+    monkeypatch.setenv("NEWROZ_MANAGED_DIR", str(tmp_path / "nope"))
+    from newroz_cli import managed_scope, doctor
 
     managed_scope.invalidate_managed_cache()
     doctor.managed_scope_check()

@@ -16,7 +16,7 @@ import time
 
 import pytest
 
-from hermes_state import SessionDB
+from newroz_state import SessionDB
 
 
 class TestHandoffStateDB:
@@ -24,9 +24,9 @@ class TestHandoffStateDB:
 
     @pytest.fixture
     def db(self, tmp_path, monkeypatch):
-        home = tmp_path / ".hermes"
+        home = tmp_path / ".newroz"
         home.mkdir()
-        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setenv("NEWROZ_HOME", str(home))
         return SessionDB(db_path=home / "state.db")
 
     def _make_session(self, db, session_id, source="cli", title=None):
@@ -187,7 +187,7 @@ class TestHandoffCommandRegistration:
     """Slash-command surface checks."""
 
     def test_command_registered(self):
-        from hermes_cli.commands import resolve_command
+        from newroz_cli.commands import resolve_command
         cmd = resolve_command("handoff")
         assert cmd is not None
         assert cmd.name == "handoff"
@@ -195,7 +195,7 @@ class TestHandoffCommandRegistration:
 
     def test_command_is_cli_only(self):
         """`/handoff` is initiated from the CLI; gateway shouldn't expose it."""
-        from hermes_cli.commands import resolve_command, GATEWAY_KNOWN_COMMANDS
+        from newroz_cli.commands import resolve_command, GATEWAY_KNOWN_COMMANDS
         cmd = resolve_command("handoff")
         assert cmd is not None
         assert cmd.cli_only is True

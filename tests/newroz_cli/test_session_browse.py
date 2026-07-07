@@ -1,4 +1,4 @@
-"""Tests for the interactive session browser (`hermes sessions browse`).
+"""Tests for the interactive session browser (`newroz sessions browse`).
 
 Covers:
 - _session_browse_picker logic (curses mocked, fallback tested)
@@ -10,7 +10,7 @@ import time
 from unittest.mock import MagicMock, patch
 
 
-from hermes_cli.main import _session_browse_picker
+from newroz_cli.main import _session_browse_picker
 
 
 # ─── Sample session data ──────────────────────────────────────────────────────
@@ -384,13 +384,13 @@ class TestSessionBrowseArgparse:
     """Verify the 'browse' subcommand is properly registered."""
 
     def test_browse_subcommand_exists(self):
-        """hermes sessions browse should be parseable."""
+        """newroz sessions browse should be parseable."""
 
         # We can't run main(), but we can import and test the parser setup
         # by checking that argparse doesn't error on "sessions browse"
         # Re-create the parser portion
         # Instead, let's just verify the import works and the function exists
-        from hermes_cli.main import _session_browse_picker
+        from newroz_cli.main import _session_browse_picker
         assert callable(_session_browse_picker)
 
     def test_browse_default_limit_is_500(self):

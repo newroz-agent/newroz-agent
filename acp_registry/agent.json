@@ -1,16 +1,16 @@
 {
-  "id": "hermes-agent",
-  "name": "Hermes Agent",
+  "id": "newroz-agent",
+  "name": "Newroz Agent",
   "version": "0.18.0",
   "description": "Self-improving open-source AI agent by Nous Research with ACP editor integration, persistent memory, skills, and rich tool support.",
   "repository": "https://github.com/NousResearch/hermes-agent",
-  "website": "https://hermes-agent.nousresearch.com/docs/user-guide/features/acp",
+  "website": "https://newroz-agent.nousresearch.com/docs/user-guide/features/acp",
   "authors": ["Nous Research"],
   "license": "MIT",
   "distribution": {
     "uvx": {
-      "package": "hermes-agent[acp]==0.18.0",
-      "args": ["hermes-acp"]
+      "package": "newroz-agent[acp]==0.18.0",
+      "args": ["newroz-acp"]
     }
   }
 }

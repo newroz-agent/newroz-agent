@@ -1,4 +1,4 @@
-"""Tests that `hermes model` always shows the model selection menu for custom
+"""Tests that `newroz model` always shows the model selection menu for custom
 providers, even when a model is already saved.
 
 Regression test for the bug where _model_flow_named_custom() returned
@@ -13,17 +13,17 @@ import pytest
 
 @pytest.fixture
 def config_home(tmp_path, monkeypatch):
-    """Isolated HERMES_HOME with a minimal config."""
-    home = tmp_path / "hermes"
+    """Isolated NEWROZ_HOME with a minimal config."""
+    home = tmp_path / "newroz"
     home.mkdir()
     config_yaml = home / "config.yaml"
     config_yaml.write_text("model: old-model\ncustom_providers: []\n")
     env_file = home / ".env"
     env_file.write_text("")
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.delenv("HERMES_MODEL", raising=False)
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.delenv("NEWROZ_MODEL", raising=False)
     monkeypatch.delenv("LLM_MODEL", raising=False)
-    monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
+    monkeypatch.delenv("NEWROZ_INFERENCE_PROVIDER", raising=False)
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     return home
@@ -40,8 +40,8 @@ class TestCustomProviderModelSwitch:
         credential selectable from the previous endpoint's pool."""
         import yaml
         from agent.credential_pool import load_pool
-        from hermes_cli.auth import read_credential_pool, write_credential_pool
-        from hermes_cli.main import _model_flow_custom
+        from newroz_cli.auth import read_credential_pool, write_credential_pool
+        from newroz_cli.main import _model_flow_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -79,15 +79,15 @@ class TestCustomProviderModelSwitch:
         )
 
         with patch(
-            "hermes_cli.models.probe_api_models",
+            "newroz_cli.models.probe_api_models",
             return_value={
                 "models": ["new-model"],
                 "used_fallback": False,
                 "probed_url": "https://new.example.test/v1/models",
             },
         ), \
-             patch("hermes_cli.secret_prompt.masked_secret_prompt", return_value="sk-new"), \
-             patch("hermes_cli.main._prompt_custom_api_mode_selection", return_value=""), \
+             patch("newroz_cli.secret_prompt.masked_secret_prompt", return_value="sk-new"), \
+             patch("newroz_cli.main._prompt_custom_api_mode_selection", return_value=""), \
              patch(
                  "builtins.input",
                  side_effect=[
@@ -119,7 +119,7 @@ class TestCustomProviderModelSwitch:
     def test_saved_model_still_probes_endpoint(self, config_home):
         """When a model is already saved, the function must still call
         fetch_api_models to probe the endpoint — not skip with early return."""
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "My vLLM",
@@ -128,8 +128,8 @@ class TestCustomProviderModelSwitch:
             "model": "model-A",  # already saved
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["model-A", "model-B"]) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=["model-A", "model-B"]) as mock_fetch, \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="2"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -144,7 +144,7 @@ class TestCustomProviderModelSwitch:
     def test_can_switch_to_different_model(self, config_home):
         """User selects a different model than the saved one."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "My vLLM",
@@ -153,8 +153,8 @@ class TestCustomProviderModelSwitch:
             "model": "model-A",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["model-A", "model-B"]), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=["model-A", "model-B"]), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="2"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -167,7 +167,7 @@ class TestCustomProviderModelSwitch:
     def test_probe_failure_falls_back_to_saved(self, config_home):
         """When endpoint probe fails and user presses Enter, saved model is used."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "My vLLM",
@@ -177,7 +177,7 @@ class TestCustomProviderModelSwitch:
         }
 
         # fetch returns empty list (probe failed), user presses Enter (empty input)
-        with patch("hermes_cli.models.fetch_api_models", return_value=[]), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=[]), \
              patch("builtins.input", return_value=""), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -190,7 +190,7 @@ class TestCustomProviderModelSwitch:
     def test_no_saved_model_still_works(self, config_home):
         """First-time flow (no saved model) still works as before."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "My vLLM",
@@ -199,8 +199,8 @@ class TestCustomProviderModelSwitch:
             # no "model" key
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["model-X"]), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=["model-X"]), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -213,7 +213,7 @@ class TestCustomProviderModelSwitch:
     def test_api_mode_set_from_provider_info(self, config_home):
         """When custom_providers entry has api_mode, it should be applied."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "Anthropic Proxy",
@@ -223,8 +223,8 @@ class TestCustomProviderModelSwitch:
             "api_mode": "anthropic_messages",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["claude-3"]) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=["claude-3"]) as mock_fetch, \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -243,7 +243,7 @@ class TestCustomProviderModelSwitch:
     def test_api_mode_cleared_when_not_specified(self, config_home):
         """When custom_providers entry has no api_mode, stale api_mode is removed."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         # Pre-seed a stale api_mode in config
         config_path = config_home / "config.yaml"
@@ -256,8 +256,8 @@ class TestCustomProviderModelSwitch:
             "model": "llama-3",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["llama-3"]), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=["llama-3"]), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -270,7 +270,7 @@ class TestCustomProviderModelSwitch:
     def test_env_template_api_key_is_preserved_in_model_config(self, config_home, monkeypatch):
         """Selecting an env-backed custom provider must not inline the secret."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -293,8 +293,8 @@ class TestCustomProviderModelSwitch:
             "model": "qwen3.6-35b-fast",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]) as mock_fetch, \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -312,7 +312,7 @@ class TestCustomProviderModelSwitch:
     def test_key_env_custom_provider_persists_reference_not_secret(self, config_home, monkeypatch):
         """key_env custom providers should also avoid writing plaintext keys."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -334,8 +334,8 @@ class TestCustomProviderModelSwitch:
             "model": "qwen3.6-35b-fast",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=["qwen3.6-35b-fast"]), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -359,7 +359,7 @@ class TestCustomProviderModelSwitch:
         ``config.yaml``. This test drives the real picker-callsite code path.
         """
         import yaml
-        from hermes_cli.main import select_provider_and_model
+        from newroz_cli.main import select_provider_and_model
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -389,11 +389,11 @@ class TestCustomProviderModelSwitch:
                 f"NeuralWatt entry missing from provider menu: {labels}"
             )
 
-        with patch("hermes_cli.main._prompt_provider_choice",
+        with patch("newroz_cli.main._prompt_provider_choice",
                    side_effect=_pick_neuralwatt), \
-             patch("hermes_cli.models.fetch_api_models",
+             patch("newroz_cli.models.fetch_api_models",
                    return_value=["qwen3.6-35b-fast"]) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             select_provider_and_model()
@@ -413,7 +413,7 @@ class TestCustomProviderModelSwitch:
     def test_bare_custom_current_provider_matches_env_base_url_before_first_fallback(
         self, config_home, monkeypatch
     ):
-        """`hermes model` must mark the custom provider matching model.base_url
+        """`newroz model` must mark the custom provider matching model.base_url
         as current instead of falling back to the first saved custom provider.
 
         Regression: with ``model.provider: custom`` and multiple
@@ -422,7 +422,7 @@ class TestCustomProviderModelSwitch:
         first entry. A config with Cerebras first and NeuralWatt active then
         showed Cerebras as current.
         """
-        from hermes_cli.main import select_provider_and_model
+        from newroz_cli.main import select_provider_and_model
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -456,7 +456,7 @@ class TestCustomProviderModelSwitch:
             captured["default"] = default
             return len(labels) - 1  # Leave unchanged
 
-        with patch("hermes_cli.main._prompt_provider_choice",
+        with patch("newroz_cli.main._prompt_provider_choice",
                    side_effect=_capture_and_cancel), \
              patch("builtins.print"):
             select_provider_and_model()
@@ -477,7 +477,7 @@ class TestCustomProviderModelSwitch:
         """Selecting an env-backed custom provider should not expand its
         ``base_url`` template into ``model.base_url`` on disk."""
         import yaml
-        from hermes_cli.main import select_provider_and_model
+        from newroz_cli.main import select_provider_and_model
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -502,11 +502,11 @@ class TestCustomProviderModelSwitch:
                 f"NeuralWatt entry missing from provider menu: {labels}"
             )
 
-        with patch("hermes_cli.main._prompt_provider_choice",
+        with patch("newroz_cli.main._prompt_provider_choice",
                    side_effect=_pick_neuralwatt), \
-             patch("hermes_cli.models.fetch_api_models",
+             patch("newroz_cli.models.fetch_api_models",
                    return_value=["qwen3.6-35b-fast"]) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             select_provider_and_model()
@@ -537,7 +537,7 @@ class TestCustomProviderModelSwitch:
         ``api_key`` belongs on disk.
         """
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -545,13 +545,13 @@ class TestCustomProviderModelSwitch:
             "  crs-henkee:\n"
             "    name: CRS Henkee\n"
             "    base_url: http://127.0.0.1:3000/api/v1\n"
-            "    key_env: HERMES_CRS_HENKEE_KEY\n"
+            "    key_env: NEWROZ_CRS_HENKEE_KEY\n"
             "    transport: anthropic_messages\n"
             "    model: claude-opus-4-7\n"
             "    default_model: claude-opus-4-7\n"
             "custom_providers: []\n"
         )
-        monkeypatch.setenv("HERMES_CRS_HENKEE_KEY", "cr_live_secret_xyz")
+        monkeypatch.setenv("NEWROZ_CRS_HENKEE_KEY", "cr_live_secret_xyz")
 
         # provider_info as built by _named_custom_provider_map for a
         # ``providers:`` entry that has key_env but no inline api_key.
@@ -559,7 +559,7 @@ class TestCustomProviderModelSwitch:
             "name": "CRS Henkee",
             "base_url": "http://127.0.0.1:3000/api/v1",
             "api_key": "",
-            "key_env": "HERMES_CRS_HENKEE_KEY",
+            "key_env": "NEWROZ_CRS_HENKEE_KEY",
             "model": "claude-opus-4-7",
             "api_mode": "anthropic_messages",
             "provider_key": "crs-henkee",
@@ -567,10 +567,10 @@ class TestCustomProviderModelSwitch:
         }
 
         with patch(
-            "hermes_cli.models.fetch_api_models",
+            "newroz_cli.models.fetch_api_models",
             return_value=["claude-opus-4-7"],
         ) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -588,13 +588,13 @@ class TestCustomProviderModelSwitch:
         assert "api_key" not in entry, (
             f"providers.crs-henkee gained an api_key field: {entry.get('api_key')!r}"
         )
-        assert entry["key_env"] == "HERMES_CRS_HENKEE_KEY"
+        assert entry["key_env"] == "NEWROZ_CRS_HENKEE_KEY"
         assert entry["default_model"] == "claude-opus-4-7"
 
         # And the plaintext secret must never appear anywhere on disk.
         assert "cr_live_secret_xyz" not in saved_text
         # The synthesized template is also redundant here — key_env owns it.
-        assert "${HERMES_CRS_HENKEE_KEY}" not in saved_text
+        assert "${NEWROZ_CRS_HENKEE_KEY}" not in saved_text
 
     def test_key_env_providers_dict_preserves_existing_api_key(
         self, config_home, monkeypatch
@@ -603,7 +603,7 @@ class TestCustomProviderModelSwitch:
         template must keep it untouched. Only entries that never declared
         an ``api_key`` should skip the write."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         config_path = config_home / "config.yaml"
         config_path.write_text(
@@ -611,31 +611,31 @@ class TestCustomProviderModelSwitch:
             "  crs-henkee:\n"
             "    name: CRS Henkee\n"
             "    base_url: http://127.0.0.1:3000/api/v1\n"
-            "    api_key: ${HERMES_CRS_HENKEE_KEY}\n"
-            "    key_env: HERMES_CRS_HENKEE_KEY\n"
+            "    api_key: ${NEWROZ_CRS_HENKEE_KEY}\n"
+            "    key_env: NEWROZ_CRS_HENKEE_KEY\n"
             "    transport: anthropic_messages\n"
             "    model: claude-opus-4-7\n"
             "    default_model: claude-opus-4-7\n"
             "custom_providers: []\n"
         )
-        monkeypatch.setenv("HERMES_CRS_HENKEE_KEY", "cr_live_secret_xyz")
+        monkeypatch.setenv("NEWROZ_CRS_HENKEE_KEY", "cr_live_secret_xyz")
 
         provider_info = {
             "name": "CRS Henkee",
             "base_url": "http://127.0.0.1:3000/api/v1",
             "api_key": "cr_live_secret_xyz",  # expanded by load_config
-            "key_env": "HERMES_CRS_HENKEE_KEY",
+            "key_env": "NEWROZ_CRS_HENKEE_KEY",
             "model": "claude-opus-4-7",
             "api_mode": "anthropic_messages",
             "provider_key": "crs-henkee",
-            "api_key_ref": "${HERMES_CRS_HENKEE_KEY}",  # raw template preserved
+            "api_key_ref": "${NEWROZ_CRS_HENKEE_KEY}",  # raw template preserved
         }
 
         with patch(
-            "hermes_cli.models.fetch_api_models",
+            "newroz_cli.models.fetch_api_models",
             return_value=["claude-opus-4-7"],
         ), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -645,19 +645,19 @@ class TestCustomProviderModelSwitch:
         entry = saved["providers"]["crs-henkee"]
         # Existing api_key template must survive (the resolved secret must not
         # clobber it via _preserve_env_ref_templates).
-        assert entry["api_key"] == "${HERMES_CRS_HENKEE_KEY}"
+        assert entry["api_key"] == "${NEWROZ_CRS_HENKEE_KEY}"
         assert "cr_live_secret_xyz" not in saved_text
 
 
 class TestCustomProviderDiscoverModels:
-    """#18726: honor ``discover_models: false`` in the terminal ``hermes model``
+    """#18726: honor ``discover_models: false`` in the terminal ``newroz model``
     named-custom flow so the picker shows the configured ``models:`` subset
     instead of the endpoint's full live catalog."""
 
     def test_discover_false_uses_configured_list_and_skips_probe(self, config_home):
         """discover_models: false + configured models → no live probe, the
         configured list is used verbatim."""
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "Baidu Coding",
@@ -668,8 +668,8 @@ class TestCustomProviderDiscoverModels:
             "model": "kimi-k2.5",
         }
 
-        with patch("hermes_cli.models.fetch_api_models") as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models") as mock_fetch, \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="2"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -680,7 +680,7 @@ class TestCustomProviderDiscoverModels:
     def test_discover_false_saves_choice_from_configured_list(self, config_home):
         """User picks the 2nd configured model; it persists, list-driven."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "Baidu Coding",
@@ -691,8 +691,8 @@ class TestCustomProviderDiscoverModels:
             "model": "kimi-k2.5",
         }
 
-        with patch("hermes_cli.models.fetch_api_models") as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models") as mock_fetch, \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="2"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -706,7 +706,7 @@ class TestCustomProviderDiscoverModels:
     def test_default_still_probes_when_discover_unset(self, config_home):
         """Default (discover_models unset → True) keeps live-probe behaviour
         even when a models: list is configured — Option B opt-out semantics."""
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "My Gateway",
@@ -717,10 +717,10 @@ class TestCustomProviderDiscoverModels:
         }
 
         with patch(
-            "hermes_cli.models.fetch_api_models",
+            "newroz_cli.models.fetch_api_models",
             return_value=["live-a", "live-b", "live-c"],
         ) as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -736,7 +736,7 @@ class TestCustomProviderDiscoverModels:
         """When discovery is on but the probe returns nothing, fall back to the
         configured models: list instead of forcing manual entry."""
         import yaml
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "My Gateway",
@@ -746,8 +746,8 @@ class TestCustomProviderDiscoverModels:
             "model": "fallback-a",
         }
 
-        with patch("hermes_cli.models.fetch_api_models", return_value=[]), \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models", return_value=[]), \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="2"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
@@ -759,7 +759,7 @@ class TestCustomProviderDiscoverModels:
 
     def test_discover_false_string_is_normalised(self, config_home):
         """String 'false' (hand-edited configs) disables discovery too."""
-        from hermes_cli.main import _model_flow_named_custom
+        from newroz_cli.main import _model_flow_named_custom
 
         provider_info = {
             "name": "Baidu Coding",
@@ -770,8 +770,8 @@ class TestCustomProviderDiscoverModels:
             "model": "kimi-k2.5",
         }
 
-        with patch("hermes_cli.models.fetch_api_models") as mock_fetch, \
-             patch("hermes_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
+        with patch("newroz_cli.models.fetch_api_models") as mock_fetch, \
+             patch("newroz_cli.curses_ui.curses_radiolist", side_effect=ImportError), \
              patch("builtins.input", return_value="1"), \
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)

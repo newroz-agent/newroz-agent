@@ -39,10 +39,10 @@ class _OneFrameBridge:
 
 
 @pytest.fixture
-def pty_client(monkeypatch, _isolate_hermes_home):
+def pty_client(monkeypatch, _isolate_newroz_home):
     from starlette.testclient import TestClient
 
-    import hermes_cli.web_server as ws
+    import newroz_cli.web_server as ws
 
     monkeypatch.setattr(ws, "_DASHBOARD_EMBEDDED_CHAT_ENABLED", True)
     monkeypatch.setattr(ws.PtyBridge, "spawn", _OneFrameBridge.spawn)
@@ -58,8 +58,8 @@ def _url(token: str, **params: str) -> str:
 
 def test_resolve_chat_argv_sets_active_session_file_env(monkeypatch):
     """Dashboard chat gives the TUI a breadcrumb file for reconnect resume."""
-    import hermes_cli.main as main_mod
-    import hermes_cli.web_server as ws
+    import newroz_cli.main as main_mod
+    import newroz_cli.web_server as ws
 
     monkeypatch.setattr(
         main_mod,
@@ -68,10 +68,10 @@ def test_resolve_chat_argv_sets_active_session_file_env(monkeypatch):
     )
 
     _argv, _cwd, env = ws._resolve_chat_argv(
-        active_session_file="/tmp/hermes-active-session.json"
+        active_session_file="/tmp/newroz-active-session.json"
     )
 
-    assert env["HERMES_TUI_ACTIVE_SESSION_FILE"] == "/tmp/hermes-active-session.json"
+    assert env["NEWROZ_TUI_ACTIVE_SESSION_FILE"] == "/tmp/newroz-active-session.json"
 
 
 def test_channel_reconnect_resumes_active_session_file(pty_client, monkeypatch):
@@ -92,7 +92,7 @@ def test_channel_reconnect_resumes_active_session_file(pty_client, monkeypatch):
                 json.dumps({"session_id": "sess-live"}),
                 encoding="utf-8",
             )
-        return (["fake-hermes-tui"], None, None)
+        return (["fake-newroz-tui"], None, None)
 
     monkeypatch.setattr(ws, "_resolve_chat_argv", fake_resolve)
 
@@ -119,7 +119,7 @@ def test_fresh_param_ignores_channel_active_session_file(pty_client, monkeypatch
     def fake_resolve(resume=None, sidecar_url=None, profile=None, active_session_file=None):
         captured["active_session_file"] = active_session_file
         captured["resume"] = resume
-        return (["fake-hermes-tui"], None, None)
+        return (["fake-newroz-tui"], None, None)
 
     monkeypatch.setattr(ws, "_resolve_chat_argv", fake_resolve)
 
@@ -152,7 +152,7 @@ def test_child_eof_closes_socket_and_bridge(pty_client, monkeypatch):
 
     monkeypatch.setattr(ws.PtyBridge, "spawn", _RecordingBridge.spawn)
     monkeypatch.setattr(
-        ws, "_resolve_chat_argv", lambda **kw: (["fake-hermes-tui"], None, None)
+        ws, "_resolve_chat_argv", lambda **kw: (["fake-newroz-tui"], None, None)
     )
 
     # The client never sends a disconnect of its own — it only reads the one

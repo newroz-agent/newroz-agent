@@ -14,7 +14,7 @@ description: "用于 RAG 和语义搜索的高性能向量相似度搜索引擎"
 
 | | |
 |---|---|
-| 来源 | 可选 — 使用 `hermes skills install official/mlops/qdrant` 安装 |
+| 来源 | 可选 — 使用 `newroz skills install official/mlops/qdrant` 安装 |
 | 路径 | `optional-skills/mlops/qdrant` |
 | 版本 | `1.0.0` |
 | 作者 | Orchestra Research |
@@ -26,7 +26,7 @@ description: "用于 RAG 和语义搜索的高性能向量相似度搜索引擎"
 ## 参考：完整 SKILL.md
 
 :::info
-以下是 Hermes 在触发此 skill 时加载的完整 skill 定义。这是 skill 激活时 agent 所看到的指令内容。
+以下是 Newroz 在触发此 skill 时加载的完整 skill 定义。这是 skill 激活时 agent 所看到的指令内容。
 :::
 
 # Qdrant - 向量相似度搜索引擎

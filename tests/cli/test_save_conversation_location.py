@@ -1,10 +1,10 @@
 """Tests for /save — the conversation snapshot slash command.
 
-Regression: the old implementation wrote ``hermes_conversation_<ts>.json``
+Regression: the old implementation wrote ``newroz_conversation_<ts>.json``
 to the current working directory (CWD). Users who ran /save expected the
-file to be discoverable via ``hermes sessions browse``, but CWD-resident
+file to be discoverable via ``newroz sessions browse``, but CWD-resident
 snapshots are not indexed in the state DB and are generally invisible.
-The fix writes snapshots under ``~/.hermes/sessions/saved/`` and prints
+The fix writes snapshots under ``~/.newroz/sessions/saved/`` and prints
 the absolute path plus the resume hint for the live session.
 """
 
@@ -20,15 +20,15 @@ import pytest
 
 
 @pytest.fixture
-def hermes_home(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+def newroz_home(tmp_path, monkeypatch):
+    home = tmp_path / ".newroz"
     home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    # Clear any cached hermes_home computation
-    import hermes_constants
-    if hasattr(hermes_constants, "_hermes_home_cache"):
-        hermes_constants._hermes_home_cache = None
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    # Clear any cached newroz_home computation
+    import newroz_constants
+    if hasattr(newroz_constants, "_newroz_home_cache"):
+        newroz_constants._newroz_home_cache = None
     return home
 
 
@@ -42,15 +42,15 @@ def _make_stub_cli(history):
     )
 
 
-def test_save_conversation_writes_under_hermes_home(hermes_home, tmp_path, monkeypatch, capsys):
-    """Snapshot must land under ~/.hermes/sessions/saved/, not CWD."""
+def test_save_conversation_writes_under_newroz_home(newroz_home, tmp_path, monkeypatch, capsys):
+    """Snapshot must land under ~/.newroz/sessions/saved/, not CWD."""
     # Change CWD to a different directory to prove the file does NOT go there.
     work = tmp_path / "somewhere-else"
     work.mkdir()
     monkeypatch.chdir(work)
 
-    # Import fresh to pick up the HERMES_HOME fixture
-    for mod in [m for m in sys.modules if m.startswith("cli") or m == "hermes_constants"]:
+    # Import fresh to pick up the NEWROZ_HOME fixture
+    for mod in [m for m in sys.modules if m.startswith("cli") or m == "newroz_constants"]:
         sys.modules.pop(mod, None)
 
     import cli  # noqa: F401  (module under test)
@@ -61,16 +61,16 @@ def test_save_conversation_writes_under_hermes_home(hermes_home, tmp_path, monke
     ])
 
     # Call the unbound method against our stub.
-    cli.HermesCLI.save_conversation(stub)
+    cli.NewrozCLI.save_conversation(stub)
 
     # File must NOT be in CWD
-    cwd_leak = list(work.glob("hermes_conversation_*.json"))
+    cwd_leak = list(work.glob("newroz_conversation_*.json"))
     assert not cwd_leak, f"snapshot leaked to CWD: {cwd_leak}"
 
-    # File MUST be under ~/.hermes/sessions/saved/
-    saved_dir = hermes_home / "sessions" / "saved"
+    # File MUST be under ~/.newroz/sessions/saved/
+    saved_dir = newroz_home / "sessions" / "saved"
     assert saved_dir.is_dir(), "expected saved/ subdirectory to be created"
-    files = list(saved_dir.glob("hermes_conversation_*.json"))
+    files = list(saved_dir.glob("newroz_conversation_*.json"))
     assert len(files) == 1, files
 
     payload = json.loads(files[0].read_text())
@@ -84,18 +84,18 @@ def test_save_conversation_writes_under_hermes_home(hermes_home, tmp_path, monke
     # User-facing message must include the absolute path AND the resume hint.
     out = capsys.readouterr().out
     assert str(files[0]) in out, out
-    assert "hermes --resume 20260101_120000_abc123" in out, out
+    assert "newroz --resume 20260101_120000_abc123" in out, out
 
 
-def test_save_conversation_empty_history_does_nothing(hermes_home, capsys):
-    for mod in [m for m in sys.modules if m.startswith("cli") or m == "hermes_constants"]:
+def test_save_conversation_empty_history_does_nothing(newroz_home, capsys):
+    for mod in [m for m in sys.modules if m.startswith("cli") or m == "newroz_constants"]:
         sys.modules.pop(mod, None)
     import cli
 
     stub = _make_stub_cli([])
-    cli.HermesCLI.save_conversation(stub)
+    cli.NewrozCLI.save_conversation(stub)
 
-    saved_dir = hermes_home / "sessions" / "saved"
+    saved_dir = newroz_home / "sessions" / "saved"
     assert not saved_dir.exists() or not list(saved_dir.iterdir())
     out = capsys.readouterr().out
     assert "No conversation to save" in out

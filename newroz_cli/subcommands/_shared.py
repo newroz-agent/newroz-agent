@@ -1,8 +1,8 @@
 """Shared parser helpers used across multiple CLI subcommand builders.
 
-These were module-level helpers in ``hermes_cli/main.py``. They are pulled
+These were module-level helpers in ``newroz_cli/main.py``. They are pulled
 into a neutral module so both ``main.py`` and every
-``hermes_cli/subcommands/<group>.py`` builder can import them without an
+``newroz_cli/subcommands/<group>.py`` builder can import them without an
 import cycle. ``main.py`` re-exports them for backwards compatibility, so
 existing references keep working.
 """
@@ -24,6 +24,6 @@ def add_accept_hooks_flag(parser: argparse.ArgumentParser) -> None:
         default=argparse.SUPPRESS,
         help=(
             "Auto-approve unseen shell hooks without a TTY prompt "
-            "(equivalent to HERMES_ACCEPT_HOOKS=1 / hooks_auto_accept: true)."
+            "(equivalent to NEWROZ_ACCEPT_HOOKS=1 / hooks_auto_accept: true)."
         ),
     )

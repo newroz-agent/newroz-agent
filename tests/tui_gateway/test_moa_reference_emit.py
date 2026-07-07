@@ -19,12 +19,12 @@ def server():
     with patch.dict(
         "sys.modules",
         {
-            "hermes_constants": MagicMock(
-                get_hermes_home=MagicMock(return_value="/tmp/hermes_test_moa_emit")
+            "newroz_constants": MagicMock(
+                get_newroz_home=MagicMock(return_value="/tmp/newroz_test_moa_emit")
             ),
-            "hermes_cli.env_loader": MagicMock(),
-            "hermes_cli.banner": MagicMock(),
-            "hermes_state": MagicMock(),
+            "newroz_cli.env_loader": MagicMock(),
+            "newroz_cli.banner": MagicMock(),
+            "newroz_state": MagicMock(),
         },
     ):
         import importlib

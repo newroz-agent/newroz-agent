@@ -1,4 +1,4 @@
-"""Tests for ``hermes dashboard register``.
+"""Tests for ``newroz dashboard register``.
 
 Covers the CLI half of self-hosted dashboard registration:
   - Docker-style auto-name generation
@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import hermes_cli.dashboard_register as dr
+import newroz_cli.dashboard_register as dr
 
 
 def _ns(**kw):
@@ -44,22 +44,22 @@ class TestNameGenerator:
 
 class TestFastFails:
     def test_not_logged_in_exits_1_with_setup_hint(self, capsys):
-        from hermes_cli.auth import AuthError
+        from newroz_cli.auth import AuthError
 
         err = AuthError("not logged in", provider="nous", relogin_required=True)
         with patch.object(dr, "cmd_dashboard_register", dr.cmd_dashboard_register):
             with patch(
-                "hermes_cli.auth.resolve_nous_access_token", side_effect=err
-            ), patch("hermes_cli.config.is_managed", return_value=False):
+                "newroz_cli.auth.resolve_nous_access_token", side_effect=err
+            ), patch("newroz_cli.config.is_managed", return_value=False):
                 with pytest.raises(SystemExit) as exc:
                     dr.cmd_dashboard_register(_ns())
         assert exc.value.code == 1
         out = capsys.readouterr().out
         assert "not logged into Nous Portal" in out
-        assert "hermes setup" in out
+        assert "newroz setup" in out
 
     def test_managed_install_refuses(self, capsys):
-        with patch("hermes_cli.config.is_managed", return_value=True):
+        with patch("newroz_cli.config.is_managed", return_value=True):
             with pytest.raises(SystemExit) as exc:
                 dr.cmd_dashboard_register(_ns())
         assert exc.value.code == 1
@@ -99,22 +99,22 @@ class TestHappyPath:
             saved[key] = value
 
         # get_env_value is consulted twice: once for the stored client_id
-        # (idempotency key) and once for HERMES_DASHBOARD_PORTAL_URL. Route by
+        # (idempotency key) and once for NEWROZ_DASHBOARD_PORTAL_URL. Route by
         # key so a test can seed a prior client_id while keeping the portal
         # unset (the default-portal-not-persisted path).
         def fake_get_env(key):
-            if key == "HERMES_DASHBOARD_OAUTH_CLIENT_ID":
+            if key == "NEWROZ_DASHBOARD_OAUTH_CLIENT_ID":
                 return existing_client_id
             return None
 
         with patch(
-            "hermes_cli.auth.resolve_nous_access_token", return_value=account_token
-        ), patch("hermes_cli.config.is_managed", return_value=False), patch.object(
+            "newroz_cli.auth.resolve_nous_access_token", return_value=account_token
+        ), patch("newroz_cli.config.is_managed", return_value=False), patch.object(
             dr, "_resolve_portal_base_url", return_value=portal
         ), patch(
-            "hermes_cli.config.get_env_value", side_effect=fake_get_env
+            "newroz_cli.config.get_env_value", side_effect=fake_get_env
         ), patch(
-            "hermes_cli.config.save_env_value", side_effect=fake_save
+            "newroz_cli.config.save_env_value", side_effect=fake_save
         ), patch.object(
             dr.urllib.request, "urlopen", side_effect=fake_urlopen
         ):
@@ -132,8 +132,8 @@ class TestHappyPath:
         assert "custom_redirect_uri" not in captured["body"]
 
         # env write: client_id present, portal URL NOT written (default portal)
-        assert saved["HERMES_DASHBOARD_OAUTH_CLIENT_ID"] == "agent:selfhost-1"
-        assert "HERMES_DASHBOARD_PORTAL_URL" not in saved
+        assert saved["NEWROZ_DASHBOARD_OAUTH_CLIENT_ID"] == "agent:selfhost-1"
+        assert "NEWROZ_DASHBOARD_PORTAL_URL" not in saved
 
         out = capsys.readouterr().out
         assert "Registered dashboard" in out
@@ -147,12 +147,12 @@ class TestHappyPath:
     def test_custom_redirect_uri_is_forwarded(self, capsys):
         captured: dict = {}
         self._run(
-            args=_ns(redirect_uri="https://hermes.example.com/auth/callback"),
+            args=_ns(redirect_uri="https://newroz.example.com/auth/callback"),
             captured=captured,
         )
         assert (
             captured["body"]["custom_redirect_uri"]
-            == "https://hermes.example.com/auth/callback"
+            == "https://newroz.example.com/auth/callback"
         )
 
     def test_non_default_portal_is_persisted(self, capsys):
@@ -161,7 +161,7 @@ class TestHappyPath:
             portal="https://nous-account-service-git-feat-x.vercel.app",
         )
         assert (
-            saved["HERMES_DASHBOARD_PORTAL_URL"]
+            saved["NEWROZ_DASHBOARD_PORTAL_URL"]
             == "https://nous-account-service-git-feat-x.vercel.app"
         )
 
@@ -170,7 +170,7 @@ class TestIdempotentRerun(TestHappyPath):
     """Re-running with a stored client_id updates instead of creating.
 
     Inherits ``_run`` from TestHappyPath; the only new lever is
-    ``existing_client_id`` (the HERMES_DASHBOARD_OAUTH_CLIENT_ID a prior run
+    ``existing_client_id`` (the NEWROZ_DASHBOARD_OAUTH_CLIENT_ID a prior run
     persisted), which the CLI re-sends so the portal updates that row.
     """
 
@@ -237,7 +237,7 @@ class TestIdempotentRerun(TestHappyPath):
             existing_client_id="agent:selfhost-1",
         )
         # Same id round-trips into .env -> idempotent, one record.
-        assert saved["HERMES_DASHBOARD_OAUTH_CLIENT_ID"] == "agent:selfhost-1"
+        assert saved["NEWROZ_DASHBOARD_OAUTH_CLIENT_ID"] == "agent:selfhost-1"
 
     def test_stale_id_falls_through_to_create_prints_registered(self, capsys):
         # Stored id no longer resolves server-side -> portal created a fresh
@@ -263,7 +263,7 @@ class TestIdempotentRerun(TestHappyPath):
         out = capsys.readouterr().out
         assert "Registered dashboard" in out
         assert "Updated dashboard" not in out
-        assert saved["HERMES_DASHBOARD_OAUTH_CLIENT_ID"] == "agent:selfhost-new"
+        assert saved["NEWROZ_DASHBOARD_OAUTH_CLIENT_ID"] == "agent:selfhost-new"
 
     def test_blank_stored_client_id_treated_as_first_run(self, capsys):
         # A blank/whitespace stored value is not a usable key: treat as a
@@ -279,7 +279,7 @@ class TestIdempotentRerun(TestHappyPath):
 
 
 class TestCustomPortalPersistence:
-    """`--portal-url` / HERMES_DASHBOARD_PORTAL_URL is persisted to .env.
+    """`--portal-url` / NEWROZ_DASHBOARD_PORTAL_URL is persisted to .env.
 
     An *explicitly supplied* custom portal URL is an intentional choice the
     user wants to survive across sessions, so it's always written (updating an
@@ -293,7 +293,7 @@ class TestCustomPortalPersistence:
         """Drive cmd_dashboard_register, capturing save_env_value calls.
 
         `existing_portal` is what get_env_value returns for
-        HERMES_DASHBOARD_PORTAL_URL (None = not present in .env).
+        NEWROZ_DASHBOARD_PORTAL_URL (None = not present in .env).
         """
         response = {
             "client_id": "agent:selfhost-1",
@@ -310,27 +310,27 @@ class TestCustomPortalPersistence:
             saved[key] = value
 
         def fake_get_env_value(key, *a, **kw):
-            if key == "HERMES_DASHBOARD_PORTAL_URL":
+            if key == "NEWROZ_DASHBOARD_PORTAL_URL":
                 return existing_portal
             return None
 
         with patch(
-            "hermes_cli.auth.resolve_nous_access_token", return_value="tok"
-        ), patch("hermes_cli.config.is_managed", return_value=False), patch.dict(
+            "newroz_cli.auth.resolve_nous_access_token", return_value="tok"
+        ), patch("newroz_cli.config.is_managed", return_value=False), patch.dict(
             dr.os.environ, {}, clear=False
         ), patch.object(
             dr, "_resolve_portal_base_url", return_value=portal
         ), patch(
-            "hermes_cli.config.get_env_value", side_effect=fake_get_env_value
+            "newroz_cli.config.get_env_value", side_effect=fake_get_env_value
         ), patch(
-            "hermes_cli.config.save_env_value", side_effect=fake_save
+            "newroz_cli.config.save_env_value", side_effect=fake_save
         ), patch.object(
             dr.urllib.request, "urlopen", return_value=_fake_http_ok(response)
         ):
-            # The ambient process env may carry HERMES_DASHBOARD_PORTAL_URL
+            # The ambient process env may carry NEWROZ_DASHBOARD_PORTAL_URL
             # (e.g. staging dev shells); drop it so `custom_portal_supplied`
             # is driven solely by the args.portal_url under test.
-            dr.os.environ.pop("HERMES_DASHBOARD_PORTAL_URL", None)
+            dr.os.environ.pop("NEWROZ_DASHBOARD_PORTAL_URL", None)
             dr.cmd_dashboard_register(args)
         return saved
 
@@ -340,7 +340,7 @@ class TestCustomPortalPersistence:
             portal="https://preview.example.com",
             existing_portal=None,
         )
-        assert saved["HERMES_DASHBOARD_PORTAL_URL"] == "https://preview.example.com"
+        assert saved["NEWROZ_DASHBOARD_PORTAL_URL"] == "https://preview.example.com"
 
     def test_explicit_custom_url_updates_existing_in_place(self, capsys):
         # An entry already exists with a different value; the explicit custom
@@ -351,7 +351,7 @@ class TestCustomPortalPersistence:
             existing_portal="https://old-preview.example.com",
         )
         assert (
-            saved["HERMES_DASHBOARD_PORTAL_URL"] == "https://new-preview.example.com"
+            saved["NEWROZ_DASHBOARD_PORTAL_URL"] == "https://new-preview.example.com"
         )
 
     def test_explicit_custom_url_persisted_even_when_equals_default(self, capsys):
@@ -363,7 +363,7 @@ class TestCustomPortalPersistence:
             existing_portal=None,
         )
         assert (
-            saved["HERMES_DASHBOARD_PORTAL_URL"] == "https://portal.nousresearch.com"
+            saved["NEWROZ_DASHBOARD_PORTAL_URL"] == "https://portal.nousresearch.com"
         )
 
     def test_explicit_custom_url_equal_to_existing_is_noop(self, capsys):
@@ -373,7 +373,7 @@ class TestCustomPortalPersistence:
             portal="https://preview.example.com",
             existing_portal="https://preview.example.com",
         )
-        assert "HERMES_DASHBOARD_PORTAL_URL" not in saved
+        assert "NEWROZ_DASHBOARD_PORTAL_URL" not in saved
 
     def test_no_flag_default_portal_not_written(self, capsys):
         # No custom URL supplied, resolves to default → not written.
@@ -382,7 +382,7 @@ class TestCustomPortalPersistence:
             portal="https://portal.nousresearch.com",
             existing_portal=None,
         )
-        assert "HERMES_DASHBOARD_PORTAL_URL" not in saved
+        assert "NEWROZ_DASHBOARD_PORTAL_URL" not in saved
 
     def test_no_flag_does_not_overwrite_existing_entry(self, capsys):
         # No custom URL supplied and the var already exists → left untouched,
@@ -392,18 +392,18 @@ class TestCustomPortalPersistence:
             portal="https://inferred-from-login.example.com",
             existing_portal="https://already-set.example.com",
         )
-        assert "HERMES_DASHBOARD_PORTAL_URL" not in saved
+        assert "NEWROZ_DASHBOARD_PORTAL_URL" not in saved
 
 
 class TestPublicUrlPersistence:
-    """`--redirect-uri` derives & persists HERMES_DASHBOARD_PUBLIC_URL in .env.
+    """`--redirect-uri` derives & persists NEWROZ_DASHBOARD_PUBLIC_URL in .env.
 
     --redirect-uri is the full public callback (e.g.
-    https://hermes.example.com/auth/callback). At serve time the dashboard auth
+    https://newroz.example.com/auth/callback). At serve time the dashboard auth
     layer reconstructs that callback by appending "/auth/callback" to
-    HERMES_DASHBOARD_PUBLIC_URL, so the value that's actually consumed is the
+    NEWROZ_DASHBOARD_PUBLIC_URL, so the value that's actually consumed is the
     ORIGIN (scheme://host). We derive the origin from the supplied redirect URI
-    and persist THAT as HERMES_DASHBOARD_PUBLIC_URL — the var the runtime reads
+    and persist THAT as NEWROZ_DASHBOARD_PUBLIC_URL — the var the runtime reads
     — so the public-URL override is genuinely wired, not just stored.
 
     An explicitly supplied value is always written (updating an existing entry
@@ -415,7 +415,7 @@ class TestPublicUrlPersistence:
         """Drive cmd_dashboard_register, capturing save_env_value calls.
 
         `existing_public` is what get_env_value returns for
-        HERMES_DASHBOARD_PUBLIC_URL (None = not present in .env).
+        NEWROZ_DASHBOARD_PUBLIC_URL (None = not present in .env).
         """
         response = {
             "client_id": "agent:selfhost-1",
@@ -432,24 +432,24 @@ class TestPublicUrlPersistence:
             saved[key] = value
 
         def fake_get_env_value(key, *a, **kw):
-            if key == "HERMES_DASHBOARD_PUBLIC_URL":
+            if key == "NEWROZ_DASHBOARD_PUBLIC_URL":
                 return existing_public
             return None
 
         with patch(
-            "hermes_cli.auth.resolve_nous_access_token", return_value="tok"
-        ), patch("hermes_cli.config.is_managed", return_value=False), patch.dict(
+            "newroz_cli.auth.resolve_nous_access_token", return_value="tok"
+        ), patch("newroz_cli.config.is_managed", return_value=False), patch.dict(
             dr.os.environ, {}, clear=False
         ), patch.object(
             dr, "_resolve_portal_base_url", return_value="https://portal.nousresearch.com"
         ), patch(
-            "hermes_cli.config.get_env_value", side_effect=fake_get_env_value
+            "newroz_cli.config.get_env_value", side_effect=fake_get_env_value
         ), patch(
-            "hermes_cli.config.save_env_value", side_effect=fake_save
+            "newroz_cli.config.save_env_value", side_effect=fake_save
         ), patch.object(
             dr.urllib.request, "urlopen", return_value=_fake_http_ok(response)
         ):
-            dr.os.environ.pop("HERMES_DASHBOARD_PORTAL_URL", None)
+            dr.os.environ.pop("NEWROZ_DASHBOARD_PORTAL_URL", None)
             dr.cmd_dashboard_register(args)
         return saved
 
@@ -457,20 +457,20 @@ class TestPublicUrlPersistence:
         # The key behaviour: a full callback URL is reduced to its ORIGIN so
         # the runtime's "public_url + /auth/callback" reconstruction matches.
         saved = self._run(
-            args=_ns(redirect_uri="https://hermes.example.com/auth/callback"),
+            args=_ns(redirect_uri="https://newroz.example.com/auth/callback"),
             existing_public=None,
         )
-        assert saved["HERMES_DASHBOARD_PUBLIC_URL"] == "https://hermes.example.com"
+        assert saved["NEWROZ_DASHBOARD_PUBLIC_URL"] == "https://newroz.example.com"
         # The full callback path must NOT be persisted verbatim (would double
         # the path at serve time).
-        assert "/auth/callback" not in saved["HERMES_DASHBOARD_PUBLIC_URL"]
+        assert "/auth/callback" not in saved["NEWROZ_DASHBOARD_PUBLIC_URL"]
 
     def test_origin_preserves_port(self, capsys):
         saved = self._run(
-            args=_ns(redirect_uri="https://hermes.example.com:8443/auth/callback"),
+            args=_ns(redirect_uri="https://newroz.example.com:8443/auth/callback"),
             existing_public=None,
         )
-        assert saved["HERMES_DASHBOARD_PUBLIC_URL"] == "https://hermes.example.com:8443"
+        assert saved["NEWROZ_DASHBOARD_PUBLIC_URL"] == "https://newroz.example.com:8443"
 
     def test_public_url_updates_existing_in_place(self, capsys):
         # A stale public-url entry exists; the new derived origin overwrites it.
@@ -478,15 +478,15 @@ class TestPublicUrlPersistence:
             args=_ns(redirect_uri="https://new.example.com/auth/callback"),
             existing_public="https://old.example.com",
         )
-        assert saved["HERMES_DASHBOARD_PUBLIC_URL"] == "https://new.example.com"
+        assert saved["NEWROZ_DASHBOARD_PUBLIC_URL"] == "https://new.example.com"
 
     def test_public_url_equal_to_existing_is_noop(self, capsys):
         # Derived origin already matches what's stored → no redundant write.
         saved = self._run(
-            args=_ns(redirect_uri="https://hermes.example.com/auth/callback"),
-            existing_public="https://hermes.example.com",
+            args=_ns(redirect_uri="https://newroz.example.com/auth/callback"),
+            existing_public="https://newroz.example.com",
         )
-        assert "HERMES_DASHBOARD_PUBLIC_URL" not in saved
+        assert "NEWROZ_DASHBOARD_PUBLIC_URL" not in saved
 
     def test_no_redirect_flag_not_written(self, capsys):
         # Localhost-only install (no --redirect-uri) → var left untouched.
@@ -494,7 +494,7 @@ class TestPublicUrlPersistence:
             args=_ns(),
             existing_public=None,
         )
-        assert "HERMES_DASHBOARD_PUBLIC_URL" not in saved
+        assert "NEWROZ_DASHBOARD_PUBLIC_URL" not in saved
 
     def test_no_redirect_flag_does_not_overwrite_existing(self, capsys):
         # No --redirect-uri supplied but a value already exists → never touch
@@ -503,7 +503,7 @@ class TestPublicUrlPersistence:
             args=_ns(),
             existing_public="https://already-set.example.com",
         )
-        assert "HERMES_DASHBOARD_PUBLIC_URL" not in saved
+        assert "NEWROZ_DASHBOARD_PUBLIC_URL" not in saved
 
     def test_non_http_redirect_not_persisted(self, capsys):
         # A malformed / non-http(s) redirect yields no derivable origin → skip.
@@ -511,7 +511,7 @@ class TestPublicUrlPersistence:
             args=_ns(redirect_uri="not-a-url"),
             existing_public=None,
         )
-        assert "HERMES_DASHBOARD_PUBLIC_URL" not in saved
+        assert "NEWROZ_DASHBOARD_PUBLIC_URL" not in saved
 
     def test_public_url_persisted_alongside_portal_url(self, capsys):
         # Both --portal-url and --redirect-uri supplied → portal_url AND the
@@ -522,7 +522,7 @@ class TestPublicUrlPersistence:
             "id": "selfhost-1",
             "name": "dreamy_tesla",
             "kind": "SELF_HOSTED",
-            "custom_redirect_uri": "https://hermes.example.com/auth/callback",
+            "custom_redirect_uri": "https://newroz.example.com/auth/callback",
             "created_at": "2026-06-04T12:00:00.000Z",
         }
         saved: dict = {}
@@ -531,27 +531,27 @@ class TestPublicUrlPersistence:
             saved[key] = value
 
         with patch(
-            "hermes_cli.auth.resolve_nous_access_token", return_value="tok"
-        ), patch("hermes_cli.config.is_managed", return_value=False), patch.dict(
+            "newroz_cli.auth.resolve_nous_access_token", return_value="tok"
+        ), patch("newroz_cli.config.is_managed", return_value=False), patch.dict(
             dr.os.environ, {}, clear=False
         ), patch.object(
             dr, "_resolve_portal_base_url", return_value="https://preview.example.com"
         ), patch(
-            "hermes_cli.config.get_env_value", return_value=None
+            "newroz_cli.config.get_env_value", return_value=None
         ), patch(
-            "hermes_cli.config.save_env_value", side_effect=fake_save
+            "newroz_cli.config.save_env_value", side_effect=fake_save
         ), patch.object(
             dr.urllib.request, "urlopen", return_value=_fake_http_ok(response)
         ):
-            dr.os.environ.pop("HERMES_DASHBOARD_PORTAL_URL", None)
+            dr.os.environ.pop("NEWROZ_DASHBOARD_PORTAL_URL", None)
             dr.cmd_dashboard_register(
                 _ns(
                     portal_url="https://preview.example.com",
-                    redirect_uri="https://hermes.example.com/auth/callback",
+                    redirect_uri="https://newroz.example.com/auth/callback",
                 )
             )
-        assert saved["HERMES_DASHBOARD_PORTAL_URL"] == "https://preview.example.com"
-        assert saved["HERMES_DASHBOARD_PUBLIC_URL"] == "https://hermes.example.com"
+        assert saved["NEWROZ_DASHBOARD_PORTAL_URL"] == "https://preview.example.com"
+        assert saved["NEWROZ_DASHBOARD_PUBLIC_URL"] == "https://newroz.example.com"
 
 
 class TestPortalResolution:
@@ -563,7 +563,7 @@ class TestPortalResolution:
 
     def test_falls_back_to_stored_login_portal(self):
         with patch(
-            "hermes_cli.auth.get_provider_auth_state",
+            "newroz_cli.auth.get_provider_auth_state",
             return_value={"portal_base_url": "https://portal.staging-nousresearch.com"},
         ):
             assert (
@@ -573,7 +573,7 @@ class TestPortalResolution:
 
     def test_blank_override_ignored(self):
         with patch(
-            "hermes_cli.auth.get_provider_auth_state",
+            "newroz_cli.auth.get_provider_auth_state",
             return_value={"portal_base_url": "https://portal.staging-nousresearch.com"},
         ):
             assert (
@@ -593,8 +593,8 @@ class TestPortalErrors:
         )
 
         with patch(
-            "hermes_cli.auth.resolve_nous_access_token", return_value="tok"
-        ), patch("hermes_cli.config.is_managed", return_value=False), patch.object(
+            "newroz_cli.auth.resolve_nous_access_token", return_value="tok"
+        ), patch("newroz_cli.config.is_managed", return_value=False), patch.object(
             dr, "_resolve_portal_base_url", return_value="https://portal.nousresearch.com"
         ), patch.object(dr.urllib.request, "urlopen", side_effect=err):
             with pytest.raises(SystemExit) as exc:

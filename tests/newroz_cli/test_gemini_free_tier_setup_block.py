@@ -8,17 +8,17 @@ import pytest
 
 @pytest.fixture
 def config_home(tmp_path, monkeypatch):
-    """Isolated HERMES_HOME with an empty config."""
-    home = tmp_path / "hermes"
+    """Isolated NEWROZ_HOME with an empty config."""
+    home = tmp_path / "newroz"
     home.mkdir()
     (home / "config.yaml").write_text("model: some-old-model\n")
     (home / ".env").write_text("")
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     # Clear any ambient env that could alter provider resolution
     for var in (
-        "HERMES_MODEL",
+        "NEWROZ_MODEL",
         "LLM_MODEL",
-        "HERMES_INFERENCE_PROVIDER",
+        "NEWROZ_INFERENCE_PROVIDER",
         "OPENAI_BASE_URL",
         "OPENAI_API_KEY",
         "GEMINI_BASE_URL",
@@ -34,18 +34,18 @@ class TestGeminiSetupFreeTierBlock:
         """Free-tier probe result -> provider is NOT saved, message is printed."""
         monkeypatch.setenv("GOOGLE_API_KEY", "fake-free-tier-key")
 
-        from hermes_cli.main import _model_flow_api_key_provider
-        from hermes_cli.config import load_config
+        from newroz_cli.main import _model_flow_api_key_provider
+        from newroz_cli.config import load_config
 
         # Mock the probe to claim this is a free-tier key
         with patch(
             "agent.gemini_native_adapter.probe_gemini_tier",
             return_value="free",
         ), patch(
-            "hermes_cli.auth._prompt_model_selection",
+            "newroz_cli.auth._prompt_model_selection",
             return_value="gemini-2.5-flash",
         ), patch(
-            "hermes_cli.auth.deactivate_provider",
+            "newroz_cli.auth.deactivate_provider",
         ), patch("builtins.input", return_value=""):
             _model_flow_api_key_provider(load_config(), "gemini", "old-model")
 
@@ -68,17 +68,17 @@ class TestGeminiSetupFreeTierBlock:
         """Paid-tier probe result -> provider IS saved normally."""
         monkeypatch.setenv("GOOGLE_API_KEY", "fake-paid-tier-key")
 
-        from hermes_cli.main import _model_flow_api_key_provider
-        from hermes_cli.config import load_config
+        from newroz_cli.main import _model_flow_api_key_provider
+        from newroz_cli.config import load_config
 
         with patch(
             "agent.gemini_native_adapter.probe_gemini_tier",
             return_value="paid",
         ), patch(
-            "hermes_cli.auth._prompt_model_selection",
+            "newroz_cli.auth._prompt_model_selection",
             return_value="gemini-2.5-flash",
         ), patch(
-            "hermes_cli.auth.deactivate_provider",
+            "newroz_cli.auth.deactivate_provider",
         ), patch("builtins.input", return_value=""):
             _model_flow_api_key_provider(load_config(), "gemini", "old-model")
 
@@ -97,17 +97,17 @@ class TestGeminiSetupFreeTierBlock:
         """Probe returning 'unknown' (network/auth error) -> proceed without blocking."""
         monkeypatch.setenv("GOOGLE_API_KEY", "fake-key")
 
-        from hermes_cli.main import _model_flow_api_key_provider
-        from hermes_cli.config import load_config
+        from newroz_cli.main import _model_flow_api_key_provider
+        from newroz_cli.config import load_config
 
         with patch(
             "agent.gemini_native_adapter.probe_gemini_tier",
             return_value="unknown",
         ), patch(
-            "hermes_cli.auth._prompt_model_selection",
+            "newroz_cli.auth._prompt_model_selection",
             return_value="gemini-2.5-flash",
         ), patch(
-            "hermes_cli.auth.deactivate_provider",
+            "newroz_cli.auth.deactivate_provider",
         ), patch("builtins.input", return_value=""):
             _model_flow_api_key_provider(load_config(), "gemini", "old-model")
 
@@ -125,16 +125,16 @@ class TestGeminiSetupFreeTierBlock:
         """Probe must only run for provider_id == 'gemini', not for other providers."""
         monkeypatch.setenv("DEEPSEEK_API_KEY", "fake-key")
 
-        from hermes_cli.main import _model_flow_api_key_provider
-        from hermes_cli.config import load_config
+        from newroz_cli.main import _model_flow_api_key_provider
+        from newroz_cli.config import load_config
 
         with patch(
             "agent.gemini_native_adapter.probe_gemini_tier",
         ) as mock_probe, patch(
-            "hermes_cli.auth._prompt_model_selection",
+            "newroz_cli.auth._prompt_model_selection",
             return_value="deepseek-chat",
         ), patch(
-            "hermes_cli.auth.deactivate_provider",
+            "newroz_cli.auth.deactivate_provider",
         ), patch("builtins.input", return_value=""):
             _model_flow_api_key_provider(load_config(), "deepseek", "old-model")
 

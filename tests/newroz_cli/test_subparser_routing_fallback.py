@@ -1,11 +1,11 @@
 """Tests for the defensive subparser routing workaround (bpo-9338).
 
-The main() function in hermes_cli/main.py sets subparsers.required=True
+The main() function in newroz_cli/main.py sets subparsers.required=True
 when argv contains a known subcommand name.  This forces deterministic
 routing on Python versions where argparse fails to match subcommand tokens
 when the parent parser has nargs='?' optional arguments (--continue).
 
-If the subcommand token is consumed as a flag value (e.g. `hermes -c model`
+If the subcommand token is consumed as a flag value (e.g. `newroz -c model`
 to resume a session named 'model'), the required=True parse raises
 SystemExit and the code falls back to the default required=False behaviour.
 """
@@ -16,8 +16,8 @@ import sys
 
 
 def _build_parser():
-    """Build a minimal replica of the hermes top-level parser."""
-    parser = argparse.ArgumentParser(prog="hermes")
+    """Build a minimal replica of the newroz top-level parser."""
+    parser = argparse.ArgumentParser(prog="newroz")
     parser.add_argument("--version", "-V", action="store_true")
     parser.add_argument("--resume", "-r", metavar="SESSION", default=None)
     parser.add_argument(

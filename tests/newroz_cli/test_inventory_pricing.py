@@ -2,11 +2,11 @@
 
 feeds the desktop GUI model picker (and onboarding) so it can show $/Mtok
 columns + Free/Pro badges and gate paid models on free Nous accounts, the
-same way the `hermes model` CLI picker does.
+same way the `newroz model` CLI picker does.
 """
 
-import hermes_cli.inventory as inv
-import hermes_cli.models as models_mod
+import newroz_cli.inventory as inv
+import newroz_cli.models as models_mod
 
 
 def _patch_pricing(monkeypatch, *, free_tier, pricing, unavailable=None):

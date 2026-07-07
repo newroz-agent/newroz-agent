@@ -1,12 +1,12 @@
-from cli import HermesCLI
-from hermes_cli.active_sessions import (
+from cli import NewrozCLI
+from newroz_cli.active_sessions import (
     active_session_registry_snapshot,
     try_acquire_active_session,
 )
 
 
 def test_cli_claim_active_session_respects_global_limit(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / ".newroz"))
     cfg = {"max_concurrent_sessions": 1}
     held, message = try_acquire_active_session(
         session_id="held-session",
@@ -16,7 +16,7 @@ def test_cli_claim_active_session_respects_global_limit(tmp_path, monkeypatch):
     assert message is None
     assert held is not None
 
-    cli = object.__new__(HermesCLI)
+    cli = object.__new__(NewrozCLI)
     cli.session_id = "new-cli-session"
     cli.config = cfg
     cli._active_session_lease = None
@@ -26,7 +26,7 @@ def test_cli_claim_active_session_respects_global_limit(tmp_path, monkeypatch):
     try:
         assert cli._claim_active_session("cli") is False
         assert printed == [
-            "[bold red]Hermes is at the active session limit (1/1). "
+            "[bold red]Newroz is at the active session limit (1/1). "
             "Try again when another session finishes.[/]"
         ]
 

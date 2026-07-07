@@ -1,12 +1,12 @@
 (function () {
   "use strict";
-  // hermes-achievements dashboard plugin
-  // Originally authored by @PCinkusz — https://github.com/PCinkusz/hermes-achievements (MIT).
-  // Bundled into hermes-agent. Upstream repo remains the staging ground for new
+  // newroz-achievements dashboard plugin
+  // Originally authored by @PCinkusz — https://github.com/PCinkusz/newroz-achievements (MIT).
+  // Bundled into newroz-agent. Upstream repo remains the staging ground for new
   // badges and UI iteration; the in-progress scan banner below is a small addition
   // layered on top of the original dist bundle.
-  const SDK = window.__HERMES_PLUGIN_SDK__;
-  if (!SDK || !window.__HERMES_PLUGINS__) return;
+  const SDK = window.__NEWROZ_PLUGIN_SDK__;
+  if (!SDK || !window.__NEWROZ_PLUGINS__) return;
 
   const React = SDK.React;
   const hooks = SDK.hooks;
@@ -50,13 +50,13 @@
 
   function api(path, options) {
     // Delegate to the host SDK's fetchJSON so auth is handled correctly in
-    // BOTH dashboard modes: loopback (X-Hermes-Session-Token header) and
-    // gated OAuth (hermes_session_at cookie via credentials:'include').
-    // Hand-rolling fetch + reading window.__HERMES_SESSION_TOKEN__ directly
+    // BOTH dashboard modes: loopback (X-Newroz-Session-Token header) and
+    // gated OAuth (newroz_session_at cookie via credentials:'include').
+    // Hand-rolling fetch + reading window.__NEWROZ_SESSION_TOKEN__ directly
     // 401s in gated mode (the token isn't injected there). fetchJSON throws
     // Error("<status>: <body>") on non-2xx — the call sites' .catch() relies
     // on that to surface errors, so we let it propagate (don't swallow).
-    const url = "/api/plugins/hermes-achievements" + path;
+    const url = "/api/plugins/newroz-achievements" + path;
     return SDK.fetchJSON(url, options);
   }
 
@@ -257,7 +257,7 @@
     ctx.fillStyle = "#8b95a8";
     ctx.font = "600 20px ui-monospace, 'SF Mono', Menlo, monospace";
     ctx.textBaseline = "bottom";
-    ctx.fillText("HERMES AGENT  ·  hermes-agent.nousresearch.com", 70, H - 40);
+    ctx.fillText("NEWROZ AGENT  ·  newroz-agent.nousresearch.com", 70, H - 40);
 
     // "UNLOCKED" stamp upper-right
     ctx.textBaseline = "top";
@@ -306,7 +306,7 @@
       const url = URL.createObjectURL(blobRef.current);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "hermes-achievement-" + (achievement.id || "badge") + ".png";
+      a.download = "newroz-achievement-" + (achievement.id || "badge") + ".png";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -335,11 +335,11 @@
     // paste in the same flow.
     function tweetText() {
       const tierPart = achievement.tier ? (achievement.tier + " tier ") : "";
-      const tmpl = tx(t, "share.tweet_text", "Just unlocked {tier_part}\"{name}\" in Hermes Agent ☤", {
+      const tmpl = tx(t, "share.tweet_text", "Just unlocked {tier_part}\"{name}\" in Newroz Agent ☤", {
         tier_part: tierPart,
         name: achievement.name,
       });
-      return tmpl + "\n\n@NousResearch · https://hermes-agent.nousresearch.com";
+      return tmpl + "\n\n@NousResearch · https://newroz-agent.nousresearch.com";
     }
 
     function shareOnX() {
@@ -443,8 +443,8 @@
       React.createElement("section", { className: "ha-hero ha-loading-hero" },
         React.createElement("div", null,
           React.createElement("div", { className: "ha-kicker" }, tx(t, "hero.kicker", "Agentic Gamerscore")),
-          React.createElement("h1", null, tx(t, "hero.title", "Hermes Achievements")),
-          React.createElement("p", null, tx(t, "hero.scan_subtitle", "Scanning Hermes session history. First scan can take 5–10 seconds on large histories."))
+          React.createElement("h1", null, tx(t, "hero.title", "Newroz Achievements")),
+          React.createElement("p", null, tx(t, "hero.scan_subtitle", "Scanning Newroz session history. First scan can take 5–10 seconds on large histories."))
         ),
         React.createElement("div", { className: "ha-scan-status", role: "status", "aria-live": "polite" },
           React.createElement("span", { className: "ha-scan-pulse", "aria-hidden": "true" }),
@@ -475,7 +475,7 @@
       React.createElement("section", { className: "ha-guide ha-loading-guide" },
         React.createElement("div", null,
           React.createElement("strong", null, tx(t, "guide.scan_status_header", "Scan status")),
-          React.createElement("p", null, tx(t, "guide.scan_status_body", "Hermes is scanning local history once, then cards will appear automatically. Nothing is stuck if this takes a few seconds."))
+          React.createElement("p", null, tx(t, "guide.scan_status_body", "Newroz is scanning local history once, then cards will appear automatically. Nothing is stuck if this takes a few seconds."))
         ),
         React.createElement("div", null,
           React.createElement("strong", null, tx(t, "guide.what_scanned_header", "What is scanned")),
@@ -666,8 +666,8 @@
       React.createElement("section", { className: "ha-hero" },
         React.createElement("div", null,
           React.createElement("div", { className: "ha-kicker" }, tx(t, "hero.kicker", "Agentic Gamerscore")),
-          React.createElement("h1", null, tx(t, "hero.title", "Hermes Achievements")),
-          React.createElement("p", null, tx(t, "hero.subtitle", "Collectible Hermes badges earned from real session history. Known unfinished achievements are shown as Discovered; Secret achievements stay hidden until the first matching behavior appears."))
+          React.createElement("h1", null, tx(t, "hero.title", "Newroz Achievements")),
+          React.createElement("p", null, tx(t, "hero.subtitle", "Collectible Newroz badges earned from real session history. Known unfinished achievements are shown as Discovered; Secret achievements stay hidden until the first matching behavior appears."))
         ),
         React.createElement(C.Button, { onClick: load, className: "ha-refresh" }, tx(t, "actions.rescan", "Rescan"))
       ),
@@ -678,7 +678,7 @@
         React.createElement(StatCard, { label: tx(t, "stats.discovered", "Discovered"), value: discovered.length, hint: tx(t, "stats.discovered_hint", "known, not earned yet") }),
         React.createElement(StatCard, { label: tx(t, "stats.secrets", "Secrets"), value: secret.length, hint: tx(t, "stats.secrets_hint", "hidden until first signal") }),
         React.createElement(StatCard, { label: tx(t, "stats.highest_tier", "Highest tier"), value: highest, hint: tx(t, "stats.highest_tier_hint", "Copper → Silver → Gold → Diamond → Olympian") }),
-        React.createElement(StatCard, { label: tx(t, "stats.latest", "Latest"), value: latest[0] ? latest[0].name : tx(t, "stats.none_yet", "None yet"), hint: latest[0] ? latest[0].category : tx(t, "stats.latest_hint_empty", "run Hermes more") })
+        React.createElement(StatCard, { label: tx(t, "stats.latest", "Latest"), value: latest[0] ? latest[0].name : tx(t, "stats.none_yet", "None yet"), hint: latest[0] ? latest[0].category : tx(t, "stats.latest_hint_empty", "run Newroz more") })
       ),
       React.createElement("section", { className: "ha-guide" },
         React.createElement("div", null,
@@ -687,7 +687,7 @@
         ),
         React.createElement("div", null,
           React.createElement("strong", null, tx(t, "guide.secret_header", "Secret achievements")),
-          React.createElement("p", null, tx(t, "guide.secret_body", "Secrets hide their exact trigger. Once Hermes sees a related signal, the card becomes Discovered and shows its requirement."))
+          React.createElement("p", null, tx(t, "guide.secret_body", "Secrets hide their exact trigger. Once Newroz sees a related signal, the card becomes Discovered and shows its requirement."))
         )
       ),
       React.createElement("div", { className: "ha-toolbar" },
@@ -722,5 +722,5 @@
     );
   }
 
-  window.__HERMES_PLUGINS__.register("hermes-achievements", AchievementsPage);
+  window.__NEWROZ_PLUGINS__.register("newroz-achievements", AchievementsPage);
 })();

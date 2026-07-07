@@ -14,7 +14,7 @@ Selection precedence for the tier (first hit wins):
 3. ``image_gen.model`` in ``config.yaml`` (when it's one of our tier IDs)
 4. :data:`DEFAULT_MODEL` — ``gpt-image-2-medium``
 
-Output is saved as PNG under ``$HERMES_HOME/cache/images/``. Source images for
+Output is saved as PNG under ``$NEWROZ_HOME/cache/images/``. Source images for
 image-to-image/editing are sent as Responses ``input_image`` content parts.
 """
 
@@ -104,7 +104,7 @@ _ACCEPTED_INPUT_MIME = frozenset(
 def _load_image_gen_config() -> Dict[str, Any]:
     """Read ``image_gen`` from config.yaml (returns {} on any failure)."""
     try:
-        from hermes_cli.config import load_config
+        from newroz_cli.config import load_config
 
         cfg = load_config()
         section = cfg.get("image_gen") if isinstance(cfg, dict) else None
@@ -452,7 +452,7 @@ class OpenAICodexImageGenProvider(ImageGenProvider):
             "tag": "gpt-image-2 via ChatGPT/Codex OAuth — no API key required; supports text and image inputs",
             "env_vars": [],
             "post_setup_hint": (
-                "Sign in with `hermes auth codex` (or `hermes setup` → Codex) "
+                "Sign in with `newroz auth codex` (or `newroz setup` → Codex) "
                 "if you haven't already. No API key needed."
             ),
         }
@@ -488,7 +488,7 @@ class OpenAICodexImageGenProvider(ImageGenProvider):
             return error_response(
                 error=(
                     "No Codex/ChatGPT OAuth credentials available. Run "
-                    "`hermes auth codex` (or `hermes setup` → Codex) to sign in."
+                    "`newroz auth codex` (or `newroz setup` → Codex) to sign in."
                 ),
                 error_type="auth_required",
                 provider="openai-codex",
@@ -513,7 +513,7 @@ class OpenAICodexImageGenProvider(ImageGenProvider):
             return error_response(
                 error=(
                     "No Codex/ChatGPT OAuth credentials available. Run "
-                    "`hermes auth codex` (or `hermes setup` → Codex) to sign in."
+                    "`newroz auth codex` (or `newroz setup` → Codex) to sign in."
                 ),
                 error_type="auth_required",
                 provider="openai-codex",

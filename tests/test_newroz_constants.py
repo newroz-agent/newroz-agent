@@ -1,4 +1,4 @@
-"""Tests for hermes_constants module."""
+"""Tests for newroz_constants module."""
 
 import os
 from pathlib import Path
@@ -6,139 +6,139 @@ from types import SimpleNamespace
 
 import pytest
 
-import hermes_constants
-from hermes_constants import (
+import newroz_constants
+from newroz_constants import (
     VALID_REASONING_EFFORTS,
     agent_browser_runnable,
-    find_hermes_node_executable,
+    find_newroz_node_executable,
     find_node_executable,
     find_node_executable_on_path,
-    get_default_hermes_root,
-    get_hermes_dir,
-    get_hermes_home,
-    heal_hermes_managed_node,
-    hermes_managed_node_tree_present,
-    iter_hermes_node_dirs,
+    get_default_newroz_root,
+    get_newroz_dir,
+    get_newroz_home,
+    heal_newroz_managed_node,
+    newroz_managed_node_tree_present,
+    iter_newroz_node_dirs,
     is_container,
     node_tool_runnable,
     parse_reasoning_effort,
     secure_parent_dir,
-    with_hermes_node_path,
+    with_newroz_node_path,
 )
 
 
-class TestGetDefaultHermesRoot:
-    """Tests for get_default_hermes_root() — Docker/custom deployment awareness."""
+class TestGetDefaultNewrozRoot:
+    """Tests for get_default_newroz_root() — Docker/custom deployment awareness."""
 
-    def test_no_hermes_home_returns_native(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is not set, returns ~/.hermes."""
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+    def test_no_newroz_home_returns_native(self, tmp_path, monkeypatch):
+        """When NEWROZ_HOME is not set, returns ~/.newroz."""
+        monkeypatch.delenv("NEWROZ_HOME", raising=False)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
-        assert get_default_hermes_root() == tmp_path / ".hermes"
+        assert get_default_newroz_root() == tmp_path / ".newroz"
 
-    def test_hermes_home_is_native(self, tmp_path, monkeypatch):
-        """When HERMES_HOME = ~/.hermes, returns ~/.hermes."""
-        native = tmp_path / ".hermes"
+    def test_newroz_home_is_native(self, tmp_path, monkeypatch):
+        """When NEWROZ_HOME = ~/.newroz, returns ~/.newroz."""
+        native = tmp_path / ".newroz"
         native.mkdir()
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(native))
-        assert get_default_hermes_root() == native
+        monkeypatch.setenv("NEWROZ_HOME", str(native))
+        assert get_default_newroz_root() == native
 
-    def test_hermes_home_is_profile(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is a profile under ~/.hermes, returns ~/.hermes."""
-        native = tmp_path / ".hermes"
+    def test_newroz_home_is_profile(self, tmp_path, monkeypatch):
+        """When NEWROZ_HOME is a profile under ~/.newroz, returns ~/.newroz."""
+        native = tmp_path / ".newroz"
         profile = native / "profiles" / "coder"
         profile.mkdir(parents=True)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(profile))
-        assert get_default_hermes_root() == native
+        monkeypatch.setenv("NEWROZ_HOME", str(profile))
+        assert get_default_newroz_root() == native
 
-    def test_hermes_home_is_docker(self, tmp_path, monkeypatch):
-        """When HERMES_HOME points outside ~/.hermes (Docker), returns HERMES_HOME."""
+    def test_newroz_home_is_docker(self, tmp_path, monkeypatch):
+        """When NEWROZ_HOME points outside ~/.newroz (Docker), returns NEWROZ_HOME."""
         docker_home = tmp_path / "opt" / "data"
         docker_home.mkdir(parents=True)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(docker_home))
-        assert get_default_hermes_root() == docker_home
+        monkeypatch.setenv("NEWROZ_HOME", str(docker_home))
+        assert get_default_newroz_root() == docker_home
 
-    def test_hermes_home_is_custom_path(self, tmp_path, monkeypatch):
-        """Any HERMES_HOME outside ~/.hermes is treated as the root."""
-        custom = tmp_path / "my-hermes-data"
+    def test_newroz_home_is_custom_path(self, tmp_path, monkeypatch):
+        """Any NEWROZ_HOME outside ~/.newroz is treated as the root."""
+        custom = tmp_path / "my-newroz-data"
         custom.mkdir()
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(custom))
-        assert get_default_hermes_root() == custom
+        monkeypatch.setenv("NEWROZ_HOME", str(custom))
+        assert get_default_newroz_root() == custom
 
     def test_docker_profile_active(self, tmp_path, monkeypatch):
-        """When a Docker profile is active (HERMES_HOME=<root>/profiles/<name>),
+        """When a Docker profile is active (NEWROZ_HOME=<root>/profiles/<name>),
         returns the Docker root, not the profile dir."""
         docker_root = tmp_path / "opt" / "data"
         profile = docker_root / "profiles" / "coder"
         profile.mkdir(parents=True)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        monkeypatch.setenv("HERMES_HOME", str(profile))
-        assert get_default_hermes_root() == docker_root
+        monkeypatch.setenv("NEWROZ_HOME", str(profile))
+        assert get_default_newroz_root() == docker_root
 
-    def test_no_hermes_home_returns_localappdata_root_on_windows(self, tmp_path, monkeypatch):
-        """Native Windows falls back to %LOCALAPPDATA%\\hermes, not ~/.hermes."""
+    def test_no_newroz_home_returns_localappdata_root_on_windows(self, tmp_path, monkeypatch):
+        """Native Windows falls back to %LOCALAPPDATA%\\newroz, not ~/.newroz."""
         local_appdata = tmp_path / "LocalAppData"
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+        monkeypatch.delenv("NEWROZ_HOME", raising=False)
         monkeypatch.setenv("LOCALAPPDATA", str(local_appdata))
         monkeypatch.setattr(Path, "home", lambda: tmp_path / "Home")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
 
-        assert get_default_hermes_root() == local_appdata / "hermes"
+        assert get_default_newroz_root() == local_appdata / "newroz"
 
-    def test_no_hermes_home_uses_windows_path_when_localappdata_missing(self, tmp_path, monkeypatch):
-        """Windows fallback still uses AppData/Local/hermes without LOCALAPPDATA."""
+    def test_no_newroz_home_uses_windows_path_when_localappdata_missing(self, tmp_path, monkeypatch):
+        """Windows fallback still uses AppData/Local/newroz without LOCALAPPDATA."""
         home = tmp_path / "Home"
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+        monkeypatch.delenv("NEWROZ_HOME", raising=False)
         monkeypatch.delenv("LOCALAPPDATA", raising=False)
         monkeypatch.setattr(Path, "home", lambda: home)
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
 
-        assert get_default_hermes_root() == home / "AppData" / "Local" / "hermes"
+        assert get_default_newroz_root() == home / "AppData" / "Local" / "newroz"
 
 
-class TestGetHermesHome:
-    """Tests for get_hermes_home() platform-aware fallback."""
+class TestGetNewrozHome:
+    """Tests for get_newroz_home() platform-aware fallback."""
 
     def test_windows_fallback_uses_localappdata(self, tmp_path, monkeypatch):
-        """When HERMES_HOME is unset on Windows, use %LOCALAPPDATA%\\hermes."""
+        """When NEWROZ_HOME is unset on Windows, use %LOCALAPPDATA%\\newroz."""
         local_appdata = tmp_path / "LocalAppData"
-        monkeypatch.delenv("HERMES_HOME", raising=False)
+        monkeypatch.delenv("NEWROZ_HOME", raising=False)
         monkeypatch.setenv("LOCALAPPDATA", str(local_appdata))
         monkeypatch.setattr(Path, "home", lambda: tmp_path / "Home")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
-        monkeypatch.setattr(hermes_constants, "_profile_fallback_warned", False)
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
+        monkeypatch.setattr(newroz_constants, "_profile_fallback_warned", False)
 
-        assert get_hermes_home() == local_appdata / "hermes"
+        assert get_newroz_home() == local_appdata / "newroz"
 
 
-class TestHermesManagedNode:
+class TestNewrozManagedNode:
     def test_windows_node_dir_prefers_portable_root(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "newroz"
         node_dir = home / "node"
         bin_dir = node_dir / "bin"
         node_dir.mkdir(parents=True)
         bin_dir.mkdir()
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
-        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
+        monkeypatch.setenv("NEWROZ_HOME", str(home))
 
-        assert iter_hermes_node_dirs() == [node_dir, bin_dir]
+        assert iter_newroz_node_dirs() == [node_dir, bin_dir]
 
     def test_windows_finds_npm_cmd_before_path(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "newroz"
         node_dir = home / "node"
         node_dir.mkdir(parents=True)
         npm_cmd = node_dir / "npm.cmd"
         npm_cmd.write_text("@echo off\n")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
-        monkeypatch.setenv("HERMES_HOME", str(home))
-        monkeypatch.setattr(hermes_constants, "node_tool_runnable", lambda path: True)
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
+        monkeypatch.setenv("NEWROZ_HOME", str(home))
+        monkeypatch.setattr(newroz_constants, "node_tool_runnable", lambda path: True)
 
-        assert find_hermes_node_executable("npm") == str(npm_cmd)
+        assert find_newroz_node_executable("npm") == str(npm_cmd)
 
     def test_windows_path_fallback_prefers_npm_cmd(self, tmp_path, monkeypatch):
         bin_dir = tmp_path / "nodejs"
@@ -149,13 +149,13 @@ class TestHermesManagedNode:
         extensionless.write_text("#!/usr/bin/env node\n")
         powershell.write_text("Write-Output npm\n")
         npm_cmd.write_text("@echo off\n")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
         monkeypatch.setenv("PATH", str(bin_dir))
 
         assert find_node_executable_on_path("npm") == str(npm_cmd)
 
     def test_windows_node_executable_falls_back_to_safe_path_shim(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "newroz"
         home.mkdir()
         bin_dir = tmp_path / "nodejs"
         bin_dir.mkdir()
@@ -163,14 +163,14 @@ class TestHermesManagedNode:
         npm_cmd = bin_dir / "npm.cmd"
         extensionless.write_text("#!/usr/bin/env node\n")
         npm_cmd.write_text("@echo off\n")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
-        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
+        monkeypatch.setenv("NEWROZ_HOME", str(home))
         monkeypatch.setenv("PATH", str(bin_dir))
 
         assert find_node_executable("npm") == str(npm_cmd)
 
     def test_windows_skips_broken_managed_npm_without_path_fallback(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+        home = tmp_path / "newroz"
         managed_npm = home / "node" / "npm.cmd"
         managed_npm.parent.mkdir(parents=True)
         managed_npm.write_text("@echo off\n")
@@ -178,31 +178,31 @@ class TestHermesManagedNode:
         bin_dir.mkdir()
         path_npm = bin_dir / "npm.cmd"
         path_npm.write_text("@echo off\n")
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
-        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
+        monkeypatch.setenv("NEWROZ_HOME", str(home))
         monkeypatch.setenv("PATH", str(bin_dir))
-        monkeypatch.setattr(hermes_constants, "_managed_node_heal_attempted", False)
-        monkeypatch.setattr(hermes_constants, "heal_hermes_managed_node", lambda: False)
+        monkeypatch.setattr(newroz_constants, "_managed_node_heal_attempted", False)
+        monkeypatch.setattr(newroz_constants, "heal_newroz_managed_node", lambda: False)
         monkeypatch.setattr(
-            hermes_constants,
+            newroz_constants,
             "node_tool_runnable",
             lambda path: False,
         )
 
-        assert hermes_managed_node_tree_present() is True
+        assert newroz_managed_node_tree_present() is True
         assert find_node_executable("npm") is None
         assert find_node_executable("npm") != str(path_npm)
 
-    def test_with_hermes_node_path_prepends_existing_managed_dirs(self, tmp_path, monkeypatch):
-        home = tmp_path / "hermes"
+    def test_with_newroz_node_path_prepends_existing_managed_dirs(self, tmp_path, monkeypatch):
+        home = tmp_path / "newroz"
         node_dir = home / "node"
         bin_dir = node_dir / "bin"
         node_dir.mkdir(parents=True)
         bin_dir.mkdir()
-        monkeypatch.setattr(hermes_constants.sys, "platform", "win32")
-        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(newroz_constants.sys, "platform", "win32")
+        monkeypatch.setenv("NEWROZ_HOME", str(home))
 
-        env = with_hermes_node_path({"PATH": "system-node"})
+        env = with_newroz_node_path({"PATH": "system-node"})
         parts = env["PATH"].split(os.pathsep)
 
         assert parts[:2] == [str(node_dir), str(bin_dir)]
@@ -211,7 +211,7 @@ class TestHermesManagedNode:
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX shell stubs; Windows uses .cmd shims")
 class TestNodeToolRunnable:
-    """node_tool_runnable() rejects broken Hermes-managed npm/node wrappers."""
+    """node_tool_runnable() rejects broken Newroz-managed npm/node wrappers."""
 
     def _stub(self, tmp_path, name, body, mode=0o755):
         path = tmp_path / name
@@ -244,9 +244,9 @@ class TestNodeToolRunnable:
         system_bin.mkdir()
         self._stub(system_bin, "npm", "#!/bin/sh\necho '11.10.0'\nexit 0\n")
 
-        monkeypatch.setenv("HERMES_HOME", str(profile_home))
+        monkeypatch.setenv("NEWROZ_HOME", str(profile_home))
         monkeypatch.setenv("PATH", str(system_bin))
-        monkeypatch.setattr(hermes_constants, "_managed_node_heal_attempted", False)
+        monkeypatch.setattr(newroz_constants, "_managed_node_heal_attempted", False)
 
         def _heal():
             heal_called["value"] = True
@@ -254,7 +254,7 @@ class TestNodeToolRunnable:
             broken_npm.chmod(0o755)
             return True
 
-        monkeypatch.setattr(hermes_constants, "heal_hermes_managed_node", _heal)
+        monkeypatch.setattr(newroz_constants, "heal_newroz_managed_node", _heal)
 
         resolved = find_node_executable("npm")
         assert heal_called["value"] is True
@@ -272,18 +272,18 @@ class TestNodeToolRunnable:
         system_bin.mkdir()
         good_npm = self._stub(system_bin, "npm", "#!/bin/sh\necho '11.10.0'\nexit 0\n")
 
-        monkeypatch.setenv("HERMES_HOME", str(profile_home))
+        monkeypatch.setenv("NEWROZ_HOME", str(profile_home))
         monkeypatch.setenv("PATH", str(system_bin))
-        monkeypatch.setattr(hermes_constants, "_managed_node_heal_attempted", False)
+        monkeypatch.setattr(newroz_constants, "_managed_node_heal_attempted", False)
 
         def _heal():
             broken_npm.write_text(healed_npm.read_text())
             broken_npm.chmod(0o755)
             return True
 
-        monkeypatch.setattr(hermes_constants, "heal_hermes_managed_node", _heal)
+        monkeypatch.setattr(newroz_constants, "heal_newroz_managed_node", _heal)
 
-        assert find_hermes_node_executable("npm") == str(healed_npm)
+        assert find_newroz_node_executable("npm") == str(healed_npm)
         assert find_node_executable("npm") == str(healed_npm)
         assert find_node_executable("npm") != str(good_npm)
 
@@ -297,10 +297,10 @@ class TestNodeToolRunnable:
         system_bin.mkdir()
         self._stub(system_bin, "npm", "#!/bin/sh\necho '11.10.0'\nexit 0\n")
 
-        monkeypatch.setenv("HERMES_HOME", str(profile_home))
+        monkeypatch.setenv("NEWROZ_HOME", str(profile_home))
         monkeypatch.setenv("PATH", str(system_bin))
-        monkeypatch.setattr(hermes_constants, "_managed_node_heal_attempted", False)
-        monkeypatch.setattr(hermes_constants, "heal_hermes_managed_node", lambda: False)
+        monkeypatch.setattr(newroz_constants, "_managed_node_heal_attempted", False)
+        monkeypatch.setattr(newroz_constants, "heal_newroz_managed_node", lambda: False)
 
         assert find_node_executable("npm") is None
 
@@ -314,7 +314,7 @@ class TestNodeToolRunnable:
         system_bin.mkdir()
         self._stub(system_bin, "npm", "#!/bin/sh\necho '11.10.0'\nexit 0\n")
 
-        monkeypatch.setenv("HERMES_HOME", str(profile_home))
+        monkeypatch.setenv("NEWROZ_HOME", str(profile_home))
         monkeypatch.setenv("PATH", str(system_bin))
 
         assert find_node_executable("npm") == str(managed_npm)
@@ -325,7 +325,7 @@ class TestIsContainer:
 
     def _reset_cache(self, monkeypatch):
         """Reset the cached detection result before each test."""
-        monkeypatch.setattr(hermes_constants, "_container_detected", None)
+        monkeypatch.setattr(newroz_constants, "_container_detected", None)
 
     def test_detects_dockerenv(self, monkeypatch, tmp_path):
         """/.dockerenv triggers container detection."""
@@ -417,7 +417,7 @@ class TestIsContainer:
 
     def test_caches_result(self, monkeypatch):
         """Second call uses cached value without re-probing."""
-        monkeypatch.setattr(hermes_constants, "_container_detected", True)
+        monkeypatch.setattr(newroz_constants, "_container_detected", True)
         assert is_container() is True
         # Even if we make os.path.exists return False, cached value wins
         monkeypatch.setattr(os.path, "exists", lambda p: False)
@@ -495,7 +495,7 @@ class TestSecureParentDir:
 
     def test_safe_path_calls_chmod(self, tmp_path, monkeypatch):
         """Normal nested path (depth >= 3) should call os.chmod."""
-        safe_dir = tmp_path / "home" / "user" / ".hermes"
+        safe_dir = tmp_path / "home" / "user" / ".newroz"
         safe_dir.mkdir(parents=True)
         target = safe_dir / "auth.json"
         target.touch()
@@ -632,7 +632,7 @@ class TestAgentBrowserRunnable:
             captured.append((cmd, kwargs))
             return SimpleNamespace(returncode=0)
 
-        import hermes_cli._subprocess_compat as subprocess_compat
+        import newroz_cli._subprocess_compat as subprocess_compat
         import subprocess as subprocess_mod
 
         monkeypatch.setattr(subprocess_compat, "windows_hide_flags", lambda: 0x08000000)
@@ -651,7 +651,7 @@ class TestAgentBrowserRunnable:
             captured.append((cmd, kwargs))
             return SimpleNamespace(returncode=0)
 
-        import hermes_cli._subprocess_compat as subprocess_compat
+        import newroz_cli._subprocess_compat as subprocess_compat
         import subprocess as subprocess_mod
 
         monkeypatch.setattr(subprocess_compat, "windows_hide_flags", lambda: 0x08000000)
@@ -662,8 +662,8 @@ class TestAgentBrowserRunnable:
         assert captured[0][1]["creationflags"] == 0x08000000
 
 
-class TestGetHermesDir:
-    """Tests for ``get_hermes_dir(new_subpath, old_name)``.
+class TestGetNewrozDir:
+    """Tests for ``get_newroz_dir(new_subpath, old_name)``.
 
     Contract: prefer the legacy ``<old_name>/`` location, but only when
     it has content. An empty legacy stub must fall through to the new
@@ -672,11 +672,11 @@ class TestGetHermesDir:
     """
 
     def _set_home(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
 
     def test_neither_exists_returns_new(self, tmp_path, monkeypatch):
         self._set_home(tmp_path, monkeypatch)
-        result = get_hermes_dir("platforms/pairing", "pairing")
+        result = get_newroz_dir("platforms/pairing", "pairing")
         assert result == tmp_path / "platforms/pairing"
 
     def test_legacy_populated_returns_legacy(self, tmp_path, monkeypatch):
@@ -684,7 +684,7 @@ class TestGetHermesDir:
         legacy = tmp_path / "image_cache"
         legacy.mkdir()
         (legacy / "cached.png").write_bytes(b"x")
-        result = get_hermes_dir("cache/images", "image_cache")
+        result = get_newroz_dir("cache/images", "image_cache")
         assert result == legacy
 
     def test_legacy_populated_with_subdir_returns_legacy(self, tmp_path, monkeypatch):
@@ -693,7 +693,7 @@ class TestGetHermesDir:
         legacy = tmp_path / "matrix" / "store"
         legacy.mkdir(parents=True)
         (legacy / "session").mkdir()  # subdir, not a file
-        result = get_hermes_dir("platforms/matrix/store", "matrix/store")
+        result = get_newroz_dir("platforms/matrix/store", "matrix/store")
         assert result == legacy
 
     def test_legacy_empty_returns_new(self, tmp_path, monkeypatch):
@@ -711,7 +711,7 @@ class TestGetHermesDir:
         new = tmp_path / "platforms" / "pairing"
         new.mkdir(parents=True)
         (new / "telegram-approved.json").write_text("[]")
-        result = get_hermes_dir("platforms/pairing", "pairing")
+        result = get_newroz_dir("platforms/pairing", "pairing")
         assert result == new
 
     def test_legacy_empty_and_new_missing_returns_new(self, tmp_path, monkeypatch):
@@ -725,7 +725,7 @@ class TestGetHermesDir:
         self._set_home(tmp_path, monkeypatch)
         legacy = tmp_path / "audio_cache"
         legacy.mkdir()
-        result = get_hermes_dir("cache/audio", "audio_cache")
+        result = get_newroz_dir("cache/audio", "audio_cache")
         assert result == tmp_path / "cache/audio"
 
     def test_legacy_is_file_treated_as_content(self, tmp_path, monkeypatch):
@@ -737,7 +737,7 @@ class TestGetHermesDir:
         self._set_home(tmp_path, monkeypatch)
         legacy = tmp_path / "image_cache"
         legacy.write_bytes(b"sentinel")
-        result = get_hermes_dir("cache/images", "image_cache")
+        result = get_newroz_dir("cache/images", "image_cache")
         assert result == legacy
 
     def test_unreadable_legacy_dir_kept(self, tmp_path, monkeypatch):
@@ -761,7 +761,7 @@ class TestGetHermesDir:
             return real_iterdir(self)
 
         monkeypatch.setattr(Path, "iterdir", boom)
-        result = get_hermes_dir(
+        result = get_newroz_dir(
             "platforms/whatsapp/session", "whatsapp/session"
         )
         assert result == legacy
@@ -793,7 +793,7 @@ class TestGetHermesDir:
             return real_lstat(self)
 
         monkeypatch.setattr(Path, "lstat", boom)
-        result = get_hermes_dir("platforms/pairing", "pairing")
+        result = get_newroz_dir("platforms/pairing", "pairing")
         assert result == legacy
 
     def test_dangling_legacy_symlink_returns_new(self, tmp_path, monkeypatch):
@@ -811,7 +811,7 @@ class TestGetHermesDir:
         new = tmp_path / "platforms" / "pairing"
         new.mkdir(parents=True)
         (new / "discord-approved.json").write_text("[]")
-        result = get_hermes_dir("platforms/pairing", "pairing")
+        result = get_newroz_dir("platforms/pairing", "pairing")
         assert result == new
 
     def test_symlink_to_populated_dir_returns_legacy(self, tmp_path, monkeypatch):
@@ -822,7 +822,7 @@ class TestGetHermesDir:
         (real / "cached.png").write_bytes(b"x")
         legacy = tmp_path / "image_cache"
         legacy.symlink_to(real)
-        result = get_hermes_dir("cache/images", "image_cache")
+        result = get_newroz_dir("cache/images", "image_cache")
         assert result == legacy
 
     def test_symlink_to_empty_dir_returns_new(self, tmp_path, monkeypatch):
@@ -832,5 +832,5 @@ class TestGetHermesDir:
         empty.mkdir()
         legacy = tmp_path / "audio_cache"
         legacy.symlink_to(empty)
-        result = get_hermes_dir("cache/audio", "audio_cache")
+        result = get_newroz_dir("cache/audio", "audio_cache")
         assert result == tmp_path / "cache/audio"

@@ -25,7 +25,7 @@ description: "通过 nano-pdf CLI 编辑 PDF 文本/错别字/标题（自然语
 ## 参考：完整 SKILL.md
 
 :::info
-以下是 Hermes 在触发该 skill 时加载的完整 skill 定义。这是 skill 激活时 agent 所看到的指令内容。
+以下是 Newroz 在触发该 skill 时加载的完整 skill 定义。这是 skill 激活时 agent 所看到的指令内容。
 :::
 
 # nano-pdf
@@ -35,7 +35,7 @@ description: "通过 nano-pdf CLI 编辑 PDF 文本/错别字/标题（自然语
 ## 前置条件
 
 ```bash
-# Install with uv (recommended — already available in Hermes)
+# Install with uv (recommended — already available in Newroz)
 uv pip install nano-pdf
 
 # Or with pip

@@ -1,4 +1,4 @@
-import { getSession } from '@/hermes'
+import { getSession } from '@/newroz'
 import { type ChatMessage, chatMessageText } from '@/lib/chat-messages'
 import { normalizePersonalityValue } from '@/lib/chat-runtime'
 import { embeddedImageUrls, textWithoutEmbeddedImages } from '@/lib/embedded-images'
@@ -20,7 +20,7 @@ import {
   setYoloActive
 } from '@/store/session'
 import { reportBackendContract } from '@/store/updates'
-import type { SessionCreateResponse, SessionInfo, SessionRuntimeInfo } from '@/types/hermes'
+import type { SessionCreateResponse, SessionInfo, SessionRuntimeInfo } from '@/types/newroz'
 
 import type { ClientSessionState } from '../../../types'
 

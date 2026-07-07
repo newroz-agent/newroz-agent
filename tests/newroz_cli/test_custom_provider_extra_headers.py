@@ -6,13 +6,13 @@ PR #3526 salvage — user-configurable extra HTTP headers on LLM API calls
 
 import json
 
-from hermes_cli.config import (
+from newroz_cli.config import (
     _normalize_custom_provider_entry,
     apply_custom_provider_extra_headers_to_client_kwargs,
     get_custom_provider_extra_headers,
     normalize_extra_headers,
 )
-from hermes_cli import models as models_mod
+from newroz_cli import models as models_mod
 
 
 def test_normalize_extra_headers_stringifies_and_drops_none():
@@ -32,13 +32,13 @@ def test_normalize_entry_keeps_extra_headers():
         {
             "name": "my-proxy",
             "base_url": "https://llm.internal.example.com/v1",
-            "extra_headers": {"X-Custom-Auth": "tok", "X-Client-Name": "hermes"},
+            "extra_headers": {"X-Custom-Auth": "tok", "X-Client-Name": "newroz"},
         }
     )
     assert normalized is not None
     assert normalized["extra_headers"] == {
         "X-Custom-Auth": "tok",
-        "X-Client-Name": "hermes",
+        "X-Client-Name": "newroz",
     }
 
 
@@ -171,7 +171,7 @@ def test_fetch_api_models_sends_extra_headers_to_models_probe(monkeypatch):
         "proxy-key",
         "https://llm.internal.example.com/v1",
         headers={
-            "sleeve-harness": "hermes",
+            "sleeve-harness": "newroz",
             "sleeve-base-url": "http://localhost:8081/v1",
         },
     )
@@ -179,5 +179,5 @@ def test_fetch_api_models_sends_extra_headers_to_models_probe(monkeypatch):
     assert models == ["proxy-model"]
     assert captured["url"] == "https://llm.internal.example.com/v1/models"
     assert captured["headers"]["authorization"] == "Bearer proxy-key"
-    assert captured["headers"]["sleeve-harness"] == "hermes"
+    assert captured["headers"]["sleeve-harness"] == "newroz"
     assert captured["headers"]["sleeve-base-url"] == "http://localhost:8081/v1"

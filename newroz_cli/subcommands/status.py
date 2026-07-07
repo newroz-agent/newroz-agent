@@ -1,6 +1,6 @@
-"""``hermes status`` subcommand parser.
+"""``newroz status`` subcommand parser.
 
-Extracted verbatim from ``hermes_cli/main.py:main()`` (god-file Phase 2).
+Extracted verbatim from ``newroz_cli/main.py:main()`` (god-file Phase 2).
 Handler injected to avoid importing ``main``.
 """
 
@@ -17,7 +17,7 @@ def build_status_parser(subparsers, *, cmd_status: Callable) -> None:
     status_parser = subparsers.add_parser(
         "status",
         help="Show status of all components",
-        description="Display status of Hermes Agent components",
+        description="Display status of Newroz Agent components",
     )
     status_parser.add_argument(
         "--all", action="store_true", help="Show all details (redacted for sharing)"

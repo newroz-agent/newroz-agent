@@ -1,10 +1,10 @@
-"""MCP picker — interactive `hermes mcp picker` (also the default `hermes mcp`).
+"""MCP picker — interactive `newroz mcp picker` (also the default `newroz mcp`).
 
 Lists every catalog entry plus any custom MCP servers the user has added via
-``hermes mcp add``, lets them pick one, and routes to install / enable /
+``newroz mcp add``, lets them pick one, and routes to install / enable /
 disable / uninstall / configure-tools flows.
 
-Mirrors the `hermes plugin` picker UX: arrow keys to navigate, ENTER on a row
+Mirrors the `newroz plugin` picker UX: arrow keys to navigate, ENTER on a row
 to act on it. The action depends on current status:
 
   not installed (catalog)   → install  (clone/bootstrap if needed, prompt for creds)
@@ -22,10 +22,10 @@ import sys
 from dataclasses import dataclass
 from typing import List, Optional
 
-from hermes_cli.colors import Colors, color
-from hermes_cli.cli_output import prompt_yes_no
-from hermes_cli.curses_ui import curses_single_select
-from hermes_cli.mcp_catalog import (
+from newroz_cli.colors import Colors, color
+from newroz_cli.cli_output import prompt_yes_no
+from newroz_cli.curses_ui import curses_single_select
+from newroz_cli.mcp_catalog import (
     CatalogEntry,
     CatalogError,
     catalog_diagnostics,
@@ -36,7 +36,7 @@ from hermes_cli.mcp_catalog import (
     installed_servers,
     uninstall_entry,
 )
-from hermes_cli.config import load_config, save_config
+from newroz_cli.config import load_config, save_config
 
 
 # ─── Status badges ────────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ def _enable_disable(name: str, *, enable: bool) -> None:
     save_config(cfg)
     print(color(
         f"  ✓ '{name}' {'enabled' if enable else 'disabled'}. "
-        "Start a new Hermes session for changes to take effect.",
+        "Start a new Newroz session for changes to take effect.",
         Colors.GREEN,
     ))
 
@@ -134,7 +134,7 @@ def _configure_tools(name: str) -> None:
     server, displays a checklist, and writes ``tools.include``.
     """
     import argparse
-    from hermes_cli.mcp_config import cmd_mcp_configure
+    from newroz_cli.mcp_config import cmd_mcp_configure
 
     cmd_mcp_configure(argparse.Namespace(name=name))
 
@@ -230,7 +230,7 @@ def _handle_row(row: _Row) -> None:
 
 def _print_rows_text(rows: List[_Row]) -> None:
     """Plain-text catalog dump used as a fallback when curses can't run, and
-    as the default output of `hermes mcp catalog`."""
+    as the default output of `newroz mcp catalog`."""
     if not rows:
         print()
         print(color("  No MCPs in the catalog or configured.", Colors.DIM))
@@ -246,11 +246,11 @@ def _print_rows_text(rows: List[_Row]) -> None:
         print(f"  {_format_row(row)}")
     print()
     print(color(
-        "  Install: hermes mcp install <name>    Picker: hermes mcp",
+        "  Install: newroz mcp install <name>    Picker: newroz mcp",
         Colors.DIM,
     ))
 
-    # Surface manifest-version warnings so users know when their Hermes is
+    # Surface manifest-version warnings so users know when their Newroz is
     # too old to install everything in the catalog.
     diags = catalog_diagnostics()
     future = [d for d in diags if d[1] == "future_manifest"]
@@ -258,7 +258,7 @@ def _print_rows_text(rows: List[_Row]) -> None:
         print()
         for name, _, msg in future:
             print(color(
-                f"  ⚠ '{name}' requires a newer Hermes — run `hermes update` "
+                f"  ⚠ '{name}' requires a newer Newroz — run `newroz update` "
                 "to install this entry.",
                 Colors.YELLOW,
             ))
@@ -267,12 +267,12 @@ def _print_rows_text(rows: List[_Row]) -> None:
 
 
 def show_catalog() -> None:
-    """`hermes mcp catalog` — print the curated list + custom servers, no interaction."""
+    """`newroz mcp catalog` — print the curated list + custom servers, no interaction."""
     _print_rows_text(_build_rows())
 
 
 def run_picker() -> None:
-    """`hermes mcp picker` (and default `hermes mcp`) — interactive selector.
+    """`newroz mcp picker` (and default `newroz mcp`) — interactive selector.
 
     Loops until the user hits ESC/q. After each action the picker re-renders
     so the user can manage several entries in one session.
@@ -299,18 +299,18 @@ def run_picker() -> None:
 
 
 def install_by_name(identifier: str) -> int:
-    """`hermes mcp install <name>` — non-interactive entry-point.
+    """`newroz mcp install <name>` — non-interactive entry-point.
 
     Returns 0 on success, non-zero on failure (so the CLI can propagate
     exit codes).
     """
-    from hermes_cli.mcp_catalog import get_entry
+    from newroz_cli.mcp_catalog import get_entry
 
     entry = get_entry(identifier)
     if entry is None:
         print(color(
             f"  ✗ '{identifier}' is not in the catalog. "
-            "Run `hermes mcp catalog` to see available entries.",
+            "Run `newroz mcp catalog` to see available entries.",
             Colors.RED,
         ))
         return 1

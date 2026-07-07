@@ -1,16 +1,16 @@
 """Regression coverage for GHSA-5qr3-c538-wm9j (#29156) — Remote Code
-Execution via the ``HERMES_ENABLE_PROJECT_PLUGINS`` bypass in the web
+Execution via the ``NEWROZ_ENABLE_PROJECT_PLUGINS`` bypass in the web
 server's dashboard plugin loader.
 
 Two primitives combined into the original advisory chain:
 
-1. ``hermes_cli.web_server._discover_dashboard_plugins`` opted into
-   the untrusted ``./.hermes/plugins/`` source via
-   ``os.environ.get("HERMES_ENABLE_PROJECT_PLUGINS")`` — truthy for
+1. ``newroz_cli.web_server._discover_dashboard_plugins`` opted into
+   the untrusted ``./.newroz/plugins/`` source via
+   ``os.environ.get("NEWROZ_ENABLE_PROJECT_PLUGINS")`` — truthy for
    any non-empty string, so ``=0`` / ``=false`` / ``=no`` (all of
    which the agent loader treats as off, and which operators set to
    *disable* project plugins) silently *enabled* the source.
-2. ``hermes_cli.web_server._mount_plugin_api_routes`` then imported
+2. ``newroz_cli.web_server._mount_plugin_api_routes`` then imported
    each plugin's manifest ``api`` field as a Python module via
    ``importlib.util.spec_from_file_location``.  The field was used
    raw, with no path-traversal check, so a single manifest line
@@ -37,7 +37,7 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli import web_server
+from newroz_cli import web_server
 
 
 @pytest.fixture(autouse=True)
@@ -61,7 +61,7 @@ def _write_plugin_manifest(root: Path, name: str, manifest: dict) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# Layer 1 — HERMES_ENABLE_PROJECT_PLUGINS env gate uses truthy semantics.
+# Layer 1 — NEWROZ_ENABLE_PROJECT_PLUGINS env gate uses truthy semantics.
 # ---------------------------------------------------------------------------
 
 
@@ -72,15 +72,15 @@ class TestProjectPluginsEnvGate:
 
     @pytest.fixture
     def project_plugin(self, tmp_path, monkeypatch):
-        """Plant a project-source plugin under CWD's ``.hermes/plugins``
+        """Plant a project-source plugin under CWD's ``.newroz/plugins``
         and isolate the user-plugins dir to an empty tmp tree."""
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "home"))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "home"))
         (tmp_path / "home").mkdir()
         cwd = tmp_path / "evil-repo"
         cwd.mkdir()
         monkeypatch.chdir(cwd)
         _write_plugin_manifest(
-            cwd / ".hermes" / "plugins",
+            cwd / ".newroz" / "plugins",
             "evil",
             {
                 "name": "evil",
@@ -95,14 +95,14 @@ class TestProjectPluginsEnvGate:
         self, project_plugin, monkeypatch, value
     ):
         if value == "":
-            monkeypatch.delenv("HERMES_ENABLE_PROJECT_PLUGINS", raising=False)
+            monkeypatch.delenv("NEWROZ_ENABLE_PROJECT_PLUGINS", raising=False)
         else:
-            monkeypatch.setenv("HERMES_ENABLE_PROJECT_PLUGINS", value)
+            monkeypatch.setenv("NEWROZ_ENABLE_PROJECT_PLUGINS", value)
 
         plugins = web_server._get_dashboard_plugins(force_rescan=True)
         names = {p["name"] for p in plugins}
         assert "evil" not in names, (
-            f"HERMES_ENABLE_PROJECT_PLUGINS={value!r} must NOT enable the "
+            f"NEWROZ_ENABLE_PROJECT_PLUGINS={value!r} must NOT enable the "
             "project source — that's the GHSA-5qr3-c538-wm9j env bypass."
         )
 
@@ -110,7 +110,7 @@ class TestProjectPluginsEnvGate:
     def test_truthy_values_enable_project_plugins(
         self, project_plugin, monkeypatch, value
     ):
-        monkeypatch.setenv("HERMES_ENABLE_PROJECT_PLUGINS", value)
+        monkeypatch.setenv("NEWROZ_ENABLE_PROJECT_PLUGINS", value)
         plugins = web_server._get_dashboard_plugins(force_rescan=True)
         evil = next((p for p in plugins if p["name"] == "evil"), None)
         assert evil is not None
@@ -184,8 +184,8 @@ class TestDiscoveryScrubsApiField:
 
     @pytest.fixture
     def user_plugin_factory(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-        monkeypatch.delenv("HERMES_ENABLE_PROJECT_PLUGINS", raising=False)
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+        monkeypatch.delenv("NEWROZ_ENABLE_PROJECT_PLUGINS", raising=False)
 
         def _make(name: str, manifest: dict) -> None:
             _write_plugin_manifest(tmp_path / "plugins", name, manifest)
@@ -308,26 +308,26 @@ class TestMountApiRoutesRefusesUntrusted:
 class TestEndToEndPocBlocked:
     """Reproduces the original advisory PoC shape: untrusted CWD with a
     manifest pointing ``api`` at an attacker-chosen Python file, with
-    ``HERMES_ENABLE_PROJECT_PLUGINS=0`` (so the operator believed the
+    ``NEWROZ_ENABLE_PROJECT_PLUGINS=0`` (so the operator believed the
     project source was disabled).  Post-fix, the importer must never
     be invoked for the payload path, regardless of how the bypass is
     framed (``=0`` truthy-string bypass, absolute path bypass,
     project-source bypass)."""
 
     def test_full_chain_blocked(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path / "home"))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "home"))
         (tmp_path / "home").mkdir()
         cwd = tmp_path / "evil-repo"
         cwd.mkdir()
         monkeypatch.chdir(cwd)
         # The original bypass: operator sets the var to a "disabled"
         # string the web server pre-fix treated as enabled.
-        monkeypatch.setenv("HERMES_ENABLE_PROJECT_PLUGINS", "0")
+        monkeypatch.setenv("NEWROZ_ENABLE_PROJECT_PLUGINS", "0")
         # Payload: absolute path inside a manifest dropped in CWD.
         payload_py = tmp_path / "payload.py"
         payload_py.write_text("OWNED = True\n")
         _write_plugin_manifest(
-            cwd / ".hermes" / "plugins",
+            cwd / ".newroz" / "plugins",
             "evil",
             {
                 "name": "evil",
@@ -354,7 +354,7 @@ class TestEndToEndPocBlocked:
         for call in spec.call_args_list:
             module_name = call.args[0]
             target = Path(call.args[1])
-            assert module_name != "hermes_dashboard_plugin_evil"
+            assert module_name != "newroz_dashboard_plugin_evil"
             assert target != payload_py
             assert "evil-repo" not in target.parts
-        assert "hermes_dashboard_plugin_evil" not in sys.modules
+        assert "newroz_dashboard_plugin_evil" not in sys.modules

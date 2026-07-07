@@ -25,7 +25,7 @@ def _response(content="ok"):
 
 @pytest.fixture
 def moa_config(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
     (home / "config.yaml").write_text(
         """
@@ -45,7 +45,7 @@ moa:
 """.strip(),
         encoding="utf-8",
     )
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     return home
 
 

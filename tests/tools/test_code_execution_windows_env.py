@@ -12,7 +12,7 @@ the host platform.  We also keep a live Winsock smoke test that only runs
 on a real Windows host.
 
 Also covers the companion Windows bug: the sandbox writes
-``hermes_tools.py`` and ``script.py`` into a temp dir, and those files
+``newroz_tools.py`` and ``script.py`` into a temp dir, and those files
 must be written as UTF-8 on every platform — the generated stub contains
 em-dash/en-dash characters in docstrings, and the default ``open(path, "w")``
 on Windows uses the system locale (cp1252 typically), corrupting those
@@ -257,7 +257,7 @@ def _legacy_posix_scrubber(source_env, is_passthrough):
     _scrub_child_env's POSIX behavior, used to prove the production helper does
     what we think it does.
 
-    Deliberately updated for #27303 (the broad ``HERMES_`` prefix was dropped
+    Deliberately updated for #27303 (the broad ``NEWROZ_`` prefix was dropped
     in favor of an explicit operational allowlist, and DSN/WEBHOOK were added
     to the secret substrings).  The original docstring said: if POSIX behavior
     legitimately needs to evolve, adjust this oracle on purpose so the churn is
@@ -268,8 +268,8 @@ def _legacy_posix_scrubber(source_env, is_passthrough):
                           "XDG_", "PYTHONPATH", "VIRTUAL_ENV", "CONDA")
     _SECRET_SUBSTRINGS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL",
                           "PASSWD", "AUTH", "DSN", "WEBHOOK")
-    _HERMES_CHILD_ALLOWED = frozenset({
-        "HERMES_HOME", "HERMES_PROFILE", "HERMES_CONFIG", "HERMES_ENV",
+    _NEWROZ_CHILD_ALLOWED = frozenset({
+        "NEWROZ_HOME", "NEWROZ_PROFILE", "NEWROZ_CONFIG", "NEWROZ_ENV",
     })
     out = {}
     for k, v in source_env.items():
@@ -281,7 +281,7 @@ def _legacy_posix_scrubber(source_env, is_passthrough):
         if any(k.startswith(p) for p in _SAFE_ENV_PREFIXES):
             out[k] = v
             continue
-        if k in _HERMES_CHILD_ALLOWED:
+        if k in _NEWROZ_CHILD_ALLOWED:
             out[k] = v
     return out
 
@@ -315,13 +315,13 @@ class TestPosixEquivalence:
         "PYTHONPATH": "/opt/lib",
         "VIRTUAL_ENV": "/home/alice/.venv",
         "CONDA_PREFIX": "/opt/conda",
-        # HERMES_* handling (#27303): only the operational allowlist passes;
-        # every other HERMES_* is dropped (the broad prefix was removed).
-        "HERMES_HOME": "/home/alice/.hermes",        # allowlisted → kept
-        "HERMES_PROFILE": "default",                 # allowlisted → kept
-        "HERMES_INTERACTIVE": "1",                   # not allowlisted → dropped
-        "HERMES_BASE_URL": "https://api.internal",   # not allowlisted → dropped
-        "HERMES_KANBAN_DB": "postgres://u:p@h/db",   # not allowlisted → dropped
+        # NEWROZ_* handling (#27303): only the operational allowlist passes;
+        # every other NEWROZ_* is dropped (the broad prefix was removed).
+        "NEWROZ_HOME": "/home/alice/.newroz",        # allowlisted → kept
+        "NEWROZ_PROFILE": "default",                 # allowlisted → kept
+        "NEWROZ_INTERACTIVE": "1",                   # not allowlisted → dropped
+        "NEWROZ_BASE_URL": "https://api.internal",   # not allowlisted → dropped
+        "NEWROZ_KANBAN_DB": "postgres://u:p@h/db",   # not allowlisted → dropped
         # Secret-substring blocks
         "OPENAI_API_KEY": "sk-xxx",
         "GITHUB_TOKEN": "ghp_xxx",
@@ -426,7 +426,7 @@ class TestPosixEquivalence:
 # ---------------------------------------------------------------------------
 #
 # The sandbox writes two Python files into a temp dir — the generated
-# ``hermes_tools.py`` stub, and the LLM's ``script.py``.  Both contain
+# ``newroz_tools.py`` stub, and the LLM's ``script.py``.  Both contain
 # non-ASCII characters in practice: the stub has em-dashes in docstrings
 # ("``tcp://host:port`` — the parent falls back..."), and user scripts
 # routinely contain non-ASCII strings, comments, or Unicode identifiers.
@@ -450,7 +450,7 @@ class TestSandboxWritesUtf8:
     context — but the code inspection is deterministic and fast."""
 
     def test_stub_and_script_writes_specify_utf8(self):
-        """Both ``hermes_tools.py`` and ``script.py`` writes in
+        """Both ``newroz_tools.py`` and ``script.py`` writes in
         ``_execute_local`` must pass ``encoding="utf-8"``."""
         import tools.code_execution_tool as cet
         src = open(cet.__file__, encoding="utf-8").read()
@@ -473,8 +473,8 @@ class TestSandboxWritesUtf8:
         """The file-based RPC transport stub (used by remote backends)
         reads/writes JSON response files.  Those must also specify UTF-8
         so non-ASCII tool results survive the round-trip intact."""
-        from tools.code_execution_tool import generate_hermes_tools_module
-        stub = generate_hermes_tools_module(["terminal"], transport="file")
+        from tools.code_execution_tool import generate_newroz_tools_module
+        stub = generate_newroz_tools_module(["terminal"], transport="file")
         # The generated stub should open response + request files as UTF-8.
         assert 'encoding="utf-8"' in stub, (
             "File-based RPC stub does not specify encoding=\"utf-8\" — "
@@ -487,9 +487,9 @@ class TestSandboxWritesUtf8:
         sandbox does, and it must succeed even when the stub contains
         em-dashes (which it does — check the transport-header docstring).
         """
-        from tools.code_execution_tool import generate_hermes_tools_module
+        from tools.code_execution_tool import generate_newroz_tools_module
         import tempfile, ast
-        stub = generate_hermes_tools_module(
+        stub = generate_newroz_tools_module(
             ["terminal", "read_file", "write_file"], transport="uds"
         )
         # Sanity: stub actually contains a non-ASCII character, otherwise
@@ -527,10 +527,10 @@ class TestSandboxWritesUtf8:
         test ever starts failing (i.e. default write succeeds), it means
         Python's default encoding has changed and the explicit UTF-8
         requirement may be obsolete — reconsider the fix."""
-        from tools.code_execution_tool import generate_hermes_tools_module
+        from tools.code_execution_tool import generate_newroz_tools_module
         import tempfile
 
-        stub = generate_hermes_tools_module(["terminal"], transport="uds")
+        stub = generate_newroz_tools_module(["terminal"], transport="uds")
         # Find a non-ASCII character we can use to prove the corruption.
         non_ascii = [c for c in stub if ord(c) > 127]
         if not non_ascii:
@@ -581,7 +581,7 @@ class TestSandboxWritesUtf8:
 # ---------------------------------------------------------------------------
 #
 # The third Windows-specific sandbox bug: after the UTF-8 file-write fix
-# let the child import hermes_tools, a user script that printed non-ASCII
+# let the child import newroz_tools, a user script that printed non-ASCII
 # to stdout still crashed with:
 #
 #     UnicodeEncodeError: 'charmap' codec can't encode character '\u2192'

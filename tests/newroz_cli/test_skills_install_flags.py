@@ -1,5 +1,5 @@
 """
-Tests for --yes / --force flag separation in `hermes skills install`.
+Tests for --yes / --force flag separation in `newroz skills install`.
 
 --yes / -y  → skip_confirm (bypass interactive prompt, needed in TUI mode)
 --force     → force (install despite blocked scan verdict)
@@ -12,7 +12,7 @@ import sys
 
 def test_cli_skills_install_yes_sets_skip_confirm(monkeypatch):
     """--yes should set skip_confirm=True but NOT force."""
-    from hermes_cli.main import main
+    from newroz_cli.main import main
 
     captured = {}
 
@@ -21,11 +21,11 @@ def test_cli_skills_install_yes_sets_skip_confirm(monkeypatch):
         captured["force"] = args.force
         captured["yes"] = args.yes
 
-    monkeypatch.setattr("hermes_cli.skills_hub.skills_command", fake_skills_command)
+    monkeypatch.setattr("newroz_cli.skills_hub.skills_command", fake_skills_command)
     monkeypatch.setattr(
         sys,
         "argv",
-        ["hermes", "skills", "install", "official/email/agentmail", "--yes"],
+        ["newroz", "skills", "install", "official/email/agentmail", "--yes"],
     )
 
     main()
@@ -37,7 +37,7 @@ def test_cli_skills_install_yes_sets_skip_confirm(monkeypatch):
 
 def test_cli_skills_install_y_alias(monkeypatch):
     """-y should behave the same as --yes."""
-    from hermes_cli.main import main
+    from newroz_cli.main import main
 
     captured = {}
 
@@ -45,11 +45,11 @@ def test_cli_skills_install_y_alias(monkeypatch):
         captured["yes"] = args.yes
         captured["force"] = args.force
 
-    monkeypatch.setattr("hermes_cli.skills_hub.skills_command", fake_skills_command)
+    monkeypatch.setattr("newroz_cli.skills_hub.skills_command", fake_skills_command)
     monkeypatch.setattr(
         sys,
         "argv",
-        ["hermes", "skills", "install", "test/skill", "-y"],
+        ["newroz", "skills", "install", "test/skill", "-y"],
     )
 
     main()
@@ -60,7 +60,7 @@ def test_cli_skills_install_y_alias(monkeypatch):
 
 def test_cli_skills_install_force_sets_force(monkeypatch):
     """--force should set force=True but NOT yes."""
-    from hermes_cli.main import main
+    from newroz_cli.main import main
 
     captured = {}
 
@@ -68,11 +68,11 @@ def test_cli_skills_install_force_sets_force(monkeypatch):
         captured["force"] = args.force
         captured["yes"] = args.yes
 
-    monkeypatch.setattr("hermes_cli.skills_hub.skills_command", fake_skills_command)
+    monkeypatch.setattr("newroz_cli.skills_hub.skills_command", fake_skills_command)
     monkeypatch.setattr(
         sys,
         "argv",
-        ["hermes", "skills", "install", "test/skill", "--force"],
+        ["newroz", "skills", "install", "test/skill", "--force"],
     )
 
     main()
@@ -83,7 +83,7 @@ def test_cli_skills_install_force_sets_force(monkeypatch):
 
 def test_cli_skills_install_force_and_yes_together(monkeypatch):
     """--force --yes should set both flags."""
-    from hermes_cli.main import main
+    from newroz_cli.main import main
 
     captured = {}
 
@@ -91,11 +91,11 @@ def test_cli_skills_install_force_and_yes_together(monkeypatch):
         captured["force"] = args.force
         captured["yes"] = args.yes
 
-    monkeypatch.setattr("hermes_cli.skills_hub.skills_command", fake_skills_command)
+    monkeypatch.setattr("newroz_cli.skills_hub.skills_command", fake_skills_command)
     monkeypatch.setattr(
         sys,
         "argv",
-        ["hermes", "skills", "install", "test/skill", "--force", "--yes"],
+        ["newroz", "skills", "install", "test/skill", "--force", "--yes"],
     )
 
     main()
@@ -106,7 +106,7 @@ def test_cli_skills_install_force_and_yes_together(monkeypatch):
 
 def test_cli_skills_install_no_flags(monkeypatch):
     """Without flags, both force and yes should be False."""
-    from hermes_cli.main import main
+    from newroz_cli.main import main
 
     captured = {}
 
@@ -114,11 +114,11 @@ def test_cli_skills_install_no_flags(monkeypatch):
         captured["force"] = args.force
         captured["yes"] = args.yes
 
-    monkeypatch.setattr("hermes_cli.skills_hub.skills_command", fake_skills_command)
+    monkeypatch.setattr("newroz_cli.skills_hub.skills_command", fake_skills_command)
     monkeypatch.setattr(
         sys,
         "argv",
-        ["hermes", "skills", "install", "test/skill"],
+        ["newroz", "skills", "install", "test/skill"],
     )
 
     main()

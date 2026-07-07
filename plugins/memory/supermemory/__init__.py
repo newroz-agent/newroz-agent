@@ -22,7 +22,7 @@ from tools.registry import tool_error
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_CONTAINER_TAG = "hermes"
+_DEFAULT_CONTAINER_TAG = "newroz"
 _DEFAULT_MAX_RECALL_RESULTS = 10
 _DEFAULT_PROFILE_FREQUENCY = 50
 _DEFAULT_CAPTURE_MODE = "all"
@@ -32,7 +32,7 @@ _DEFAULT_API_TIMEOUT = 5.0
 _MIN_CAPTURE_LENGTH = 10
 _MAX_ENTITY_CONTEXT_LENGTH = 1500
 _CONVERSATIONS_URL = "https://api.supermemory.ai/v4/conversations"
-_API_KEY_URL = "http://app.supermemory.ai/integrations?connect=hermes"
+_API_KEY_URL = "http://app.supermemory.ai/integrations?connect=newroz"
 _TRIVIAL_RE = re.compile(
     r"^(ok|okay|thanks|thank you|got it|sure|yes|no|yep|nope|k|ty|thx|np)\.?$",
     re.IGNORECASE,
@@ -96,9 +96,9 @@ def _as_bool(value: Any, default: bool) -> bool:
     return default
 
 
-def _load_supermemory_config(hermes_home: str) -> dict:
+def _load_supermemory_config(newroz_home: str) -> dict:
     config = _default_config()
-    config_path = Path(hermes_home) / "supermemory.json"
+    config_path = Path(newroz_home) / "supermemory.json"
     if config_path.exists():
         try:
             raw = json.loads(config_path.read_text(encoding="utf-8"))
@@ -142,8 +142,8 @@ def _load_supermemory_config(hermes_home: str) -> dict:
     return config
 
 
-def _save_supermemory_config(values: dict, hermes_home: str) -> None:
-    config_path = Path(hermes_home) / "supermemory.json"
+def _save_supermemory_config(values: dict, newroz_home: str) -> None:
+    config_path = Path(newroz_home) / "supermemory.json"
     existing = {}
     if config_path.exists():
         try:
@@ -287,14 +287,14 @@ class _SupermemoryClient:
             api_key=api_key,
             timeout=timeout,
             max_retries=0,
-            default_headers={"x-sm-source": "hermes"},
+            default_headers={"x-sm-source": "newroz"},
         )
 
     def _merge_metadata(self, metadata: Optional[dict]) -> dict:
-        # sm_source routes Hermes writes into the "Hermes" Space in the Supermemory
+        # sm_source routes Newroz writes into the "Newroz" Space in the Supermemory
         # app so the user can filter / bulk-manage them per source agent. This is a
         # functional routing key for the user, not vendor telemetry.
-        merged = {"sm_source": "hermes", **(metadata or {})}
+        merged = {"sm_source": "newroz", **(metadata or {})}
         legacy_source = merged.pop("source", None)
         if legacy_source and "type" not in merged:
             merged["type"] = str(legacy_source)
@@ -393,7 +393,7 @@ class _SupermemoryClient:
             headers={
                 "Authorization": f"Bearer {self._api_key}",
                 "Content-Type": "application/json",
-                "x-sm-source": "hermes",
+                "x-sm-source": "newroz",
             },
             method="POST",
         )
@@ -401,19 +401,19 @@ class _SupermemoryClient:
             return
 
 
-def _resolve_container_tag_for_setup(hermes_home: str, *, identity: str = "default") -> str:
-    config = _load_supermemory_config(hermes_home)
+def _resolve_container_tag_for_setup(newroz_home: str, *, identity: str = "default") -> str:
+    config = _load_supermemory_config(newroz_home)
     env_tag = os.environ.get("SUPERMEMORY_CONTAINER_TAG", "").strip()
     raw_tag = env_tag or config["container_tag"]
     return _sanitize_tag(raw_tag.replace("{identity}", identity))
 
 
-def _probe_supermemory_connection(api_key: str, hermes_home: str, *, identity: str = "default") -> dict:
-    config = _load_supermemory_config(hermes_home)
+def _probe_supermemory_connection(api_key: str, newroz_home: str, *, identity: str = "default") -> dict:
+    config = _load_supermemory_config(newroz_home)
     status = {
         "ok": False,
         "error": "",
-        "container_tag": _resolve_container_tag_for_setup(hermes_home, identity=identity),
+        "container_tag": _resolve_container_tag_for_setup(newroz_home, identity=identity),
         "profile_facts": 0,
         "auto_recall": bool(config["auto_recall"]),
         "auto_capture": bool(config["auto_capture"]),
@@ -531,7 +531,7 @@ class SupermemoryMemoryProvider(MemoryProvider):
         self._search_mode = _DEFAULT_SEARCH_MODE
         self._entity_context = _DEFAULT_ENTITY_CONTEXT
         self._api_timeout = _DEFAULT_API_TIMEOUT
-        self._hermes_home = ""
+        self._newroz_home = ""
         self._write_enabled = True
         self._active = False
         # Multi-container support
@@ -556,35 +556,35 @@ class SupermemoryMemoryProvider(MemoryProvider):
         return bool(os.environ.get("SUPERMEMORY_API_KEY", ""))
 
     def get_config_schema(self):
-        # Only prompt for the API key during `hermes memory setup`.
-        # All other options are documented for $HERMES_HOME/supermemory.json
+        # Only prompt for the API key during `newroz memory setup`.
+        # All other options are documented for $NEWROZ_HOME/supermemory.json
         # or the SUPERMEMORY_CONTAINER_TAG env var.
         return [
             {"key": "api_key", "description": "Supermemory API key", "secret": True, "required": True, "env_var": "SUPERMEMORY_API_KEY", "url": _API_KEY_URL},
         ]
 
-    def save_config(self, values, hermes_home):
+    def save_config(self, values, newroz_home):
         sanitized = dict(values or {})
         if "container_tag" in sanitized:
             sanitized["container_tag"] = _sanitize_tag(str(sanitized["container_tag"]))
         if "entity_context" in sanitized:
             sanitized["entity_context"] = _clamp_entity_context(str(sanitized["entity_context"]))
-        _save_supermemory_config(sanitized, hermes_home)
+        _save_supermemory_config(sanitized, newroz_home)
 
     def get_status_config(self, provider_config: dict) -> dict:
-        from hermes_constants import get_hermes_home
+        from newroz_constants import get_newroz_home
 
         del provider_config
-        hermes_home = str(get_hermes_home())
+        newroz_home = str(get_newroz_home())
         api_key = os.environ.get("SUPERMEMORY_API_KEY", "")
-        status = _probe_supermemory_connection(api_key, hermes_home)
+        status = _probe_supermemory_connection(api_key, newroz_home)
         return {"summary": _format_connection_summary(status)}
 
-    def post_setup(self, hermes_home: str, config: dict) -> None:
+    def post_setup(self, newroz_home: str, config: dict) -> None:
         from pathlib import Path
 
-        from hermes_cli.config import save_config
-        from hermes_cli.memory_setup import _prompt, _write_env_vars
+        from newroz_cli.config import save_config
+        from newroz_cli.memory_setup import _prompt, _write_env_vars
 
         print("\n  Configuring supermemory:\n")
         print(f"  Get your API key at {_API_KEY_URL}\n")
@@ -605,7 +605,7 @@ class SupermemoryMemoryProvider(MemoryProvider):
         save_config(config)
 
         if env_writes:
-            _write_env_vars(Path(hermes_home) / ".env", env_writes)
+            _write_env_vars(Path(newroz_home) / ".env", env_writes)
 
         api_key = env_writes.get("SUPERMEMORY_API_KEY") or existing
         # Make the freshly-entered key visible to the connection probe below.
@@ -614,7 +614,7 @@ class SupermemoryMemoryProvider(MemoryProvider):
         if api_key and os.environ.get("SUPERMEMORY_API_KEY") != api_key:
             os.environ["SUPERMEMORY_API_KEY"] = api_key
 
-        status = _probe_supermemory_connection(api_key, hermes_home)
+        status = _probe_supermemory_connection(api_key, newroz_home)
         print(f"\n  {_format_connection_summary(status)}")
         print("\n  Memory provider: supermemory")
         print("  Activation saved to config.yaml")
@@ -623,11 +623,11 @@ class SupermemoryMemoryProvider(MemoryProvider):
         print("\n  Start a new session to activate.\n")
 
     def initialize(self, session_id: str, **kwargs) -> None:
-        from hermes_constants import get_hermes_home
-        self._hermes_home = kwargs.get("hermes_home") or str(get_hermes_home())
+        from newroz_constants import get_newroz_home
+        self._newroz_home = kwargs.get("newroz_home") or str(get_newroz_home())
         self._session_id = session_id
         self._turn_count = 0
-        self._config = _load_supermemory_config(self._hermes_home)
+        self._config = _load_supermemory_config(self._newroz_home)
         self._api_key = os.environ.get("SUPERMEMORY_API_KEY", "")
 
         # Resolve container tag: env var > config > default.

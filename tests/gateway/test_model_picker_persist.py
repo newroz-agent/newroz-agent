@@ -15,7 +15,7 @@ across sessions like a typed one.
 These tests drive the real ``_handle_model_command`` with a fake picker-capable
 adapter that captures the ``on_model_selected`` callback, then invoke that
 callback and assert ``config.yaml`` is (or isn't) updated — exercising the exact
-closure the PR changed, against a real temp ``HERMES_HOME``.
+closure the PR changed, against a real temp ``NEWROZ_HOME``.
 """
 
 import types
@@ -65,7 +65,7 @@ def _make_event(text):
 
 def _fake_switch_result():
     """A successful ModelSwitchResult that bypasses real provider resolution."""
-    from hermes_cli.model_switch import ModelSwitchResult
+    from newroz_cli.model_switch import ModelSwitchResult
 
     return ModelSwitchResult(
         success=True,
@@ -84,15 +84,15 @@ def _setup_isolated_home(tmp_path, monkeypatch, model_yaml_value):
     """Write a config.yaml with the given ``model:`` value and stub heavy bits."""
     import gateway.run as gateway_run
 
-    hermes_home = tmp_path / ".hermes"
-    hermes_home.mkdir()
-    cfg_path = hermes_home / "config.yaml"
+    newroz_home = tmp_path / ".newroz"
+    newroz_home.mkdir()
+    cfg_path = newroz_home / "config.yaml"
     cfg_path.write_text(
         yaml.safe_dump({"model": model_yaml_value, "providers": {}}),
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(gateway_run, "_hermes_home", hermes_home)
+    monkeypatch.setattr(gateway_run, "_newroz_home", newroz_home)
     monkeypatch.setattr("agent.models_dev.fetch_models_dev", lambda: {})
     # The picker-setup path calls list_picker_providers, which otherwise hits
     # the network (OpenRouter model catalog). Stub it to a minimal list — these
@@ -100,14 +100,14 @@ def _setup_isolated_home(tmp_path, monkeypatch, model_yaml_value):
     # picker contents. The handler imports it as a local alias at call time, so
     # patching the source-module attribute takes effect.
     monkeypatch.setattr(
-        "hermes_cli.model_switch.list_picker_providers",
+        "newroz_cli.model_switch.list_picker_providers",
         lambda **kw: [{"slug": "openrouter", "name": "OpenRouter", "models": ["gpt-5.5"]}],
     )
     # switch_model is imported as a local alias inside the handler
-    # (`from hermes_cli.model_switch import switch_model as _switch_model`),
+    # (`from newroz_cli.model_switch import switch_model as _switch_model`),
     # so patching the source-module attribute takes effect at call time.
     monkeypatch.setattr(
-        "hermes_cli.model_switch.switch_model",
+        "newroz_cli.model_switch.switch_model",
         lambda **kw: _fake_switch_result(),
     )
     # The confirmation builder resolves context length for display, which
@@ -115,12 +115,12 @@ def _setup_isolated_home(tmp_path, monkeypatch, model_yaml_value):
     # OpenRouter models catalog). Stub it — these tests don't assert on the
     # displayed context, and the closure imports it lazily from this module.
     monkeypatch.setattr(
-        "hermes_cli.model_switch.resolve_display_context_length",
+        "newroz_cli.model_switch.resolve_display_context_length",
         lambda *a, **k: 272000,
     )
-    # save_config writes to ``get_hermes_home() / config.yaml`` — point it here.
-    monkeypatch.setattr("hermes_constants.get_hermes_home", lambda: hermes_home)
-    monkeypatch.setattr("hermes_cli.config.get_hermes_home", lambda: hermes_home)
+    # save_config writes to ``get_newroz_home() / config.yaml`` — point it here.
+    monkeypatch.setattr("newroz_constants.get_newroz_home", lambda: newroz_home)
+    monkeypatch.setattr("newroz_cli.config.get_newroz_home", lambda: newroz_home)
     return cfg_path
 
 

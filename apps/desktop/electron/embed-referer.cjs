@@ -2,7 +2,7 @@
 
 const { session } = require('electron')
 
-const EMBED_SESSION_PARTITION = 'persist:hermes-embed'
+const EMBED_SESSION_PARTITION = 'persist:newroz-embed'
 const EMBED_REFERER = 'https://www.youtube.com/'
 const YOUTUBE_REFERER_HOST_RE =
   /(^|\.)(youtube\.com|youtube-nocookie\.com|googlevideo\.com|ytimg\.com|youtubei\.googleapis\.com)$/i

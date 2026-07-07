@@ -1,6 +1,6 @@
 """Tests for the Windows half-updated-venv hardening (July 2026 incident).
 
-Covers three additions to ``hermes update``:
+Covers three additions to ``newroz update``:
 
 1. ``_venv_core_imports_healthy`` — the venv health probe that lets an
    "Already up to date" checkout still repair a broken dependency install.
@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hermes_cli import main as cli_main
+from newroz_cli import main as cli_main
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +43,7 @@ def test_venv_health_missing_venv_unhealthy_on_managed_install(tmp_path):
     """On a managed install (bootstrap marker) the venv IS the install —
     its absence must be reported unhealthy so the repair lane runs instead
     of 'Already up to date!'."""
-    (tmp_path / ".hermes-bootstrap-complete").write_text("done")
+    (tmp_path / ".newroz-bootstrap-complete").write_text("done")
     with patch.object(cli_main, "PROJECT_ROOT", tmp_path):
         healthy, detail = cli_main._venv_core_imports_healthy()
     assert healthy is False
@@ -151,7 +151,7 @@ def test_detect_venv_python_finds_backend(_winp, tmp_path):
     fake_psutil = types.SimpleNamespace(
         process_iter=lambda attrs: iter(
             [
-                _proc(101, venv_py, "python.exe", ["python.exe", "-m", "hermes_cli.main", "serve"]),
+                _proc(101, venv_py, "python.exe", ["python.exe", "-m", "newroz_cli.main", "serve"]),
                 _proc(102, other_py, "python.exe", ["python.exe", "somescript.py"]),
             ]
         ),
@@ -179,7 +179,7 @@ def test_detect_venv_python_excludes_self_and_ancestors(_winp, tmp_path):
         process_iter=lambda attrs: iter(
             [
                 _proc(_os.getpid(), venv_py, "python.exe"),
-                _proc(555, venv_py, "hermes.exe"),
+                _proc(555, venv_py, "newroz.exe"),
             ]
         ),
         Process=lambda *a, **k: me,
@@ -200,21 +200,21 @@ def test_detect_venv_python_no_psutil_is_empty(_winp, tmp_path):
 
 def test_format_venv_holders_message_flags_desktop_backend(tmp_path):
     matches = [
-        (101, "python.exe", "python.exe -m hermes_cli.main serve --host 127.0.0.1"),
-        (102, "pythonw.exe", "pythonw.exe -m hermes_cli.main gateway run"),
+        (101, "python.exe", "python.exe -m newroz_cli.main serve --host 127.0.0.1"),
+        (102, "pythonw.exe", "pythonw.exe -m newroz_cli.main gateway run"),
     ]
     msg = cli_main._format_venv_python_holders_message(matches)
     assert "101" in msg
     assert "desktop app" in msg.lower()
     assert "gateway" in msg
-    assert "hermes update" in msg
+    assert "newroz update" in msg
     assert "--force-venv" in msg
 
 
 @patch.object(cli_main, "_is_windows", return_value=True)
 def test_detect_venv_python_catches_outside_venv_trampoline(_winp, tmp_path):
     """uv/base-interpreter trampoline: exe OUTSIDE the venv, but the cmdline
-    clearly runs Hermes from this install → must still be flagged as a holder
+    clearly runs Newroz from this install → must still be flagged as a holder
     (it imports from the venv and holds its .pyd files)."""
     base_py = "C:\\Python311\\python.exe"
     venv_path = str(tmp_path / "venv" / "Scripts" / "python.exe")
@@ -226,12 +226,12 @@ def test_detect_venv_python_catches_outside_venv_trampoline(_winp, tmp_path):
             [
                 # cmdline references the venv path directly
                 _proc(201, base_py, "python.exe", [base_py, venv_path, "-m", "x"]),
-                # `-m hermes_cli.main serve` with the install root as cwd
+                # `-m newroz_cli.main serve` with the install root as cwd
                 _proc(
                     202,
                     base_py,
                     "python.exe",
-                    [base_py, "-m", "hermes_cli.main", "serve"],
+                    [base_py, "-m", "newroz_cli.main", "serve"],
                     cwd=str(tmp_path),
                 ),
                 # unrelated base-interpreter python → NOT a holder
@@ -249,8 +249,8 @@ def test_detect_venv_python_catches_outside_venv_trampoline(_winp, tmp_path):
 
 
 @patch.object(cli_main, "_is_windows", return_value=True)
-def test_detect_venv_hermes_cli_cmdline_outside_install_not_matched(_winp, tmp_path):
-    """A hermes_cli.main process belonging to a DIFFERENT install (neither
+def test_detect_venv_newroz_cli_cmdline_outside_install_not_matched(_winp, tmp_path):
+    """A newroz_cli.main process belonging to a DIFFERENT install (neither
     install root in cmdline nor cwd under it) must not be flagged."""
     base_py = "C:\\Python311\\python.exe"
     me = MagicMock()
@@ -262,7 +262,7 @@ def test_detect_venv_hermes_cli_cmdline_outside_install_not_matched(_winp, tmp_p
                     301,
                     base_py,
                     "python.exe",
-                    [base_py, "-m", "hermes_cli.main", "serve"],
+                    [base_py, "-m", "newroz_cli.main", "serve"],
                     cwd="C:\\other-install",
                 ),
             ]
@@ -319,7 +319,7 @@ def _run_update_until_guard(args):
     ), patch.object(
         cli_main,
         "_detect_venv_python_processes",
-        return_value=[(101, "python.exe", "python.exe -m hermes_cli.main serve")],
+        return_value=[(101, "python.exe", "python.exe -m newroz_cli.main serve")],
     ), patch.object(
         cli_main, "PROJECT_ROOT", _RootSentinel()
     ):

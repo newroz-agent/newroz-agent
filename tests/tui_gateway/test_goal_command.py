@@ -19,14 +19,14 @@ import pytest
 
 
 @pytest.fixture()
-def hermes_home(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+def newroz_home(tmp_path, monkeypatch):
+    home = tmp_path / ".newroz"
     home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
-    # Bust the goal-module DB cache so it re-resolves HERMES_HOME.
-    from hermes_cli import goals
+    # Bust the goal-module DB cache so it re-resolves NEWROZ_HOME.
+    from newroz_cli import goals
 
     goals._DB_CACHE.clear()
     yield home
@@ -34,12 +34,12 @@ def hermes_home(tmp_path, monkeypatch):
 
 
 @pytest.fixture()
-def server(hermes_home):
+def server(newroz_home):
     with patch.dict(
         "sys.modules",
         {
-            "hermes_cli.env_loader": MagicMock(),
-            "hermes_cli.banner": MagicMock(),
+            "newroz_cli.env_loader": MagicMock(),
+            "newroz_cli.banner": MagicMock(),
         },
     ):
         mod = importlib.import_module("tui_gateway.server")
@@ -114,7 +114,7 @@ def test_goal_set_returns_send_with_notice(server, session):
     assert "20-turn budget" in result["notice"]
 
     # Persisted in SessionDB
-    from hermes_cli.goals import GoalManager
+    from newroz_cli.goals import GoalManager
 
     mgr = GoalManager(session_key)
     assert mgr.state is not None
@@ -129,7 +129,7 @@ def test_goal_pause_after_set(server, session):
     assert r["result"]["type"] == "exec"
     assert "paused" in r["result"]["output"].lower()
 
-    from hermes_cli.goals import GoalManager
+    from newroz_cli.goals import GoalManager
 
     assert GoalManager(session_key).state.status == "paused"
 
@@ -142,7 +142,7 @@ def test_goal_resume_reactivates(server, session):
     assert r["result"]["type"] == "exec"
     assert "resumed" in r["result"]["output"].lower()
 
-    from hermes_cli.goals import GoalManager
+    from newroz_cli.goals import GoalManager
 
     assert GoalManager(session_key).state.status == "active"
 
@@ -154,7 +154,7 @@ def test_goal_clear_removes_active_goal(server, session):
     assert r["result"]["type"] == "exec"
     assert "cleared" in r["result"]["output"].lower()
 
-    from hermes_cli.goals import GoalManager
+    from newroz_cli.goals import GoalManager
 
     # After clear the row is marked status=cleared (kept for audit);
     # ``has_goal()`` / ``is_active()`` return False so the goal loop
@@ -211,8 +211,8 @@ def _write_moa_config(home, text):
     cfg_path.write_text(text)
 
 
-def test_moa_bare_returns_usage(server, session, hermes_home):
-    _write_moa_config(hermes_home, """
+def test_moa_bare_returns_usage(server, session, newroz_home):
+    _write_moa_config(newroz_home, """
 moa:
   default_preset: default
   presets:
@@ -231,10 +231,10 @@ moa:
     assert "model_override" not in s
 
 
-def test_moa_arg_is_always_one_shot(server, session, hermes_home):
+def test_moa_arg_is_always_one_shot(server, session, newroz_home):
     # Any arg (even a preset name) is a one-shot prompt through the DEFAULT
     # preset; /moa never does a sticky switch anymore.
-    _write_moa_config(hermes_home, """
+    _write_moa_config(newroz_home, """
 moa:
   default_preset: default
   presets:
@@ -259,8 +259,8 @@ moa:
     assert s["model_override"]["model"] == "default"
 
 
-def test_moa_non_preset_returns_one_shot_send(server, session, hermes_home):
-    _write_moa_config(hermes_home, """
+def test_moa_non_preset_returns_one_shot_send(server, session, newroz_home):
+    _write_moa_config(newroz_home, """
 moa:
   default_preset: default
   presets:

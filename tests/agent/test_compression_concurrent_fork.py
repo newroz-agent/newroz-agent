@@ -1,6 +1,6 @@
 """Regression: prevent transcript fork when two paths compress the same session_id.
 
-Damien's incident (Discord, 2026-05-28): a long Hermes session in a Discord
+Damien's incident (Discord, 2026-05-28): a long Newroz session in a Discord
 gateway hit the compression threshold at the end of a turn.  The parent agent
 finished delivering the response and ``conversation_loop.py`` fired
 ``_spawn_background_review(...)`` — which builds a forked ``AIAgent`` that
@@ -36,7 +36,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hermes_state import SessionDB
+from newroz_state import SessionDB
 
 
 def _build_agent_with_db(db: SessionDB, session_id: str):
@@ -382,7 +382,7 @@ def test_typeerror_fallback_exception_stops_lock_refresher(tmp_path: Path, monke
 class _NoLockSubsystemDB:
     """Wraps a real SessionDB but simulates a pre-#34351 version skew.
 
-    A long-lived process can hold ``hermes_state.SessionDB`` bound to the
+    A long-lived process can hold ``newroz_state.SessionDB`` bound to the
     OLD class in memory (no compression-lock methods) while a lazily
     re-imported ``conversation_compression.py`` calls the NEW lock code.
     ``try_acquire_compression_lock`` then raises ``AttributeError`` — which

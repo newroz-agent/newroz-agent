@@ -14,7 +14,7 @@ _mcp_discovery_thread: Optional[threading.Thread] = None
 def _has_configured_mcp_servers() -> bool:
     """Cheap config probe so non-MCP users avoid importing the MCP stack."""
     try:
-        from hermes_cli.config import read_raw_config
+        from newroz_cli.config import read_raw_config
 
         mcp_servers = (read_raw_config() or {}).get("mcp_servers")
         return isinstance(mcp_servers, dict) and len(mcp_servers) > 0
@@ -61,7 +61,7 @@ def _resolve_discovery_timeout(explicit: "float | None") -> float:
     if explicit is not None:
         return explicit
     try:
-        from hermes_cli.config import load_config, DEFAULT_CONFIG
+        from newroz_cli.config import load_config, DEFAULT_CONFIG
 
         default = float(DEFAULT_CONFIG.get("mcp_discovery_timeout", 1.5))
         raw = (load_config() or {}).get("mcp_discovery_timeout", default)
@@ -106,7 +106,7 @@ def mcp_discovery_in_flight() -> bool:
     Mirrors ``tui_gateway.entry.mcp_discovery_in_flight`` for the surfaces that
     start discovery through ``start_background_mcp_discovery`` here (the desktop
     app + dashboard WebSocket sidecar via ``tui_gateway/ws.py``, and
-    ``hermes dashboard``).  Those processes populate THIS module's
+    ``newroz dashboard``).  Those processes populate THIS module's
     ``_mcp_discovery_thread``, not ``tui_gateway.entry``'s, so the late-refresh
     scheduler must consult both to decide whether a slow server's tools are
     still pending (see #51587).

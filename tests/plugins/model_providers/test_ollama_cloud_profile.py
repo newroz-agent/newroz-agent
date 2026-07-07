@@ -3,7 +3,7 @@
 Ollama Cloud's ``/v1/chat/completions`` endpoint supports top-level
 ``reasoning_effort`` with values ``none``, ``low``, ``medium``, ``high``,
 and (undocumented but empirically confirmed) ``max``.  The profile maps
-Hermes's ``xhigh`` → ``max`` to unlock DeepSeek V4's "Max thinking" tier
+Newroz's ``xhigh`` → ``max`` to unlock DeepSeek V4's "Max thinking" tier
 and passes the standard levels through unchanged.
 
 These tests pin the profile's wire-shape contract so Ollama Cloud

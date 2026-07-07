@@ -187,7 +187,7 @@ class TestFinalizeSessionPersist:
 class TestOnSessionEndHook:
     """Verify on_session_end plugin hook fires on finalize."""
 
-    @patch("hermes_cli.plugins.invoke_hook")
+    @patch("newroz_cli.plugins.invoke_hook")
     def test_hook_fired_with_interrupted_true(self, mock_invoke_hook):
         """on_session_end is called with interrupted=True when finalizing."""
         from tui_gateway.server import _finalize_session
@@ -208,7 +208,7 @@ class TestOnSessionEndHook:
             platform="tui",
         )
 
-    @patch("hermes_cli.plugins.invoke_hook")
+    @patch("newroz_cli.plugins.invoke_hook")
     def test_hook_exception_does_not_block(self, mock_invoke_hook):
         """Hook failure doesn't prevent session finalization."""
         from tui_gateway.server import _finalize_session

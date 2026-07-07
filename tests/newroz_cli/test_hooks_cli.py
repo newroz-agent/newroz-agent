@@ -1,4 +1,4 @@
-"""Tests for the ``hermes hooks`` CLI subcommand."""
+"""Tests for the ``newroz hooks`` CLI subcommand."""
 
 from __future__ import annotations
 
@@ -12,13 +12,13 @@ from unittest.mock import patch
 import pytest
 
 from agent import shell_hooks
-from hermes_cli import hooks as hooks_cli
+from newroz_cli import hooks as hooks_cli
 
 
 @pytest.fixture(autouse=True)
 def _isolated_home(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "home"))
-    monkeypatch.delenv("HERMES_ACCEPT_HOOKS", raising=False)
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("NEWROZ_ACCEPT_HOOKS", raising=False)
     shell_hooks.reset_for_tests()
     yield
     shell_hooks.reset_for_tests()
@@ -44,7 +44,7 @@ def _run(sub_args: SimpleNamespace) -> str:
 
 class TestHooksList:
     def test_empty_config(self, tmp_path):
-        with patch("hermes_cli.config.load_config", return_value={}):
+        with patch("newroz_cli.config.load_config", return_value={}):
             out = _run(SimpleNamespace(hooks_action="list"))
         assert "No shell hooks configured" in out
 
@@ -66,7 +66,7 @@ class TestHooksList:
         # Approve one of the two so we can see both states in the output
         shell_hooks._record_approval("pre_tool_call", str(script))
 
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(hooks_action="list"))
 
         assert "[pre_tool_call]" in out
@@ -81,10 +81,10 @@ class TestHooksList:
 
 class TestHooksTest:
     def test_synthetic_payload_matches_production_shape(self, tmp_path):
-        """`hermes hooks test` must feed the script stdin in the same
+        """`newroz hooks test` must feed the script stdin in the same
         shape invoke_hook() would at runtime.  Prior to this fix,
         run_once bypassed _serialize_payload and the two paths diverged —
-        scripts tested with `hermes hooks test` saw different top-level
+        scripts tested with `newroz hooks test` saw different top-level
         keys than at runtime, silently breaking in production."""
         capture = tmp_path / "captured.json"
         script = _hook_script(
@@ -92,7 +92,7 @@ class TestHooksTest:
             f"#!/usr/bin/env bash\ncat - > {capture}\nprintf '{{}}\\n'\n",
         )
         cfg = {"hooks": {"subagent_stop": [{"command": str(script)}]}}
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             _run(SimpleNamespace(
                 hooks_action="test", event="subagent_stop",
                 for_tool=None, payload_file=None,
@@ -125,7 +125,7 @@ class TestHooksTest:
                 ],
             },
         }
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(
                 hooks_action="test", event="pre_tool_call",
                 for_tool="terminal", payload_file=None,
@@ -144,7 +144,7 @@ class TestHooksTest:
                 ],
             }
         }
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(
                 hooks_action="test", event="pre_tool_call",
                 for_tool="web_search", payload_file=None,
@@ -152,7 +152,7 @@ class TestHooksTest:
         assert "No shell hooks" in out
 
     def test_unknown_event(self):
-        with patch("hermes_cli.config.load_config", return_value={}):
+        with patch("newroz_cli.config.load_config", return_value={}):
             out = _run(SimpleNamespace(
                 hooks_action="test", event="bogus_event",
                 for_tool=None, payload_file=None,
@@ -190,14 +190,14 @@ class TestHooksDoctor:
         script.write_text("#!/usr/bin/env bash\nprintf '{}\\n'\n")
         # No chmod — intentionally not executable
         cfg = {"hooks": {"on_session_start": [{"command": str(script)}]}}
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(hooks_action="doctor"))
         assert "not executable" in out.lower()
 
     def test_flags_unallowlisted(self, tmp_path):
         script = _hook_script(tmp_path, "#!/usr/bin/env bash\nprintf '{}\\n'\n")
         cfg = {"hooks": {"on_session_start": [{"command": str(script)}]}}
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(hooks_action="doctor"))
         assert "not allowlisted" in out.lower()
 
@@ -208,7 +208,7 @@ class TestHooksDoctor:
         )
         shell_hooks._record_approval("on_session_start", str(script))
         cfg = {"hooks": {"on_session_start": [{"command": str(script)}]}}
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(hooks_action="doctor"))
         assert "not valid JSON" in out
 
@@ -231,7 +231,7 @@ class TestHooksDoctor:
         }))
 
         cfg = {"hooks": {"on_session_start": [{"command": str(script)}]}}
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(hooks_action="doctor"))
         assert "modified since approval" in out
 
@@ -239,12 +239,12 @@ class TestHooksDoctor:
         script = _hook_script(tmp_path, "#!/usr/bin/env bash\nprintf '{}\\n'\n")
         shell_hooks._record_approval("on_session_start", str(script))
         cfg = {"hooks": {"on_session_start": [{"command": str(script)}]}}
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(hooks_action="doctor"))
         assert "All shell hooks look healthy" in out
 
     def test_unallowlisted_script_is_not_executed(self, tmp_path):
-        """Regression for M4: `hermes hooks doctor` used to run every
+        """Regression for M4: `newroz hooks doctor` used to run every
         listed script against a synthetic payload as part of its JSON
         smoke test, which contradicted the documented workflow of
         "spot newly-added hooks *before they register*".  An un-allowlisted
@@ -256,7 +256,7 @@ class TestHooksDoctor:
             f"#!/usr/bin/env bash\ntouch {sentinel}\nprintf '{{}}\\n'\n",
         )
         cfg = {"hooks": {"on_session_start": [{"command": str(script)}]}}
-        with patch("hermes_cli.config.load_config", return_value=cfg):
+        with patch("newroz_cli.config.load_config", return_value=cfg):
             out = _run(SimpleNamespace(hooks_action="doctor"))
 
         assert not sentinel.exists(), (

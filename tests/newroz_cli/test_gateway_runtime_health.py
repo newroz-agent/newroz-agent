@@ -1,4 +1,4 @@
-from hermes_cli.gateway import _runtime_health_lines
+from newroz_cli.gateway import _runtime_health_lines
 
 
 def test_runtime_health_lines_include_fatal_platform_and_startup_reason(monkeypatch):
@@ -27,8 +27,8 @@ def test_runtime_status_running_pid_validates_live_gateway_record(monkeypatch):
 
     runtime = {
         "pid": 12345,
-        "kind": "hermes-gateway",
-        "argv": ["/opt/hermes/hermes_cli/main.py", "gateway", "run", "--replace"],
+        "kind": "newroz-gateway",
+        "argv": ["/opt/newroz/newroz_cli/main.py", "gateway", "run", "--replace"],
         "start_time": None,
         "gateway_state": "running",
     }
@@ -44,8 +44,8 @@ def test_runtime_status_running_pid_rejects_stopped_record(monkeypatch):
 
     runtime = {
         "pid": 12345,
-        "kind": "hermes-gateway",
-        "argv": ["/opt/hermes/hermes_cli/main.py", "gateway", "run", "--replace"],
+        "kind": "newroz-gateway",
+        "argv": ["/opt/newroz/newroz_cli/main.py", "gateway", "run", "--replace"],
         "gateway_state": "stopped",
     }
     monkeypatch.setattr(status_mod, "_pid_exists", lambda pid: True)

@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from hermes_cli.memory_setup import _CANCELLED
+from newroz_cli.memory_setup import _CANCELLED
 from plugins.memory.hindsight import (
     HindsightMemoryProvider,
     RECALL_SCHEMA,
@@ -98,11 +98,11 @@ def _provider_for_mode(tmp_path, monkeypatch, mode: str):
     config_path.write_text(json.dumps(config))
 
     monkeypatch.setattr(
-        "plugins.memory.hindsight.get_hermes_home", lambda: tmp_path
+        "plugins.memory.hindsight.get_newroz_home", lambda: tmp_path
     )
 
     provider = HindsightMemoryProvider()
-    provider.initialize(session_id="test-session", hermes_home=str(tmp_path), platform="cli")
+    provider.initialize(session_id="test-session", newroz_home=str(tmp_path), platform="cli")
     return provider
 
 
@@ -167,11 +167,11 @@ def provider(tmp_path, monkeypatch):
     config_path.write_text(json.dumps(config))
 
     monkeypatch.setattr(
-        "plugins.memory.hindsight.get_hermes_home", lambda: tmp_path
+        "plugins.memory.hindsight.get_newroz_home", lambda: tmp_path
     )
 
     p = HindsightMemoryProvider()
-    p.initialize(session_id="test-session", hermes_home=str(tmp_path), platform="cli")
+    p.initialize(session_id="test-session", newroz_home=str(tmp_path), platform="cli")
     p._client = _make_mock_client()
     return p
 
@@ -194,26 +194,26 @@ def provider_with_config(tmp_path, monkeypatch):
         config_path.write_text(json.dumps(config))
 
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home", lambda: tmp_path
+            "plugins.memory.hindsight.get_newroz_home", lambda: tmp_path
         )
 
         p = HindsightMemoryProvider()
-        p.initialize(session_id="test-session", hermes_home=str(tmp_path), platform="cli")
+        p.initialize(session_id="test-session", newroz_home=str(tmp_path), platform="cli")
         p._client = _make_mock_client()
         return p
     return _make
 
 
 def test_normalize_retain_tags_accepts_csv_and_dedupes():
-    assert _normalize_retain_tags("agent:fakeassistantname, source_system:hermes-agent, agent:fakeassistantname") == [
+    assert _normalize_retain_tags("agent:fakeassistantname, source_system:newroz-agent, agent:fakeassistantname") == [
         "agent:fakeassistantname",
-        "source_system:hermes-agent",
+        "source_system:newroz-agent",
     ]
 
 
 def test_normalize_retain_tags_accepts_json_array_string():
-    value = json.dumps(["agent:fakeassistantname", "source_system:hermes-agent"])
-    assert _normalize_retain_tags(value) == ["agent:fakeassistantname", "source_system:hermes-agent"]
+    value = json.dumps(["agent:fakeassistantname", "source_system:newroz-agent"])
+    assert _normalize_retain_tags(value) == ["agent:fakeassistantname", "source_system:newroz-agent"]
 
 
 def test_normalize_observation_scopes_empty_is_none():
@@ -315,7 +315,7 @@ class TestConfig:
         assert provider._recall_types == ["observation"]
         assert provider._bank_mission == ""
         assert provider._bank_retain_mission is None
-        assert provider._retain_context == "conversation between Hermes Agent and the User"
+        assert provider._retain_context == "conversation between Newroz Agent and the User"
 
     def test_recall_types_default_is_observation_only(self, provider):
         """Auto-recall must filter to observation by default."""
@@ -348,7 +348,7 @@ class TestConfig:
     def test_custom_config_values(self, provider_with_config):
         p = provider_with_config(
             retain_tags=["tag1", "tag2"],
-            retain_source="hermes",
+            retain_source="newroz",
             retain_user_prefix="User (fakeusername)",
             retain_assistant_prefix="Assistant (fakeassistantname)",
             recall_tags=["recall-tag"],
@@ -366,7 +366,7 @@ class TestConfig:
         )
         assert p._tags == ["tag1", "tag2"]
         assert p._retain_tags == ["tag1", "tag2"]
-        assert p._retain_source == "hermes"
+        assert p._retain_source == "newroz"
         assert p._retain_user_prefix == "User (fakeusername)"
         assert p._retain_assistant_prefix == "Assistant (fakeassistantname)"
         assert p._recall_tags == ["recall-tag"]
@@ -385,7 +385,7 @@ class TestConfig:
     def test_config_from_env_fallback(self, tmp_path, monkeypatch):
         """When no config file exists, falls back to env vars."""
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home",
+            "plugins.memory.hindsight.get_newroz_home",
             lambda: tmp_path / "nonexistent",
         )
         monkeypatch.setenv("HINDSIGHT_MODE", "cloud")
@@ -395,8 +395,8 @@ class TestConfig:
 
         cfg = _load_config()
         assert cfg["apiKey"] == "env-key"
-        assert cfg["banks"]["hermes"]["bankId"] == "env-bank"
-        assert cfg["banks"]["hermes"]["budget"] == "high"
+        assert cfg["banks"]["newroz"]["bankId"] == "env-bank"
+        assert cfg["banks"]["newroz"]["budget"] == "high"
 
     def test_embedded_profile_env_includes_idle_timeout_from_config(self):
         env = _build_embedded_profile_env({
@@ -430,7 +430,7 @@ class TestConfig:
         p = HindsightMemoryProvider()
         p._mode = "local_embedded"
         p._config = {
-            "profile": "hermes",
+            "profile": "newroz",
             "llm_provider": "openai_compatible",
             "llm_api_key": "test-key",
             "llm_model": "test-model",
@@ -446,85 +446,85 @@ class TestConfig:
 
 class TestPostSetup:
     def test_setup_cancel_at_mode_picker_writes_nothing(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "hermes-home"
+        newroz_home = tmp_path / "newroz-home"
         user_home = tmp_path / "user-home"
         user_home.mkdir()
         monkeypatch.setenv("HOME", str(user_home))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: hermes_home)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: newroz_home)
 
         save_config = MagicMock()
         which = MagicMock(return_value="/usr/bin/uv")
         run = MagicMock()
-        monkeypatch.setattr("hermes_cli.memory_setup._curses_select", lambda *args, **kwargs: _CANCELLED)
+        monkeypatch.setattr("newroz_cli.memory_setup._curses_select", lambda *args, **kwargs: _CANCELLED)
         monkeypatch.setattr("shutil.which", which)
         monkeypatch.setattr("subprocess.run", run)
         monkeypatch.setattr("builtins.input", MagicMock(side_effect=AssertionError("prompt should not run")))
         monkeypatch.setattr("getpass.getpass", MagicMock(side_effect=AssertionError("prompt should not run")))
-        monkeypatch.setattr("hermes_cli.config.save_config", save_config)
+        monkeypatch.setattr("newroz_cli.config.save_config", save_config)
 
         provider = HindsightMemoryProvider()
-        provider.post_setup(str(hermes_home), {"memory": {"provider": "builtin"}})
+        provider.post_setup(str(newroz_home), {"memory": {"provider": "builtin"}})
 
         save_config.assert_not_called()
         which.assert_not_called()
         run.assert_not_called()
-        assert not (hermes_home / ".env").exists()
-        assert not (hermes_home / "hindsight" / "config.json").exists()
-        assert not (user_home / ".hindsight" / "profiles" / "hermes.env").exists()
+        assert not (newroz_home / ".env").exists()
+        assert not (newroz_home / "hindsight" / "config.json").exists()
+        assert not (user_home / ".hindsight" / "profiles" / "newroz.env").exists()
 
     def test_local_embedded_setup_cancel_at_llm_picker_writes_nothing(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "hermes-home"
+        newroz_home = tmp_path / "newroz-home"
         user_home = tmp_path / "user-home"
         user_home.mkdir()
         monkeypatch.setenv("HOME", str(user_home))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: hermes_home)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: newroz_home)
 
         selections = iter([1, _CANCELLED])  # local_embedded, then cancel LLM picker
         save_config = MagicMock()
         which = MagicMock(return_value="/usr/bin/uv")
         run = MagicMock()
-        monkeypatch.setattr("hermes_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
+        monkeypatch.setattr("newroz_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
         monkeypatch.setattr("shutil.which", which)
         monkeypatch.setattr("subprocess.run", run)
         monkeypatch.setattr("builtins.input", MagicMock(side_effect=AssertionError("prompt should not run")))
         monkeypatch.setattr("getpass.getpass", MagicMock(side_effect=AssertionError("prompt should not run")))
-        monkeypatch.setattr("hermes_cli.config.save_config", save_config)
+        monkeypatch.setattr("newroz_cli.config.save_config", save_config)
 
         provider = HindsightMemoryProvider()
-        provider.post_setup(str(hermes_home), {"memory": {"provider": "builtin"}})
+        provider.post_setup(str(newroz_home), {"memory": {"provider": "builtin"}})
 
         save_config.assert_not_called()
         which.assert_not_called()
         run.assert_not_called()
-        assert not (hermes_home / ".env").exists()
-        assert not (hermes_home / "hindsight" / "config.json").exists()
-        assert not (user_home / ".hindsight" / "profiles" / "hermes.env").exists()
+        assert not (newroz_home / ".env").exists()
+        assert not (newroz_home / "hindsight" / "config.json").exists()
+        assert not (user_home / ".hindsight" / "profiles" / "newroz.env").exists()
 
     def test_local_embedded_setup_materializes_profile_env(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "hermes-home"
+        newroz_home = tmp_path / "newroz-home"
         user_home = tmp_path / "user-home"
         user_home.mkdir()
         monkeypatch.setenv("HOME", str(user_home))
 
         selections = iter([1, 0])  # local_embedded, openai
-        monkeypatch.setattr("hermes_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
+        monkeypatch.setattr("newroz_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
         monkeypatch.setattr("shutil.which", lambda name: None)
         monkeypatch.setattr("builtins.input", lambda prompt="": "")
         monkeypatch.setattr("sys.stdin.isatty", lambda: True)
         monkeypatch.setattr("getpass.getpass", lambda prompt="": "sk-local-test")
         saved_configs = []
-        monkeypatch.setattr("hermes_cli.config.save_config", lambda cfg: saved_configs.append(cfg.copy()))
+        monkeypatch.setattr("newroz_cli.config.save_config", lambda cfg: saved_configs.append(cfg.copy()))
 
         provider = HindsightMemoryProvider()
-        provider.post_setup(str(hermes_home), {"memory": {}})
+        provider.post_setup(str(newroz_home), {"memory": {}})
 
         assert saved_configs[-1]["memory"]["provider"] == "hindsight"
-        env_text = (hermes_home / ".env").read_text()
+        env_text = (newroz_home / ".env").read_text()
         assert "HINDSIGHT_LLM_API_KEY=sk-local-test\n" in env_text
         assert "HINDSIGHT_TIMEOUT=120\n" in env_text
         assert "HINDSIGHT_IDLE_TIMEOUT=300\n" in env_text
 
-        profile_env = user_home / ".hindsight" / "profiles" / "hermes.env"
+        profile_env = user_home / ".hindsight" / "profiles" / "newroz.env"
         assert profile_env.exists()
         assert profile_env.read_text() == (
             "HINDSIGHT_API_LLM_PROVIDER=openai\n"
@@ -535,61 +535,61 @@ class TestPostSetup:
         )
 
     def test_local_embedded_setup_respects_existing_profile_name(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "hermes-home"
+        newroz_home = tmp_path / "newroz-home"
         user_home = tmp_path / "user-home"
         user_home.mkdir()
         monkeypatch.setenv("HOME", str(user_home))
 
         selections = iter([1, 0])  # local_embedded, openai
-        monkeypatch.setattr("hermes_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
+        monkeypatch.setattr("newroz_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
         monkeypatch.setattr("shutil.which", lambda name: None)
         monkeypatch.setattr("builtins.input", lambda prompt="": "")
         monkeypatch.setattr("sys.stdin.isatty", lambda: True)
         monkeypatch.setattr("getpass.getpass", lambda prompt="": "sk-local-test")
-        monkeypatch.setattr("hermes_cli.config.save_config", lambda cfg: None)
+        monkeypatch.setattr("newroz_cli.config.save_config", lambda cfg: None)
 
         provider = HindsightMemoryProvider()
-        provider.save_config({"profile": "coder"}, str(hermes_home))
-        provider.post_setup(str(hermes_home), {"memory": {}})
+        provider.save_config({"profile": "coder"}, str(newroz_home))
+        provider.post_setup(str(newroz_home), {"memory": {}})
 
         coder_env = user_home / ".hindsight" / "profiles" / "coder.env"
-        hermes_env = user_home / ".hindsight" / "profiles" / "hermes.env"
+        newroz_env = user_home / ".hindsight" / "profiles" / "newroz.env"
         assert coder_env.exists()
-        assert not hermes_env.exists()
+        assert not newroz_env.exists()
 
     def test_local_embedded_setup_preserves_existing_key_when_input_left_blank(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "hermes-home"
+        newroz_home = tmp_path / "newroz-home"
         user_home = tmp_path / "user-home"
         user_home.mkdir()
         monkeypatch.setenv("HOME", str(user_home))
 
         selections = iter([1, 0])  # local_embedded, openai
-        monkeypatch.setattr("hermes_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
+        monkeypatch.setattr("newroz_cli.memory_setup._curses_select", lambda *args, **kwargs: next(selections))
         monkeypatch.setattr("shutil.which", lambda name: None)
         monkeypatch.setattr("builtins.input", lambda prompt="": "")
         monkeypatch.setattr("sys.stdin.isatty", lambda: True)
         monkeypatch.setattr("getpass.getpass", lambda prompt="": "")
-        monkeypatch.setattr("hermes_cli.config.save_config", lambda cfg: None)
+        monkeypatch.setattr("newroz_cli.config.save_config", lambda cfg: None)
 
-        env_path = hermes_home / ".env"
+        env_path = newroz_home / ".env"
         env_path.parent.mkdir(parents=True, exist_ok=True)
         env_path.write_text("HINDSIGHT_LLM_API_KEY=existing-key\n")
 
         provider = HindsightMemoryProvider()
-        provider.post_setup(str(hermes_home), {"memory": {}})
+        provider.post_setup(str(newroz_home), {"memory": {}})
 
-        profile_env = user_home / ".hindsight" / "profiles" / "hermes.env"
+        profile_env = user_home / ".hindsight" / "profiles" / "newroz.env"
         assert profile_env.exists()
         assert "HINDSIGHT_API_LLM_API_KEY=existing-key\n" in profile_env.read_text()
 
 
     def test_local_embedded_setup_blank_inputs_preserve_existing_config(self, tmp_path, monkeypatch):
         """Pressing Enter through setup should keep existing Hindsight values."""
-        hermes_home = tmp_path / "hermes-home"
+        newroz_home = tmp_path / "newroz-home"
         user_home = tmp_path / "user-home"
         user_home.mkdir()
         monkeypatch.setenv("HOME", str(user_home))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: hermes_home)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: newroz_home)
 
         existing_config = {
             "mode": "local_embedded",
@@ -597,7 +597,7 @@ class TestPostSetup:
             "llm_base_url": "http://192.168.1.161:8060/v1",
             "llm_api_key": "9913",
             "llm_model": "gemma-4-26B-A4B-it-heretic-oQ4",
-            "bank_id": "hermes",
+            "bank_id": "newroz",
             "recall_budget": "mid",
             "idle_timeout": 0,
             "HINDSIGHT_EMBED_DAEMON_IDLE_TIMEOUT": "0",
@@ -605,21 +605,21 @@ class TestPostSetup:
             "timeout": 120,
         }
         provider = HindsightMemoryProvider()
-        provider.save_config(existing_config, str(hermes_home))
+        provider.save_config(existing_config, str(newroz_home))
 
         # Simulate pressing Enter at the mode and LLM-provider pickers, which
         # should select their current values, and pressing Enter at text prompts.
-        monkeypatch.setattr("hermes_cli.memory_setup._curses_select", lambda *args, **kwargs: kwargs.get("default", 0))
+        monkeypatch.setattr("newroz_cli.memory_setup._curses_select", lambda *args, **kwargs: kwargs.get("default", 0))
         monkeypatch.setattr("shutil.which", lambda name: None)
         monkeypatch.setattr("builtins.input", lambda prompt="": "")
         monkeypatch.setattr("sys.stdin.isatty", lambda: True)
         monkeypatch.setattr("getpass.getpass", lambda prompt="": "")
-        monkeypatch.setattr("hermes_cli.config.save_config", lambda cfg: None)
+        monkeypatch.setattr("newroz_cli.config.save_config", lambda cfg: None)
 
         provider = HindsightMemoryProvider()
-        provider.post_setup(str(hermes_home), {"memory": {}})
+        provider.post_setup(str(newroz_home), {"memory": {}})
 
-        saved = json.loads((hermes_home / "hindsight" / "config.json").read_text())
+        saved = json.loads((newroz_home / "hindsight" / "config.json").read_text())
         assert saved["mode"] == "local_embedded"
         assert saved["llm_provider"] == "openai_compatible"
         assert saved["llm_base_url"] == "http://192.168.1.161:8060/v1"
@@ -865,7 +865,7 @@ class TestSyncTurn:
     def test_sync_turn_retains_metadata_rich_turn(self, provider_with_config):
         p = provider_with_config(
             retain_tags=["conv", "session1"],
-            retain_source="hermes",
+            retain_source="newroz",
             retain_user_prefix="User (fakeusername)",
             retain_assistant_prefix="Assistant (fakeassistantname)",
         )
@@ -892,7 +892,7 @@ class TestSyncTurn:
         assert call_kwargs["retain_async"] is True
         assert len(call_kwargs["items"]) == 1
         item = call_kwargs["items"][0]
-        assert item["context"] == "conversation between Hermes Agent and the User"
+        assert item["context"] == "conversation between Newroz Agent and the User"
         assert item["tags"] == ["conv", "session1", "session:session-1"]
         content = json.loads(item["content"])
         assert len(content) == 1
@@ -900,7 +900,7 @@ class TestSyncTurn:
         assert content[0][0]["content"] == "User (fakeusername): hello"
         assert content[0][1]["role"] == "assistant"
         assert content[0][1]["content"] == "Assistant (fakeassistantname): hi there"
-        assert item["metadata"]["source"] == "hermes"
+        assert item["metadata"]["source"] == "newroz"
         assert item["metadata"]["session_id"] == "session-1"
         assert item["metadata"]["platform"] == "discord"
         assert item["metadata"]["user_id"] == "fakeusername-123"
@@ -939,7 +939,7 @@ class TestSyncTurn:
         assert call_kwargs["document_id"].startswith("test-session-")
         assert call_kwargs["retain_async"] is True
         assert len(call_kwargs["items"]) == 1
-        assert call_kwargs["items"][0]["context"] == "conversation between Hermes Agent and the User"
+        assert call_kwargs["items"][0]["context"] == "conversation between Newroz Agent and the User"
 
     def test_sync_turn_custom_context(self, provider_with_config):
         p = provider_with_config(retain_context="my-agent")
@@ -1054,17 +1054,17 @@ class TestSyncTurn:
         config_path = tmp_path / "hindsight" / "config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(config))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: tmp_path)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: tmp_path)
 
         p1 = HindsightMemoryProvider()
-        p1.initialize(session_id="resumed-session", hermes_home=str(tmp_path), platform="cli")
+        p1.initialize(session_id="resumed-session", newroz_home=str(tmp_path), platform="cli")
 
         # Sleep just enough that the microsecond timestamp differs
         import time
         time.sleep(0.001)
 
         p2 = HindsightMemoryProvider()
-        p2.initialize(session_id="resumed-session", hermes_home=str(tmp_path), platform="cli")
+        p2.initialize(session_id="resumed-session", newroz_home=str(tmp_path), platform="cli")
 
         # Same session, but each process gets its own document_id
         assert p1._document_id != p2._document_id
@@ -1084,12 +1084,12 @@ class TestSyncTurn:
         config_path = tmp_path / "hindsight" / "config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(config))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: tmp_path)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: tmp_path)
 
         p = HindsightMemoryProvider()
         p.initialize(
             session_id="child-session",
-            hermes_home=str(tmp_path),
+            newroz_home=str(tmp_path),
             platform="cli",
             parent_session_id="parent-session",
         )
@@ -1492,7 +1492,7 @@ class TestConfigSchema:
 
 class TestBankIdTemplate:
     def test_sanitize_bank_segment_passthrough(self):
-        assert _sanitize_bank_segment("hermes") == "hermes"
+        assert _sanitize_bank_segment("newroz") == "newroz"
         assert _sanitize_bank_segment("my-agent_1") == "my-agent_1"
 
     def test_sanitize_bank_segment_strips_unsafe(self):
@@ -1506,33 +1506,33 @@ class TestBankIdTemplate:
 
     def test_resolve_empty_template_uses_fallback(self):
         result = _resolve_bank_id_template(
-            "", fallback="hermes", profile="coder"
+            "", fallback="newroz", profile="coder"
         )
-        assert result == "hermes"
+        assert result == "newroz"
 
     def test_resolve_with_profile(self):
         result = _resolve_bank_id_template(
-            "hermes-{profile}", fallback="hermes",
+            "newroz-{profile}", fallback="newroz",
             profile="coder", workspace="", platform="", user="", session="",
         )
-        assert result == "hermes-coder"
+        assert result == "newroz-coder"
 
     def test_resolve_with_multiple_placeholders(self):
         result = _resolve_bank_id_template(
             "{workspace}-{profile}-{platform}",
-            fallback="hermes",
+            fallback="newroz",
             profile="coder", workspace="myorg", platform="cli",
             user="", session="",
         )
         assert result == "myorg-coder-cli"
 
     def test_resolve_collapses_empty_placeholders(self):
-        # When user is empty, "hermes-{user}" becomes "hermes-" -> trimmed to "hermes"
+        # When user is empty, "newroz-{user}" becomes "newroz-" -> trimmed to "newroz"
         result = _resolve_bank_id_template(
-            "hermes-{user}", fallback="default",
+            "newroz-{user}", fallback="default",
             profile="", workspace="", platform="", user="", session="",
         )
-        assert result == "hermes"
+        assert result == "newroz"
 
     def test_resolve_collapses_double_dashes(self):
         # Two empty placeholders with a dash between them should collapse
@@ -1551,7 +1551,7 @@ class TestBankIdTemplate:
 
     def test_resolve_sanitizes_placeholder_values(self):
         result = _resolve_bank_id_template(
-            "user-{user}", fallback="hermes",
+            "user-{user}", fallback="newroz",
             profile="", workspace="", platform="",
             user="josh@example.com", session="",
         )
@@ -1560,10 +1560,10 @@ class TestBankIdTemplate:
     def test_resolve_invalid_template_returns_fallback(self):
         # Unknown placeholder should fall back without raising
         result = _resolve_bank_id_template(
-            "hermes-{unknown}", fallback="hermes",
+            "newroz-{unknown}", fallback="newroz",
             profile="", workspace="", platform="", user="", session="",
         )
-        assert result == "hermes"
+        assert result == "newroz"
 
     def test_provider_uses_bank_id_template_from_config(self, tmp_path, monkeypatch):
         config = {
@@ -1571,23 +1571,23 @@ class TestBankIdTemplate:
             "apiKey": "k",
             "api_url": "http://x",
             "bank_id": "fallback-bank",
-            "bank_id_template": "hermes-{profile}",
+            "bank_id_template": "newroz-{profile}",
         }
         config_path = tmp_path / "hindsight" / "config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(config))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: tmp_path)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: tmp_path)
 
         p = HindsightMemoryProvider()
         p.initialize(
             session_id="s1",
-            hermes_home=str(tmp_path),
+            newroz_home=str(tmp_path),
             platform="cli",
             agent_identity="coder",
-            agent_workspace="hermes",
+            agent_workspace="newroz",
         )
-        assert p._bank_id == "hermes-coder"
-        assert p._bank_id_template == "hermes-{profile}"
+        assert p._bank_id == "newroz-coder"
+        assert p._bank_id_template == "newroz-{profile}"
 
     def test_provider_without_template_uses_static_bank_id(self, tmp_path, monkeypatch):
         config = {
@@ -1599,12 +1599,12 @@ class TestBankIdTemplate:
         config_path = tmp_path / "hindsight" / "config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(config))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: tmp_path)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: tmp_path)
 
         p = HindsightMemoryProvider()
         p.initialize(
             session_id="s1",
-            hermes_home=str(tmp_path),
+            newroz_home=str(tmp_path),
             platform="cli",
             agent_identity="coder",
         )
@@ -1615,18 +1615,18 @@ class TestBankIdTemplate:
             "mode": "cloud",
             "apiKey": "k",
             "api_url": "http://x",
-            "bank_id": "hermes-fallback",
-            "bank_id_template": "hermes-{profile}",
+            "bank_id": "newroz-fallback",
+            "bank_id_template": "newroz-{profile}",
         }
         config_path = tmp_path / "hindsight" / "config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(config))
-        monkeypatch.setattr("plugins.memory.hindsight.get_hermes_home", lambda: tmp_path)
+        monkeypatch.setattr("plugins.memory.hindsight.get_newroz_home", lambda: tmp_path)
 
         p = HindsightMemoryProvider()
-        # No agent_identity passed — template renders to "hermes-" which collapses to "hermes"
-        p.initialize(session_id="s1", hermes_home=str(tmp_path), platform="cli")
-        assert p._bank_id == "hermes"
+        # No agent_identity passed — template renders to "newroz-" which collapses to "newroz"
+        p.initialize(session_id="s1", newroz_home=str(tmp_path), platform="cli")
+        assert p._bank_id == "newroz"
 
 
 # ---------------------------------------------------------------------------
@@ -1637,7 +1637,7 @@ class TestBankIdTemplate:
 class TestAvailability:
     def test_available_with_api_key(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home",
+            "plugins.memory.hindsight.get_newroz_home",
             lambda: tmp_path / "nonexistent",
         )
         monkeypatch.setenv("HINDSIGHT_API_KEY", "test-key")
@@ -1646,7 +1646,7 @@ class TestAvailability:
 
     def test_not_available_without_config(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home",
+            "plugins.memory.hindsight.get_newroz_home",
             lambda: tmp_path / "nonexistent",
         )
         p = HindsightMemoryProvider()
@@ -1654,7 +1654,7 @@ class TestAvailability:
 
     def test_available_in_local_mode(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home",
+            "plugins.memory.hindsight.get_newroz_home",
             lambda: tmp_path / "nonexistent",
         )
         monkeypatch.setenv("HINDSIGHT_MODE", "local")
@@ -1673,7 +1673,7 @@ class TestAvailability:
             "api_key": "***",
         }))
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home",
+            "plugins.memory.hindsight.get_newroz_home",
             lambda: tmp_path,
         )
 
@@ -1683,7 +1683,7 @@ class TestAvailability:
 
     def test_local_mode_unavailable_when_runtime_import_fails(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home",
+            "plugins.memory.hindsight.get_newroz_home",
             lambda: tmp_path / "nonexistent",
         )
         monkeypatch.setenv("HINDSIGHT_MODE", "local")
@@ -1706,7 +1706,7 @@ class TestAvailability:
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(config))
         monkeypatch.setattr(
-            "plugins.memory.hindsight.get_hermes_home", lambda: tmp_path
+            "plugins.memory.hindsight.get_newroz_home", lambda: tmp_path
         )
 
         def _raise(_name):
@@ -1718,7 +1718,7 @@ class TestAvailability:
         )
 
         p = HindsightMemoryProvider()
-        p.initialize(session_id="test-session", hermes_home=str(tmp_path), platform="cli")
+        p.initialize(session_id="test-session", newroz_home=str(tmp_path), platform="cli")
         assert p._mode == "disabled"
 
 

@@ -14,7 +14,7 @@ Article illustrations: type × style × palette consistency.
 
 | | |
 |---|---|
-| Source | Optional — install with `hermes skills install official/creative/baoyu-article-illustrator` |
+| Source | Optional — install with `newroz skills install official/creative/baoyu-article-illustrator` |
 | Path | `optional-skills/creative/baoyu-article-illustrator` |
 | Version | `1.57.0` |
 | Author | 宝玉 (JimLiu) |
@@ -25,12 +25,12 @@ Article illustrations: type × style × palette consistency.
 ## Reference: full SKILL.md
 
 :::info
-The following is the complete skill definition that Hermes loads when this skill is triggered. This is what the agent sees as instructions when the skill is active.
+The following is the complete skill definition that Newroz loads when this skill is triggered. This is what the agent sees as instructions when the skill is active.
 :::
 
 # Article Illustrator
 
-Adapted from [baoyu-article-illustrator](https://github.com/JimLiu/baoyu-skills) for Hermes Agent's tool ecosystem.
+Adapted from [baoyu-article-illustrator](https://github.com/JimLiu/baoyu-skills) for Newroz Agent's tool ecosystem.
 
 Analyze articles, identify illustration positions, generate images with **Type × Style × Palette** consistency.
 

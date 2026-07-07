@@ -4,7 +4,7 @@ from argparse import Namespace
 from types import ModuleType
 from unittest.mock import MagicMock, patch
 
-from hermes_cli import setup as setup_mod
+from newroz_cli import setup as setup_mod
 
 
 # ---------------------------------------------------------------------------
@@ -17,59 +17,59 @@ class TestOfferOpenclawMigration:
 
     def test_skips_when_no_openclaw_dir(self, tmp_path):
         """Should return False immediately when ~/.openclaw does not exist."""
-        with patch("hermes_cli.setup.Path.home", return_value=tmp_path):
-            assert setup_mod._offer_openclaw_migration(tmp_path / ".hermes") is False
+        with patch("newroz_cli.setup.Path.home", return_value=tmp_path):
+            assert setup_mod._offer_openclaw_migration(tmp_path / ".newroz") is False
 
     def test_skips_when_migration_script_missing(self, tmp_path):
         """Should return False when the migration script file is absent."""
         openclaw_dir = tmp_path / ".openclaw"
         openclaw_dir.mkdir()
         with (
-            patch("hermes_cli.setup.Path.home", return_value=tmp_path),
+            patch("newroz_cli.setup.Path.home", return_value=tmp_path),
             patch.object(setup_mod, "_OPENCLAW_SCRIPT", tmp_path / "nonexistent.py"),
         ):
-            assert setup_mod._offer_openclaw_migration(tmp_path / ".hermes") is False
+            assert setup_mod._offer_openclaw_migration(tmp_path / ".newroz") is False
 
     def test_skips_when_user_declines(self, tmp_path):
         """Should return False when user declines the migration prompt."""
         openclaw_dir = tmp_path / ".openclaw"
         openclaw_dir.mkdir()
-        script = tmp_path / "openclaw_to_hermes.py"
+        script = tmp_path / "openclaw_to_newroz.py"
         script.write_text("# placeholder")
         with (
-            patch("hermes_cli.setup.Path.home", return_value=tmp_path),
+            patch("newroz_cli.setup.Path.home", return_value=tmp_path),
             patch.object(setup_mod, "_OPENCLAW_SCRIPT", script),
             patch.object(setup_mod, "prompt_yes_no", return_value=False),
         ):
-            assert setup_mod._offer_openclaw_migration(tmp_path / ".hermes") is False
+            assert setup_mod._offer_openclaw_migration(tmp_path / ".newroz") is False
 
     def test_runs_migration_when_user_accepts(self, tmp_path):
         """Should run dry-run preview first, then execute after confirmation."""
         openclaw_dir = tmp_path / ".openclaw"
         openclaw_dir.mkdir()
 
-        # Create a fake hermes home with config
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        config_path = hermes_home / "config.yaml"
+        # Create a fake newroz home with config
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        config_path = newroz_home / "config.yaml"
         config_path.write_text("agent:\n  max_turns: 90\n")
 
         # Build a fake migration module
-        fake_mod = ModuleType("openclaw_to_hermes")
+        fake_mod = ModuleType("openclaw_to_newroz")
         fake_mod.resolve_selected_options = MagicMock(return_value={"soul", "memory"})
         fake_migrator = MagicMock()
         fake_migrator.migrate.return_value = {
             "summary": {"migrated": 3, "skipped": 1, "conflict": 0, "error": 0},
             "items": [{"kind": "config", "status": "migrated", "destination": "/tmp/x"}],
-            "output_dir": str(hermes_home / "migration"),
+            "output_dir": str(newroz_home / "migration"),
         }
         fake_mod.Migrator = MagicMock(return_value=fake_migrator)
 
-        script = tmp_path / "openclaw_to_hermes.py"
+        script = tmp_path / "openclaw_to_newroz.py"
         script.write_text("# placeholder")
 
         with (
-            patch("hermes_cli.setup.Path.home", return_value=tmp_path),
+            patch("newroz_cli.setup.Path.home", return_value=tmp_path),
             patch.object(setup_mod, "_OPENCLAW_SCRIPT", script),
             # Both prompts answered Yes: preview offer + proceed confirmation
             patch.object(setup_mod, "prompt_yes_no", return_value=True),
@@ -87,7 +87,7 @@ class TestOfferOpenclawMigration:
 
             mock_spec.loader.exec_module = exec_module
 
-            result = setup_mod._offer_openclaw_migration(hermes_home)
+            result = setup_mod._offer_openclaw_migration(newroz_home)
 
         assert result is True
         fake_mod.resolve_selected_options.assert_called_once_with(
@@ -118,12 +118,12 @@ class TestOfferOpenclawMigration:
         openclaw_dir = tmp_path / ".openclaw"
         openclaw_dir.mkdir()
 
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        config_path = hermes_home / "config.yaml"
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        config_path = newroz_home / "config.yaml"
         config_path.write_text("agent:\n  max_turns: 90\n")
 
-        fake_mod = ModuleType("openclaw_to_hermes")
+        fake_mod = ModuleType("openclaw_to_newroz")
         fake_mod.resolve_selected_options = MagicMock(return_value={"soul", "memory"})
         fake_migrator = MagicMock()
         fake_migrator.migrate.return_value = {
@@ -132,14 +132,14 @@ class TestOfferOpenclawMigration:
         }
         fake_mod.Migrator = MagicMock(return_value=fake_migrator)
 
-        script = tmp_path / "openclaw_to_hermes.py"
+        script = tmp_path / "openclaw_to_newroz.py"
         script.write_text("# placeholder")
 
         # First prompt (preview): Yes, Second prompt (proceed): No
         prompt_responses = iter([True, False])
 
         with (
-            patch("hermes_cli.setup.Path.home", return_value=tmp_path),
+            patch("newroz_cli.setup.Path.home", return_value=tmp_path),
             patch.object(setup_mod, "_OPENCLAW_SCRIPT", script),
             patch.object(setup_mod, "prompt_yes_no", side_effect=prompt_responses),
             patch.object(setup_mod, "get_config_path", return_value=config_path),
@@ -155,7 +155,7 @@ class TestOfferOpenclawMigration:
 
             mock_spec.loader.exec_module = exec_module
 
-            result = setup_mod._offer_openclaw_migration(hermes_home)
+            result = setup_mod._offer_openclaw_migration(newroz_home)
 
         assert result is False
         # Only dry-run Migrator was created, not the execute one
@@ -167,16 +167,16 @@ class TestOfferOpenclawMigration:
         """Should catch exceptions and return False."""
         openclaw_dir = tmp_path / ".openclaw"
         openclaw_dir.mkdir()
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        config_path = hermes_home / "config.yaml"
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        config_path = newroz_home / "config.yaml"
         config_path.write_text("")
 
-        script = tmp_path / "openclaw_to_hermes.py"
+        script = tmp_path / "openclaw_to_newroz.py"
         script.write_text("# placeholder")
 
         with (
-            patch("hermes_cli.setup.Path.home", return_value=tmp_path),
+            patch("newroz_cli.setup.Path.home", return_value=tmp_path),
             patch.object(setup_mod, "_OPENCLAW_SCRIPT", script),
             patch.object(setup_mod, "prompt_yes_no", return_value=True),
             patch.object(setup_mod, "get_config_path", return_value=config_path),
@@ -185,7 +185,7 @@ class TestOfferOpenclawMigration:
                 side_effect=RuntimeError("boom"),
             ),
         ):
-            result = setup_mod._offer_openclaw_migration(hermes_home)
+            result = setup_mod._offer_openclaw_migration(newroz_home)
 
         assert result is False
 
@@ -193,16 +193,16 @@ class TestOfferOpenclawMigration:
         """Should bootstrap config.yaml before running migration."""
         openclaw_dir = tmp_path / ".openclaw"
         openclaw_dir.mkdir()
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        config_path = hermes_home / "config.yaml"
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        config_path = newroz_home / "config.yaml"
         # config does NOT exist yet
 
-        script = tmp_path / "openclaw_to_hermes.py"
+        script = tmp_path / "openclaw_to_newroz.py"
         script.write_text("# placeholder")
 
         with (
-            patch("hermes_cli.setup.Path.home", return_value=tmp_path),
+            patch("newroz_cli.setup.Path.home", return_value=tmp_path),
             patch.object(setup_mod, "_OPENCLAW_SCRIPT", script),
             patch.object(setup_mod, "prompt_yes_no", return_value=True),
             patch.object(setup_mod, "get_config_path", return_value=config_path),
@@ -213,7 +213,7 @@ class TestOfferOpenclawMigration:
                 side_effect=RuntimeError("stop early"),
             ),
         ):
-            setup_mod._offer_openclaw_migration(hermes_home)
+            setup_mod._offer_openclaw_migration(newroz_home)
 
         # save_config should have been called to bootstrap the file
         mock_save.assert_called_once_with({"agent": {}})
@@ -240,12 +240,12 @@ class TestSetupWizardOpenclawIntegration:
         args = _first_time_args()
 
         with (
-            patch.object(setup_mod, "ensure_hermes_home"),
+            patch.object(setup_mod, "ensure_newroz_home"),
             patch.object(setup_mod, "load_config", return_value={}),
-            patch.object(setup_mod, "get_hermes_home", return_value=tmp_path),
+            patch.object(setup_mod, "get_newroz_home", return_value=tmp_path),
             patch.object(setup_mod, "get_env_value", return_value=""),
             patch.object(setup_mod, "is_interactive_stdin", return_value=True),
-            patch("hermes_cli.auth.get_active_provider", return_value=None),
+            patch("newroz_cli.auth.get_active_provider", return_value=None),
             # User presses Enter to start
             patch("builtins.input", return_value=""),
             # Select "Full setup" (index 1) so we exercise the full path
@@ -277,12 +277,12 @@ class TestSetupWizardOpenclawIntegration:
             return {}
 
         with (
-            patch.object(setup_mod, "ensure_hermes_home"),
+            patch.object(setup_mod, "ensure_newroz_home"),
             patch.object(setup_mod, "load_config", side_effect=tracking_load_config),
-            patch.object(setup_mod, "get_hermes_home", return_value=tmp_path),
+            patch.object(setup_mod, "get_newroz_home", return_value=tmp_path),
             patch.object(setup_mod, "get_env_value", return_value=""),
             patch.object(setup_mod, "is_interactive_stdin", return_value=True),
-            patch("hermes_cli.auth.get_active_provider", return_value=None),
+            patch("newroz_cli.auth.get_active_provider", return_value=None),
             patch("builtins.input", return_value=""),
             patch.object(setup_mod, "prompt_choice", return_value=1),
             patch.object(setup_mod, "_offer_openclaw_migration", return_value=True),
@@ -305,16 +305,16 @@ class TestSetupWizardOpenclawIntegration:
         reloaded_config = {"model": {"provider": "openrouter"}}
 
         with (
-            patch.object(setup_mod, "ensure_hermes_home"),
+            patch.object(setup_mod, "ensure_newroz_home"),
             patch.object(
                 setup_mod,
                 "load_config",
                 side_effect=[initial_config, reloaded_config],
             ),
-            patch.object(setup_mod, "get_hermes_home", return_value=tmp_path),
+            patch.object(setup_mod, "get_newroz_home", return_value=tmp_path),
             patch.object(setup_mod, "get_env_value", return_value=""),
             patch.object(setup_mod, "is_interactive_stdin", return_value=True),
-            patch("hermes_cli.auth.get_active_provider", return_value=None),
+            patch("newroz_cli.auth.get_active_provider", return_value=None),
             patch("builtins.input", return_value=""),
             patch.object(setup_mod, "prompt_choice", return_value=1),
             patch.object(setup_mod, "_offer_openclaw_migration", return_value=True),
@@ -335,15 +335,15 @@ class TestSetupWizardOpenclawIntegration:
         args = _first_time_args()
 
         with (
-            patch.object(setup_mod, "ensure_hermes_home"),
+            patch.object(setup_mod, "ensure_newroz_home"),
             patch.object(setup_mod, "load_config", return_value={}),
-            patch.object(setup_mod, "get_hermes_home", return_value=tmp_path),
+            patch.object(setup_mod, "get_newroz_home", return_value=tmp_path),
             patch.object(
                 setup_mod,
                 "get_env_value",
                 side_effect=lambda k: "sk-xxx" if k == "OPENROUTER_API_KEY" else "",
             ),
-            patch("hermes_cli.auth.get_active_provider", return_value=None),
+            patch("newroz_cli.auth.get_active_provider", return_value=None),
             # Returning user picks "Exit"
             patch.object(setup_mod, "prompt_choice", return_value=9),
             patch.object(
@@ -404,12 +404,12 @@ class TestGetSectionConfigSummary:
         assert result == "max turns: 120"
 
     def test_gateway_returns_none_without_tokens(self):
-        # _platform_status reads via hermes_cli.gateway.get_env_value, not
+        # _platform_status reads via newroz_cli.gateway.get_env_value, not
         # setup_mod.get_env_value, so patch BOTH. Without the second patch,
         # any environment-variable token (or one leaked in by a sibling
         # test on the same xdist worker) makes the gateway section report
         # platforms-configured and the test sees a non-None summary.
-        import hermes_cli.gateway as gateway_mod
+        import newroz_cli.gateway as gateway_mod
         with patch.object(setup_mod, "get_env_value", return_value=""), \
              patch.object(gateway_mod, "get_env_value", return_value=""):
             result = setup_mod._get_section_config_summary({}, "gateway")
@@ -424,9 +424,9 @@ class TestGetSectionConfigSummary:
             return ""
 
         # Also patch gateway module's binding since _platform_status()
-        # reads from hermes_cli.gateway.get_env_value after the setup
+        # reads from newroz_cli.gateway.get_env_value after the setup
         # flows were unified via platform_registry.
-        import hermes_cli.gateway as gateway_mod
+        import newroz_cli.gateway as gateway_mod
         with patch.object(setup_mod, "get_env_value", side_effect=env_side), \
              patch.object(gateway_mod, "get_env_value", side_effect=env_side):
             result = setup_mod._get_section_config_summary({}, "gateway")
@@ -480,7 +480,7 @@ class TestGetSectionConfigSummary:
         def env_side(key):
             return "true" if key == "WHATSAPP_ENABLED" else ""
 
-        import hermes_cli.gateway as gateway_mod
+        import newroz_cli.gateway as gateway_mod
         with patch.object(setup_mod, "get_env_value", side_effect=env_side), \
              patch.object(gateway_mod, "get_env_value", side_effect=env_side):
             result = setup_mod._get_section_config_summary({}, "gateway")
@@ -492,7 +492,7 @@ class TestGetSectionConfigSummary:
         def env_side(key):
             return "http://signal.local" if key == "SIGNAL_HTTP_URL" else ""
 
-        import hermes_cli.gateway as gateway_mod
+        import newroz_cli.gateway as gateway_mod
         with patch.object(setup_mod, "get_env_value", side_effect=env_side), \
              patch.object(gateway_mod, "get_env_value", side_effect=env_side):
             result = setup_mod._get_section_config_summary({}, "gateway")
@@ -545,7 +545,7 @@ class TestGetSectionConfigSummary:
         """Every built-in platform should be recognised by its primary
         env-var sentinel — i.e. the summary must not drift from the
         registry used by the setup checklist."""
-        from hermes_cli.gateway import _PLATFORMS
+        from newroz_cli.gateway import _PLATFORMS
 
         for plat in _PLATFORMS:
             label = plat["label"]
@@ -561,7 +561,7 @@ class TestGetSectionConfigSummary:
                 if _target == "WHATSAPP_ENABLED":
                     return "true"
                 return "x"
-            import hermes_cli.gateway as gateway_mod
+            import newroz_cli.gateway as gateway_mod
             with patch.object(setup_mod, "get_env_value", side_effect=env_side), \
                  patch.object(gateway_mod, "get_env_value", side_effect=env_side):
                 result = setup_mod._get_section_config_summary({}, "gateway")
@@ -626,30 +626,30 @@ class TestSetupWizardSkipsConfiguredSections:
                 return "sk-xxx"
             return ""
 
-        def fake_migration(hermes_home):
+        def fake_migration(newroz_home):
             migration_done["value"] = True
             return True
 
         reloaded_config = {"model": "openai/gpt-4"}
 
         # _platform_status (called by the gateway summary path) reads env
-        # vars via hermes_cli.gateway.get_env_value, NOT setup_mod's. Patch
+        # vars via newroz_cli.gateway.get_env_value, NOT setup_mod's. Patch
         # both so xdist sibling tests can't leak a TELEGRAM_BOT_TOKEN /
         # WHATSAPP_* / etc. through and trick the wizard into thinking the
         # gateway section is already configured (which would skip it).
-        import hermes_cli.gateway as gateway_mod
+        import newroz_cli.gateway as gateway_mod
 
         with (
-            patch.object(setup_mod, "ensure_hermes_home"),
+            patch.object(setup_mod, "ensure_newroz_home"),
             patch.object(
                 setup_mod, "load_config",
                 side_effect=[{}, reloaded_config],
             ),
-            patch.object(setup_mod, "get_hermes_home", return_value=tmp_path),
+            patch.object(setup_mod, "get_newroz_home", return_value=tmp_path),
             patch.object(setup_mod, "get_env_value", side_effect=env_side),
             patch.object(gateway_mod, "get_env_value", side_effect=env_side),
             patch.object(setup_mod, "is_interactive_stdin", return_value=True),
-            patch("hermes_cli.auth.get_active_provider", return_value=None),
+            patch("newroz_cli.auth.get_active_provider", return_value=None),
             patch("builtins.input", return_value=""),
             patch.object(setup_mod, "prompt_choice", return_value=1),
             # Migration succeeds and flips the env_side flag

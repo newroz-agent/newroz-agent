@@ -1,7 +1,7 @@
 """
 Integration tests for the desktop boot handshake fix (PR #50231 / issue #50209).
 
-Simulates a slow hermes_cli.gateway import (15-30 s on a fresh Windows install
+Simulates a slow newroz_cli.gateway import (15-30 s on a fresh Windows install
 with Defender scanning every new .pyc) by patching the two helpers that touch
 the blocking import and measuring event-loop freedom + response latency.
 
@@ -9,7 +9,7 @@ Three scenarios are covered:
 
 1. _lifespan fire-and-forget: patched _warm_gateway_module sleeps N seconds in
    a thread; TestClient startup must complete in << N seconds (event loop not
-   blocked, HERMES_DASHBOARD_READY would fire immediately).
+   blocked, NEWROZ_DASHBOARD_READY would fire immediately).
 
 2. get_status run_in_executor: patched _resolve_restart_drain_timeout sleeps N
    seconds in a thread; a concurrent fast endpoint (/api/version) must respond
@@ -28,7 +28,7 @@ from unittest.mock import patch
 
 import pytest
 
-import hermes_cli.web_server as web_server_mod
+import newroz_cli.web_server as web_server_mod
 
 SLOW_SECONDS = 3  # represents the Defender worst-case (scaled down for CI speed)
 
@@ -61,7 +61,7 @@ def test_lifespan_warmup_is_nonblocking():
     _warm_gateway_module runs in an executor (fire-and-forget).
     Even if it sleeps for SLOW_SECONDS, TestClient startup must complete
     in well under that time — proving the event loop was never blocked and
-    HERMES_DASHBOARD_READY would have fired without delay.
+    NEWROZ_DASHBOARD_READY would have fired without delay.
     """
     from fastapi.testclient import TestClient
 

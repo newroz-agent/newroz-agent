@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from hermes_cli.nous_billing import (
+from newroz_cli.nous_billing import (
     BillingError,
     _absolutize_portal_url,
     _raise_for_error,
@@ -18,7 +18,7 @@ from hermes_cli.nous_billing import (
 
 @pytest.fixture
 def _preview(monkeypatch):
-    monkeypatch.setenv("HERMES_PORTAL_BASE_URL", "https://nas-pr-412.nousresearch.wtf")
+    monkeypatch.setenv("NEWROZ_PORTAL_BASE_URL", "https://nas-pr-412.nousresearch.wtf")
 
 
 def test_absolutize_resolves_relative(_preview):

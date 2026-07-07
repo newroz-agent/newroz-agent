@@ -1,10 +1,10 @@
-"""Tests for ``hermes update`` / ``--check`` inside the Docker container.
+"""Tests for ``newroz update`` / ``--check`` inside the Docker container.
 
 Background: ``.dockerignore`` excludes ``.git``, so the existing git-pull
 update path can never succeed inside the published image.  Before this
-fix, ``hermes update`` would fall through to ``"✗ Not a git repository.
+fix, ``newroz update`` would fall through to ``"✗ Not a git repository.
 Please reinstall: curl ... install.sh"`` — that script installs a *new*
-host-side Hermes, not an update to the running container, so the message
+host-side Newroz, not an update to the running container, so the message
 was actively misleading.
 
 These tests pin the new behaviour: when ``detect_install_method`` reports
@@ -21,19 +21,19 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli.main import _cmd_update_check, cmd_update
+from newroz_cli.main import _cmd_update_check, cmd_update
 
 
 # ---------- cmd_update (apply path) ----------
 
 
-@patch("hermes_cli.config.is_managed", return_value=False)
-@patch("hermes_cli.config.detect_install_method", return_value="docker")
+@patch("newroz_cli.config.is_managed", return_value=False)
+@patch("newroz_cli.config.detect_install_method", return_value="docker")
 @patch("subprocess.run")
 def test_cmd_update_in_docker_prints_guidance_and_exits(
     mock_run, _mock_method, _mock_managed, capsys
 ):
-    """``hermes update`` inside Docker → friendly message + exit 1, no git calls."""
+    """``newroz update`` inside Docker → friendly message + exit 1, no git calls."""
     with pytest.raises(SystemExit) as excinfo:
         cmd_update(SimpleNamespace(check=False))
 
@@ -42,34 +42,34 @@ def test_cmd_update_in_docker_prints_guidance_and_exits(
     # Spot-check the key guidance — exhaustive wording is locked in by the
     # config-module test below to keep these CLI tests resilient to copy edits.
     assert "doesn't apply inside the Docker container" in out
-    assert "docker pull nousresearch/hermes-agent:latest" in out
+    assert "docker pull nousresearch/newroz-agent:latest" in out
 
     # No git invocations — the early-return must beat every git command.
     git_calls = [c for c in mock_run.call_args_list if c.args and c.args[0] and "git" in str(c.args[0][0])]
     assert git_calls == [], f"expected no git calls, got: {git_calls}"
 
 
-@patch("hermes_cli.config.is_managed", return_value=False)
-@patch("hermes_cli.config.detect_install_method", return_value="docker")
+@patch("newroz_cli.config.is_managed", return_value=False)
+@patch("newroz_cli.config.detect_install_method", return_value="docker")
 @patch("subprocess.run")
 def test_cmd_update_check_in_docker_prints_guidance_and_exits(
     mock_run, _mock_method, _mock_managed, capsys
 ):
-    """``hermes update --check`` inside Docker → same message + exit 1, no fetch."""
+    """``newroz update --check`` inside Docker → same message + exit 1, no fetch."""
     with pytest.raises(SystemExit) as excinfo:
         cmd_update(SimpleNamespace(check=True, branch=None))
 
     assert excinfo.value.code == 1
     out = capsys.readouterr().out
     assert "doesn't apply inside the Docker container" in out
-    assert "docker pull nousresearch/hermes-agent:latest" in out
+    assert "docker pull nousresearch/newroz-agent:latest" in out
 
     git_calls = [c for c in mock_run.call_args_list if c.args and c.args[0] and "git" in str(c.args[0][0])]
     assert git_calls == [], f"expected no git calls, got: {git_calls}"
 
 
-@patch("hermes_cli.config.is_managed", return_value=False)
-@patch("hermes_cli.config.detect_install_method", return_value="docker")
+@patch("newroz_cli.config.is_managed", return_value=False)
+@patch("newroz_cli.config.detect_install_method", return_value="docker")
 @patch("subprocess.run")
 def test_cmd_update_in_docker_ignores_yes_and_force(
     mock_run, _mock_method, _mock_managed, capsys
@@ -91,7 +91,7 @@ def test_cmd_update_in_docker_ignores_yes_and_force(
 # ---------- _cmd_update_check (check path, direct entry) ----------
 
 
-@patch("hermes_cli.config.detect_install_method", return_value="docker")
+@patch("newroz_cli.config.detect_install_method", return_value="docker")
 @patch("subprocess.run")
 def test_cmd_update_check_direct_in_docker(mock_run, _mock_method, capsys):
     """Calling ``_cmd_update_check`` directly (no apply path) also bails."""
@@ -107,8 +107,8 @@ def test_cmd_update_check_direct_in_docker(mock_run, _mock_method, capsys):
 # ---------- Non-Docker installs unaffected ----------
 
 
-@patch("hermes_cli.config.is_managed", return_value=False)
-@patch("hermes_cli.config.detect_install_method", return_value="git")
+@patch("newroz_cli.config.is_managed", return_value=False)
+@patch("newroz_cli.config.detect_install_method", return_value="git")
 @patch(
     "subprocess.run",
     return_value=SimpleNamespace(returncode=0, stdout="0\n", stderr=""),
@@ -143,8 +143,8 @@ def test_cmd_update_on_git_install_does_not_print_docker_message(
     assert "doesn't apply inside the Docker container" not in capsys.readouterr().out
 
 
-@patch("hermes_cli.config.detect_install_method", return_value="pip")
-@patch("hermes_cli.banner.check_via_pypi", return_value=0)
+@patch("newroz_cli.config.detect_install_method", return_value="pip")
+@patch("newroz_cli.banner.check_via_pypi", return_value=0)
 def test_cmd_update_check_on_pip_install_still_uses_pypi(
     _mock_pypi, _mock_method, capsys
 ):
@@ -166,18 +166,18 @@ def test_format_docker_update_message_contents():
     disappear in a copy edit, the message has lost its value.  Specific
     wording around them is free to evolve (we don't assert full text).
     """
-    from hermes_cli.config import format_docker_update_message
+    from newroz_cli.config import format_docker_update_message
 
     msg = format_docker_update_message()
 
     # Primary command — the entire reason this message exists.
-    assert "docker pull nousresearch/hermes-agent:latest" in msg
+    assert "docker pull nousresearch/newroz-agent:latest" in msg
 
     # The four key concepts the message must cover:
     assert "restart" in msg.lower(), "must explain that a restart is required"
     assert "--version" in msg, "must show how to verify the new version"
     assert ":latest" in msg, "must mention tag pinning caveat"
-    assert "HERMES_HOME" in msg or "/opt/data" in msg, (
+    assert "NEWROZ_HOME" in msg or "/opt/data" in msg, (
         "must address config persistence across upgrades"
     )
 

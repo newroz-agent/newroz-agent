@@ -30,8 +30,8 @@ def _fake_response(*, b64=None, url=None, revised_prompt=None):
 
 
 @pytest.fixture(autouse=True)
-def _tmp_hermes_home(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+def _tmp_newroz_home(tmp_path, monkeypatch):
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     yield tmp_path
 
 
@@ -126,11 +126,11 @@ class TestModelResolution:
 
 class TestSourceImageLoading:
     def test_load_image_bytes_blocks_credential_store(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        auth_json = hermes_home / "auth.json"
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        auth_json = newroz_home / "auth.json"
         auth_json.write_text('{"api_key":"sk-secret"}', encoding="utf-8")
-        monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+        monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
 
         with pytest.raises(ValueError, match="credential store"):
             openai_plugin._load_image_bytes(str(auth_json))
@@ -139,11 +139,11 @@ class TestSourceImageLoading:
         """The guard must fire BEFORE the file is opened — a credential store
         must never be read into memory (#57698). Spy builtins.open and assert
         it is never called for the blocked path."""
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        auth_json = hermes_home / "auth.json"
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        auth_json = newroz_home / "auth.json"
         auth_json.write_text('{"api_key":"sk-secret"}', encoding="utf-8")
-        monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+        monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
 
         import builtins
 
@@ -162,9 +162,9 @@ class TestSourceImageLoading:
     def test_load_image_bytes_allows_legit_local_image(self, tmp_path, monkeypatch):
         """Negative control: a legitimate local image path is NOT blocked and
         loads normally — proves the guard doesn't over-fire on everything."""
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
         img = tmp_path / "pic.png"
         img.write_bytes(b"\x89PNG\r\n\x1a\nfake-image-bytes")
 
@@ -177,9 +177,9 @@ class TestSourceImageLoading:
         local-path guard (the guard only applies to local file reads)."""
         import base64
 
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
-        monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
+        monkeypatch.setenv("NEWROZ_HOME", str(newroz_home))
         b64 = base64.b64encode(b"xyz").decode("ascii")
         data, name = openai_plugin._load_image_bytes(f"data:image/png;base64,{b64}")
         assert data == b"xyz"

@@ -1,6 +1,6 @@
 """Tests for the load_env() process-level cache.
 
-The cache exists to keep `hermes tools` → "All Platforms" fast: every
+The cache exists to keep `newroz tools` → "All Platforms" fast: every
 `get_env_value()` lookup used to re-read and re-sanitise the entire
 .env file, racking up hundreds of ms across one menu render. The
 cache is keyed on (path, mtime, size); writers (save_env_value /
@@ -21,7 +21,7 @@ def _write_env(path: Path, contents: str) -> None:
 
 def test_load_env_caches_on_repeat_calls():
     """Repeated load_env() calls on the same file return the cached dict."""
-    from hermes_cli.config import invalidate_env_cache, load_env
+    from newroz_cli.config import invalidate_env_cache, load_env
 
     invalidate_env_cache()
 
@@ -32,7 +32,7 @@ def test_load_env_caches_on_repeat_calls():
         env_path = Path(f.name)
 
     try:
-        with patch("hermes_cli.config.get_env_path", return_value=env_path):
+        with patch("newroz_cli.config.get_env_path", return_value=env_path):
             first = load_env()
             # Even if a writer outside our cache mutates the file, an
             # mtime/size match means the cache still wins. We simulate that
@@ -49,7 +49,7 @@ def test_load_env_caches_on_repeat_calls():
 
 def test_load_env_invalidates_on_mtime_bump():
     """Editing the file (mtime changes) invalidates the cache."""
-    from hermes_cli.config import invalidate_env_cache, load_env
+    from newroz_cli.config import invalidate_env_cache, load_env
 
     invalidate_env_cache()
 
@@ -60,7 +60,7 @@ def test_load_env_invalidates_on_mtime_bump():
         env_path = Path(f.name)
 
     try:
-        with patch("hermes_cli.config.get_env_path", return_value=env_path):
+        with patch("newroz_cli.config.get_env_path", return_value=env_path):
             first = load_env()
             assert first.get("OPENAI_API_KEY") == "sk-old"
 
@@ -85,7 +85,7 @@ def test_invalidate_env_cache_forces_reread():
     This is the belt-and-braces knob for writers (save_env_value, etc.)
     on filesystems where mtime resolution might miss a same-second write.
     """
-    from hermes_cli.config import invalidate_env_cache, load_env
+    from newroz_cli.config import invalidate_env_cache, load_env
 
     invalidate_env_cache()
 
@@ -96,7 +96,7 @@ def test_invalidate_env_cache_forces_reread():
         env_path = Path(f.name)
 
     try:
-        with patch("hermes_cli.config.get_env_path", return_value=env_path):
+        with patch("newroz_cli.config.get_env_path", return_value=env_path):
             assert load_env().get("OPENAI_API_KEY") == "sk-old"
 
             # Rewrite WITHOUT bumping mtime — simulates same-second write.
@@ -115,8 +115,8 @@ def test_invalidate_env_cache_forces_reread():
 
 def test_save_env_value_invalidates_cache(tmp_path, monkeypatch):
     """save_env_value() invalidates the cache so subsequent reads see the update."""
-    from hermes_cli import config as config_mod
-    from hermes_cli.config import invalidate_env_cache, load_env, save_env_value
+    from newroz_cli import config as config_mod
+    from newroz_cli.config import invalidate_env_cache, load_env, save_env_value
 
     invalidate_env_cache()
 
@@ -124,7 +124,7 @@ def test_save_env_value_invalidates_cache(tmp_path, monkeypatch):
     env_path.write_text("EXISTING_KEY=old\n", encoding="utf-8")
 
     monkeypatch.setattr(config_mod, "get_env_path", lambda: env_path)
-    monkeypatch.setattr(config_mod, "ensure_hermes_home", lambda: None)
+    monkeypatch.setattr(config_mod, "ensure_newroz_home", lambda: None)
     monkeypatch.setattr(config_mod, "_secure_file", lambda _p: None)
     monkeypatch.setattr(config_mod, "is_managed", lambda: False)
 
@@ -148,8 +148,8 @@ def test_save_env_value_invalidates_cache(tmp_path, monkeypatch):
 
 def test_remove_env_value_invalidates_cache(tmp_path, monkeypatch):
     """remove_env_value() invalidates the cache so the removed key disappears."""
-    from hermes_cli import config as config_mod
-    from hermes_cli.config import (
+    from newroz_cli import config as config_mod
+    from newroz_cli.config import (
         invalidate_env_cache,
         load_env,
         remove_env_value,
@@ -160,7 +160,7 @@ def test_remove_env_value_invalidates_cache(tmp_path, monkeypatch):
 
     env_path = tmp_path / ".env"
     monkeypatch.setattr(config_mod, "get_env_path", lambda: env_path)
-    monkeypatch.setattr(config_mod, "ensure_hermes_home", lambda: None)
+    monkeypatch.setattr(config_mod, "ensure_newroz_home", lambda: None)
     monkeypatch.setattr(config_mod, "_secure_file", lambda _p: None)
     monkeypatch.setattr(config_mod, "is_managed", lambda: False)
 
@@ -178,15 +178,15 @@ def test_remove_env_value_invalidates_cache(tmp_path, monkeypatch):
 
 def test_load_env_handles_missing_file():
     """A nonexistent .env returns {} and caches the empty result."""
-    from hermes_cli.config import invalidate_env_cache, load_env
+    from newroz_cli.config import invalidate_env_cache, load_env
 
     invalidate_env_cache()
 
-    nonexistent = Path(tempfile.gettempdir()) / "hermes-test-no-such-env-xyz123.env"
+    nonexistent = Path(tempfile.gettempdir()) / "newroz-test-no-such-env-xyz123.env"
     nonexistent.unlink(missing_ok=True)
 
     try:
-        with patch("hermes_cli.config.get_env_path", return_value=nonexistent):
+        with patch("newroz_cli.config.get_env_path", return_value=nonexistent):
             assert load_env() == {}
             assert load_env() == {}  # cached
     finally:

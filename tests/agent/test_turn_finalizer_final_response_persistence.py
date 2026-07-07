@@ -77,7 +77,7 @@ def test_final_response_closes_tool_tail_before_persistence(monkeypatch):
     way, the next turn reloads a stale/malformed history and can appear to loop
     because the assistant's visible final answer is missing from durable state.
     """
-    monkeypatch.setattr("hermes_cli.plugins.invoke_hook", lambda *_a, **_kw: [])
+    monkeypatch.setattr("newroz_cli.plugins.invoke_hook", lambda *_a, **_kw: [])
     agent = FakeAgent()
     messages = [
         {"role": "user", "content": "do it"},

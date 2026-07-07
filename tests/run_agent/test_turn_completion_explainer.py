@@ -38,7 +38,7 @@ def _make_agent(max_iterations: int = 10, config: dict | None = None) -> AIAgent
     with (
         patch("run_agent.get_tool_definitions", return_value=[]),
         patch("run_agent.check_toolset_requirements", return_value={}),
-        patch("hermes_cli.config.load_config", return_value=config or {}),
+        patch("newroz_cli.config.load_config", return_value=config or {}),
         patch("run_agent.OpenAI"),
     ):
         agent = AIAgent(
@@ -112,15 +112,15 @@ def test_explanation_for_all_retries_exhausted():
 def test_explainer_enabled_by_default():
     agent = _make_agent()
     with patch.dict(os.environ, {}, clear=False):
-        os.environ.pop("HERMES_TURN_COMPLETION_EXPLAINER", None)
-        with patch("hermes_cli.config.load_config", return_value={}):
+        os.environ.pop("NEWROZ_TURN_COMPLETION_EXPLAINER", None)
+        with patch("newroz_cli.config.load_config", return_value={}):
             assert agent._turn_completion_explainer_enabled() is True
 
 
 def test_explainer_disabled_via_env():
     agent = _make_agent()
     with patch.dict(
-        os.environ, {"HERMES_TURN_COMPLETION_EXPLAINER": "0"}, clear=False
+        os.environ, {"NEWROZ_TURN_COMPLETION_EXPLAINER": "0"}, clear=False
     ):
         assert agent._turn_completion_explainer_enabled() is False
 
@@ -128,9 +128,9 @@ def test_explainer_disabled_via_env():
 def test_explainer_disabled_via_config():
     agent = _make_agent()
     with patch.dict(os.environ, {}, clear=False):
-        os.environ.pop("HERMES_TURN_COMPLETION_EXPLAINER", None)
+        os.environ.pop("NEWROZ_TURN_COMPLETION_EXPLAINER", None)
         with patch(
-            "hermes_cli.config.load_config",
+            "newroz_cli.config.load_config",
             return_value={"display": {"turn_completion_explainer": False}},
         ):
             assert agent._turn_completion_explainer_enabled() is False

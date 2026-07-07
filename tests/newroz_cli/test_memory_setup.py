@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-import hermes_cli.memory_setup as memory_setup
-from hermes_cli.memory_setup import _CANCELLED, _curses_select
+import newroz_cli.memory_setup as memory_setup
+from newroz_cli.memory_setup import _CANCELLED, _curses_select
 
 
 def test_curses_select_cancel_defaults_to_selected(monkeypatch):
@@ -17,7 +17,7 @@ def test_curses_select_cancel_defaults_to_selected(monkeypatch):
         })
         return cancel_returns
 
-    monkeypatch.setattr("hermes_cli.curses_ui.curses_radiolist", fake_radiolist)
+    monkeypatch.setattr("newroz_cli.curses_ui.curses_radiolist", fake_radiolist)
 
     result = _curses_select("Pick one", [("first", "desc"), ("second", "")], default=1)
 
@@ -37,7 +37,7 @@ def test_curses_select_accepts_explicit_cancel_value(monkeypatch):
         captured["cancel_returns"] = cancel_returns
         return cancel_returns
 
-    monkeypatch.setattr("hermes_cli.curses_ui.curses_radiolist", fake_radiolist)
+    monkeypatch.setattr("newroz_cli.curses_ui.curses_radiolist", fake_radiolist)
 
     result = _curses_select("Pick one", [("first", "")], default=0, cancel_returns=_CANCELLED)
 
@@ -52,7 +52,7 @@ def test_curses_select_clears_after_picker_returns(monkeypatch):
         events.append("picker")
         return selected
 
-    monkeypatch.setattr("hermes_cli.curses_ui.curses_radiolist", fake_radiolist)
+    monkeypatch.setattr("newroz_cli.curses_ui.curses_radiolist", fake_radiolist)
     monkeypatch.setattr(memory_setup, "_clear_interactive_transition", lambda: events.append("clear"))
 
     result = _curses_select("Pick one", [("first", "")], default=0)
@@ -67,8 +67,8 @@ def test_cmd_setup_top_level_cancel_writes_nothing(monkeypatch):
 
     monkeypatch.setattr(memory_setup, "_get_available_providers", lambda: [("fake", "local", object())])
     monkeypatch.setattr(memory_setup, "_curses_select", lambda *args, **kwargs: kwargs["cancel_returns"])
-    monkeypatch.setattr("hermes_cli.config.load_config", load_config)
-    monkeypatch.setattr("hermes_cli.config.save_config", save_config)
+    monkeypatch.setattr("newroz_cli.config.load_config", load_config)
+    monkeypatch.setattr("newroz_cli.config.save_config", save_config)
 
     memory_setup.cmd_setup(SimpleNamespace())
 
@@ -83,8 +83,8 @@ def test_cmd_setup_builtin_selection_still_saves_builtin(monkeypatch):
 
     monkeypatch.setattr(memory_setup, "_get_available_providers", lambda: providers)
     monkeypatch.setattr(memory_setup, "_curses_select", lambda *args, **kwargs: len(providers))
-    monkeypatch.setattr("hermes_cli.config.load_config", lambda: config)
-    monkeypatch.setattr("hermes_cli.config.save_config", save_config)
+    monkeypatch.setattr("newroz_cli.config.load_config", lambda: config)
+    monkeypatch.setattr("newroz_cli.config.save_config", save_config)
 
     memory_setup.cmd_setup(SimpleNamespace())
 
@@ -96,15 +96,15 @@ def test_cmd_setup_clears_interactive_picker_before_provider_post_setup(monkeypa
     events = []
 
     class PostSetupProvider:
-        def post_setup(self, hermes_home, config):
+        def post_setup(self, newroz_home, config):
             events.append("post_setup")
 
     monkeypatch.setattr(memory_setup, "_get_available_providers", lambda: [("openviking", "local", PostSetupProvider())])
     monkeypatch.setattr(memory_setup, "_curses_select", lambda *args, **kwargs: events.append("select") or 0)
     monkeypatch.setattr(memory_setup, "_clear_interactive_transition", lambda: events.append("clear"), raising=False)
     monkeypatch.setattr(memory_setup, "_install_dependencies", lambda name: events.append("install"))
-    monkeypatch.setattr(memory_setup, "get_hermes_home", lambda: "/tmp/hermes-test")
-    monkeypatch.setattr("hermes_cli.config.load_config", lambda: {"memory": {}})
+    monkeypatch.setattr(memory_setup, "get_newroz_home", lambda: "/tmp/newroz-test")
+    monkeypatch.setattr("newroz_cli.config.load_config", lambda: {"memory": {}})
 
     memory_setup.cmd_setup(SimpleNamespace())
 
@@ -115,14 +115,14 @@ def test_cmd_setup_provider_clears_before_provider_post_setup(monkeypatch):
     events = []
 
     class PostSetupProvider:
-        def post_setup(self, hermes_home, config):
+        def post_setup(self, newroz_home, config):
             events.append("post_setup")
 
     monkeypatch.setattr(memory_setup, "_get_available_providers", lambda: [("openviking", "local", PostSetupProvider())])
     monkeypatch.setattr(memory_setup, "_clear_interactive_transition", lambda: events.append("clear"), raising=False)
     monkeypatch.setattr(memory_setup, "_install_dependencies", lambda name: events.append("install"))
-    monkeypatch.setattr(memory_setup, "get_hermes_home", lambda: "/tmp/hermes-test")
-    monkeypatch.setattr("hermes_cli.config.load_config", lambda: {"memory": {}})
+    monkeypatch.setattr(memory_setup, "get_newroz_home", lambda: "/tmp/newroz-test")
+    monkeypatch.setattr("newroz_cli.config.load_config", lambda: {"memory": {}})
 
     memory_setup.cmd_setup_provider("openviking")
 
@@ -139,7 +139,7 @@ def test_cmd_status_prefers_provider_status_config(monkeypatch, capsys):
                 "endpoint": "https://vps.example",
                 "account": "acct",
                 "user": "alice",
-                "agent": "hermes",
+                "agent": "newroz",
             }
 
         def is_available(self):
@@ -155,7 +155,7 @@ def test_cmd_status_prefers_provider_status_config(monkeypatch, capsys):
             },
         }
     }
-    monkeypatch.setattr("hermes_cli.config.load_config", lambda: config)
+    monkeypatch.setattr("newroz_cli.config.load_config", lambda: config)
     monkeypatch.setattr(memory_setup, "_get_available_providers", lambda: [("openviking", "API key / local", StatusProvider())])
 
     memory_setup.cmd_status(SimpleNamespace())
@@ -186,9 +186,9 @@ def test_cmd_setup_generic_choice_cancel_writes_nothing(tmp_path, monkeypatch):
     monkeypatch.setattr(memory_setup, "_get_available_providers", lambda: [("fake", "local", provider)])
     monkeypatch.setattr(memory_setup, "_curses_select", lambda *args, **kwargs: next(selections))
     monkeypatch.setattr(memory_setup, "_install_dependencies", install_dependencies)
-    monkeypatch.setattr(memory_setup, "get_hermes_home", lambda: tmp_path)
-    monkeypatch.setattr("hermes_cli.config.load_config", lambda: {"memory": {}})
-    monkeypatch.setattr("hermes_cli.config.save_config", save_config)
+    monkeypatch.setattr(memory_setup, "get_newroz_home", lambda: tmp_path)
+    monkeypatch.setattr("newroz_cli.config.load_config", lambda: {"memory": {}})
+    monkeypatch.setattr("newroz_cli.config.save_config", save_config)
 
     memory_setup.cmd_setup(SimpleNamespace())
 

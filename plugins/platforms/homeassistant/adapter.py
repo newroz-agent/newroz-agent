@@ -401,7 +401,7 @@ class HomeAssistantAdapter(BasePlatformAdapter):
             "Content-Type": "application/json",
         }
         payload = {
-            "title": "Hermes Agent",
+            "title": "Newroz Agent",
             "message": content[:self.MAX_MESSAGE_LENGTH],
         }
 
@@ -533,13 +533,13 @@ async def _standalone_send(
 def _is_connected(config) -> bool:
     """Home Assistant is considered connected when ``HASS_TOKEN`` is set.
 
-    Looks up via ``hermes_cli.gateway.get_env_value`` at call time (not via
+    Looks up via ``newroz_cli.gateway.get_env_value`` at call time (not via
     the plugin's own bound import) so tests that patch
     ``gateway_mod.get_env_value`` can suppress ambient ``HASS_TOKEN`` env
     vars.  Matches what the legacy connected-platforms check did before
     this migration.
     """
-    import hermes_cli.gateway as gateway_mod
+    import newroz_cli.gateway as gateway_mod
     return bool((gateway_mod.get_env_value("HASS_TOKEN") or "").strip())
 
 
@@ -554,7 +554,7 @@ def _build_adapter(config):
 
 
 def register(ctx) -> None:
-    """Plugin entry point — called by the Hermes plugin system."""
+    """Plugin entry point — called by the Newroz plugin system."""
     ctx.register_platform(
         name="homeassistant",
         label="Home Assistant",

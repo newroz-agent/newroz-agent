@@ -35,7 +35,7 @@ test('prepareProfileDeleteRequest returns the torn-down profile name', () => {
   assert.match(fnBody, /return null/, 'early-exit guard should return null, not undefined')
 })
 
-test('hermes:api handler routes profile-delete requests to the primary backend', () => {
+test('newroz:api handler routes profile-delete requests to the primary backend', () => {
   const source = readElectronFile('main.cjs')
 
   // The handler must capture prepareProfileDeleteRequest's return value.

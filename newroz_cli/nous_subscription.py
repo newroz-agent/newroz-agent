@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Set
 
-from hermes_cli.config import get_env_value, load_config
-from hermes_cli.nous_account import (
+from newroz_cli.config import get_env_value, load_config
+from newroz_cli.nous_account import (
     NousPortalAccountInfo,
     format_nous_portal_entitlement_message,
     get_nous_portal_account_info,
@@ -26,12 +26,12 @@ from tools.tool_backend_helpers import (
 
 
 _DEFAULT_PLATFORM_TOOLSETS = {
-    "cli": "hermes-cli",
+    "cli": "newroz-cli",
 }
 
 # Maps a tools_config provider's ``managed_nous_feature`` to the tool-pool
-# coverage category (hermes_cli.nous_account.TOOL_COVERAGE_CATEGORIES). Lets the
-# `hermes tools` picker scope its entitlement gate to the selected backend, so a
+# coverage category (newroz_cli.nous_account.TOOL_COVERAGE_CATEGORIES). Lets the
+# `newroz tools` picker scope its entitlement gate to the selected backend, so a
 # free-tool-pool user is allowed image gen but denied video gen at select time —
 # consistent with the per-category feature gates in get_nous_subscription_features.
 MANAGED_FEATURE_COVERAGE_CATEGORY: Dict[str, str] = {
@@ -159,7 +159,7 @@ def _toolset_enabled(config: Dict[str, object], toolset_key: str) -> bool:
 def _has_agent_browser() -> bool:
     import shutil
 
-    from hermes_constants import agent_browser_runnable
+    from newroz_constants import agent_browser_runnable
 
     # Validate the resolved binary actually runs — a dangling global symlink
     # (issue #48521) is reported by ``which`` but fails at exec. Fall through to
@@ -240,7 +240,7 @@ def _local_stt_backend_available() -> bool:
     ``apply_nous_managed_defaults`` from flipping a working local setup
     to the managed gateway.
     """
-    if get_env_value("HERMES_LOCAL_STT_COMMAND"):
+    if get_env_value("NEWROZ_LOCAL_STT_COMMAND"):
         return True
     try:
         from tools.transcription_tools import _HAS_FASTER_WHISPER
@@ -395,7 +395,7 @@ def get_nous_subscription_features(
     )
 
     # use_gateway flags — when True, the user explicitly opted into the
-    # Tool Gateway via `hermes model`, so direct credentials should NOT
+    # Tool Gateway via `newroz model`, so direct credentials should NOT
     # prevent gateway routing.
     web_use_gateway = _uses_gateway(web_cfg)
     tts_use_gateway = _uses_gateway(tts_cfg)
@@ -431,10 +431,10 @@ def get_nous_subscription_features(
     try:
         from tools.transcription_tools import _HAS_FASTER_WHISPER
         local_stt_available = bool(_HAS_FASTER_WHISPER) or bool(
-            get_env_value("HERMES_LOCAL_STT_COMMAND")
+            get_env_value("NEWROZ_LOCAL_STT_COMMAND")
         )
     except Exception:
-        local_stt_available = bool(get_env_value("HERMES_LOCAL_STT_COMMAND"))
+        local_stt_available = bool(get_env_value("NEWROZ_LOCAL_STT_COMMAND"))
 
     # When use_gateway is set, suppress direct credentials for managed detection
     if web_use_gateway:
@@ -1073,7 +1073,7 @@ def prompt_enable_tool_gateway(
         return set()
 
     try:
-        from hermes_cli.setup import prompt_checklist
+        from newroz_cli.setup import prompt_checklist
     except Exception:
         return set()
 
@@ -1121,7 +1121,7 @@ def prompt_enable_tool_gateway(
 
     changed = apply_gateway_defaults(config, chosen_keys)
     if changed:
-        from hermes_cli.config import save_config
+        from newroz_cli.config import save_config
 
         save_config(config)
         for key in sorted(changed):
@@ -1131,7 +1131,7 @@ def prompt_enable_tool_gateway(
 
 
 # ---------------------------------------------------------------------------
-# Inline Nous Portal login for the Tool Gateway picker (`hermes tools`)
+# Inline Nous Portal login for the Tool Gateway picker (`newroz tools`)
 # ---------------------------------------------------------------------------
 
 
@@ -1143,8 +1143,8 @@ def ensure_nous_portal_access(
     """Make sure the user is entitled to the Nous Tool Gateway, logging in if
     needed.
 
-    Used by ``hermes tools`` when a user selects a Nous-managed Tool Gateway
-    backend (e.g. "Firecrawl (Nous Portal)").  Unlike ``hermes model``'s Nous
+    Used by ``newroz tools`` when a user selects a Nous-managed Tool Gateway
+    backend (e.g. "Firecrawl (Nous Portal)").  Unlike ``newroz model``'s Nous
     login, this:
 
     - does NOT change the inference provider (``model.provider`` is untouched),
@@ -1211,7 +1211,7 @@ def _run_nous_portal_login_only(*, capability: str) -> bool:
     the flow failed.
     """
     try:
-        from hermes_cli.auth import (
+        from newroz_cli.auth import (
             _auth_store_lock,
             _load_auth_store,
             _nous_device_code_login,

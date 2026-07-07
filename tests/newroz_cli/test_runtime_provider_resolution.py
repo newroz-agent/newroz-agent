@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from hermes_cli import runtime_provider as rp
+from newroz_cli import runtime_provider as rp
 
 
 def _fake_invoke_jwt(ttl_seconds=3600):
@@ -219,7 +219,7 @@ def test_resolve_runtime_provider_falls_back_when_pool_empty(monkeypatch):
             "provider": "openai-codex",
             "base_url": "https://chatgpt.com/backend-api/codex",
             "api_key": "codex-token",
-            "source": "hermes-auth-store",
+            "source": "newroz-auth-store",
             "last_refresh": "2026-02-26T00:00:00Z",
         },
     )
@@ -319,7 +319,7 @@ def test_resolve_provider_alias_qwen(monkeypatch):
 
 def test_qwen_oauth_auto_fallthrough_on_auth_failure(monkeypatch):
     """When requested_provider is 'auto' and Qwen creds fail, fall through."""
-    from hermes_cli.auth import AuthError
+    from newroz_cli.auth import AuthError
 
     monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "qwen-oauth")
     monkeypatch.setattr(
@@ -1260,7 +1260,7 @@ def test_explicit_openrouter_honors_openrouter_base_url_over_pool(monkeypatch):
 
 
 def test_resolve_requested_provider_precedence(monkeypatch):
-    monkeypatch.setenv("HERMES_INFERENCE_PROVIDER", "nous")
+    monkeypatch.setenv("NEWROZ_INFERENCE_PROVIDER", "nous")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"provider": "openai-codex"})
     assert rp.resolve_requested_provider("openrouter") == "openrouter"
     assert rp.resolve_requested_provider() == "openai-codex"
@@ -1268,7 +1268,7 @@ def test_resolve_requested_provider_precedence(monkeypatch):
     monkeypatch.setattr(rp, "_get_model_config", lambda: {})
     assert rp.resolve_requested_provider() == "nous"
 
-    monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
+    monkeypatch.delenv("NEWROZ_INFERENCE_PROVIDER", raising=False)
     assert rp.resolve_requested_provider() == "auto"
 
 
@@ -1764,13 +1764,13 @@ def test_named_custom_provider_anthropic_api_mode(monkeypatch):
 
 def test_resolve_provider_custom_returns_custom():
     """resolve_provider('custom') must return 'custom', not 'openrouter'."""
-    from hermes_cli.auth import resolve_provider
+    from newroz_cli.auth import resolve_provider
     assert resolve_provider("custom") == "custom"
 
 
 def test_resolve_provider_openrouter_unchanged():
     """resolve_provider('openrouter') must still return 'openrouter'."""
-    from hermes_cli.auth import resolve_provider
+    from newroz_cli.auth import resolve_provider
     assert resolve_provider("openrouter") == "openrouter"
 
 
@@ -1781,7 +1781,7 @@ def test_resolve_provider_lmstudio_returns_lmstudio(monkeypatch):
     'custom' before the PROVIDER_REGISTRY lookup, bypassing the first-class
     LM Studio provider entirely at runtime.
     """
-    from hermes_cli.auth import resolve_provider
+    from newroz_cli.auth import resolve_provider
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     assert resolve_provider("lmstudio") == "lmstudio"
@@ -1840,7 +1840,7 @@ def test_custom_provider_no_key_gets_placeholder(monkeypatch):
 
 def test_auto_detected_nous_auth_failure_falls_through_to_openrouter(monkeypatch):
     """When auto-detect picks Nous but credentials are revoked, fall through to OpenRouter."""
-    from hermes_cli.auth import AuthError
+    from newroz_cli.auth import AuthError
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-or-key")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -1871,7 +1871,7 @@ def test_auto_detected_nous_auth_failure_falls_through_to_openrouter(monkeypatch
 
 def test_auto_detected_codex_auth_failure_falls_through_to_openrouter(monkeypatch):
     """When auto-detect picks Codex but credentials are revoked, fall through to OpenRouter."""
-    from hermes_cli.auth import AuthError
+    from newroz_cli.auth import AuthError
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-or-key")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -1898,7 +1898,7 @@ def test_auto_detected_codex_auth_failure_falls_through_to_openrouter(monkeypatc
 
 def test_explicit_nous_auth_failure_still_raises(monkeypatch):
     """When user explicitly requests Nous and auth fails, the error should propagate."""
-    from hermes_cli.auth import AuthError
+    from newroz_cli.auth import AuthError
     import pytest
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-or-key")
@@ -2256,9 +2256,9 @@ class TestAzureFoundryResolution:
 
     def test_azure_foundry_missing_api_key_raises(self, monkeypatch):
         monkeypatch.delenv("AZURE_FOUNDRY_API_KEY", raising=False)
-        # `get_env_value` reads from ~/.hermes/.env — mock it to return None
+        # `get_env_value` reads from ~/.newroz/.env — mock it to return None
         # so the resolver can't find a key there either.
-        import hermes_cli.config as cfg_mod
+        import newroz_cli.config as cfg_mod
         monkeypatch.setattr(cfg_mod, "get_env_value", lambda k: None)
         monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "azure-foundry")
         monkeypatch.setattr(rp, "_get_model_config", lambda: self._make_cfg(
@@ -2534,7 +2534,7 @@ class TestProviderEntryApiKeyEnvAlias:
     use `api_key_env`) resolve correctly."""
 
     def test_snake_case_api_key_env_normalizes_to_key_env(self):
-        from hermes_cli.config import _normalize_custom_provider_entry
+        from newroz_cli.config import _normalize_custom_provider_entry
         entry = {
             "name": "vendor",
             "base_url": "https://api.vendor.example.com/v1",
@@ -2545,7 +2545,7 @@ class TestProviderEntryApiKeyEnvAlias:
         assert normalized.get("key_env") == "MY_VENDOR_KEY"
 
     def test_camel_case_api_key_env_normalizes_to_key_env(self):
-        from hermes_cli.config import _normalize_custom_provider_entry
+        from newroz_cli.config import _normalize_custom_provider_entry
         entry = {
             "name": "vendor",
             "base_url": "https://api.vendor.example.com/v1",
@@ -2557,7 +2557,7 @@ class TestProviderEntryApiKeyEnvAlias:
 
     def test_key_env_wins_if_both_forms_present(self):
         """If both key_env and api_key_env are set, the canonical key_env wins."""
-        from hermes_cli.config import _normalize_custom_provider_entry
+        from newroz_cli.config import _normalize_custom_provider_entry
         entry = {
             "name": "vendor",
             "base_url": "https://api.vendor.example.com/v1",
@@ -2571,11 +2571,11 @@ class TestProviderEntryApiKeyEnvAlias:
     def test_valid_fields_set_lists_key_env(self):
         """The _VALID_CUSTOM_PROVIDER_FIELDS documentation set must include
         key_env so the set stays in sync with what the runtime actually reads."""
-        from hermes_cli.config import _VALID_CUSTOM_PROVIDER_FIELDS
+        from newroz_cli.config import _VALID_CUSTOM_PROVIDER_FIELDS
         assert "key_env" in _VALID_CUSTOM_PROVIDER_FIELDS
 
     def test_extra_body_is_supported_schema(self):
-        from hermes_cli.config import (
+        from newroz_cli.config import (
             _VALID_CUSTOM_PROVIDER_FIELDS,
             _normalize_custom_provider_entry,
         )
@@ -2678,7 +2678,7 @@ class TestTencentTokenhubRuntimeResolution:
 
 def test_minimax_oauth_runtime_returns_anthropic_messages_mode(monkeypatch):
     """resolve_runtime_provider for minimax-oauth must return api_mode='anthropic_messages'."""
-    from hermes_cli.auth import MINIMAX_OAUTH_GLOBAL_INFERENCE
+    from newroz_cli.auth import MINIMAX_OAUTH_GLOBAL_INFERENCE
 
     monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "minimax-oauth")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"provider": "minimax-oauth"})
@@ -2701,7 +2701,7 @@ def test_minimax_oauth_runtime_returns_anthropic_messages_mode(monkeypatch):
         "source": "oauth",
     }
 
-    import hermes_cli.auth as auth_mod
+    import newroz_cli.auth as auth_mod
     monkeypatch.setattr(auth_mod, "resolve_minimax_oauth_runtime_credentials",
                         lambda **k: fake_creds)
 
@@ -2714,7 +2714,7 @@ def test_minimax_oauth_runtime_returns_anthropic_messages_mode(monkeypatch):
 
 def test_minimax_oauth_runtime_uses_inference_base_url(monkeypatch):
     """Base URL returned by resolve_runtime_provider should match the OAuth credentials."""
-    from hermes_cli.auth import MINIMAX_OAUTH_CN_INFERENCE
+    from newroz_cli.auth import MINIMAX_OAUTH_CN_INFERENCE
 
     monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "minimax-oauth")
     monkeypatch.setattr(rp, "_get_model_config", lambda: {"provider": "minimax-oauth"})
@@ -2729,7 +2729,7 @@ def test_minimax_oauth_runtime_uses_inference_base_url(monkeypatch):
         "source": "oauth",
     }
 
-    import hermes_cli.auth as auth_mod
+    import newroz_cli.auth as auth_mod
     monkeypatch.setattr(auth_mod, "resolve_minimax_oauth_runtime_credentials",
                         lambda **k: fake_creds)
 
@@ -3246,7 +3246,7 @@ def test_named_custom_provider_with_extra_headers(monkeypatch):
                     "api_key": "custom-host-key",
                     "extra_headers": {
                         "X-Custom-Auth": "auth-123",
-                        "X-Client-Name": "hermes-agent",
+                        "X-Client-Name": "newroz-agent",
                     },
                 }
             ]
@@ -3260,7 +3260,7 @@ def test_named_custom_provider_with_extra_headers(monkeypatch):
     assert resolved["api_key"] == "custom-host-key"
     assert resolved["extra_headers"] == {
         "X-Custom-Auth": "auth-123",
-        "X-Client-Name": "hermes-agent",
+        "X-Client-Name": "newroz-agent",
     }
 
 

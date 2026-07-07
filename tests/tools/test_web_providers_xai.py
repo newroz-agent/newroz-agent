@@ -74,7 +74,7 @@ class TestXAIProviderIdentity:
 
 class TestXAIProviderIsAvailable:
     """``is_available()`` MUST be cheap — no network, no token refresh, no
-    auth-store lock. It runs on every ``hermes tools`` repaint and at
+    auth-store lock. It runs on every ``newroz tools`` repaint and at
     tool-registration time, so any I/O regression here would surface as
     visible CLI latency.
     """
@@ -85,10 +85,10 @@ class TestXAIProviderIsAvailable:
         assert XAIWebSearchProvider().is_available() is True
 
     def test_available_via_auth_store(self, monkeypatch, tmp_path):
-        """Cheap probe should detect xai-oauth tokens in ~/.hermes/auth.json
+        """Cheap probe should detect xai-oauth tokens in ~/.newroz/auth.json
         without invoking the resolver (which can trigger refresh)."""
         monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         auth_path = tmp_path / "auth.json"
         auth_path.write_text(json.dumps({
             "version": 1,
@@ -102,14 +102,14 @@ class TestXAIProviderIsAvailable:
 
     def test_unavailable_when_no_env_and_no_auth_store(self, monkeypatch, tmp_path):
         monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         # No auth.json written.
         from plugins.web.xai.provider import XAIWebSearchProvider
         assert XAIWebSearchProvider().is_available() is False
 
     def test_unavailable_when_auth_store_has_empty_token(self, monkeypatch, tmp_path):
         monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         auth_path = tmp_path / "auth.json"
         auth_path.write_text(json.dumps({
             "version": 1,
@@ -122,7 +122,7 @@ class TestXAIProviderIsAvailable:
     def test_unavailable_when_auth_store_corrupted(self, monkeypatch, tmp_path):
         """A malformed auth.json must not crash availability scans."""
         monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         (tmp_path / "auth.json").write_text("not json at all }{")
 
         from plugins.web.xai.provider import XAIWebSearchProvider
@@ -672,12 +672,12 @@ class TestXAIBackendWiring:
         from tools import web_tools
 
         monkeypatch.delenv("XAI_API_KEY", raising=False)
-        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
         assert web_tools._is_backend_available("xai") is False
 
     def test_is_backend_available_does_not_call_resolver(self, monkeypatch):
         """Regression guard — `_is_backend_available` runs on every web_search
-        dispatch and every `hermes tools` repaint. It must not invoke the
+        dispatch and every `newroz tools` repaint. It must not invoke the
         OAuth resolver (which can trigger a network refresh)."""
         from tools import web_tools
 
@@ -696,7 +696,7 @@ class TestXAIBackendWiring:
     def test_xai_not_in_legacy_backend_candidate_chain(self, monkeypatch):
         """The hardcoded ``backend_candidates`` tuple in ``_get_backend()``
         does not include xAI — by design, since the no-config legacy
-        chain is for users who set env vars but never ran ``hermes tools``,
+        chain is for users who set env vars but never ran ``newroz tools``,
         and we don't want a stray ``XAI_API_KEY`` (perhaps set for chat
         inference) to silently re-route web_search through Grok.
 
@@ -727,8 +727,8 @@ class TestXAIBackendWiring:
 
 class TestXAIProviderOAuthPath:
     """Verifies the provider works when credentials come from the OAuth
-    runtime resolver (``hermes auth`` sign-in) rather than an env-var key.
-    Patches at the ``hermes_cli.runtime_provider.resolve_runtime_provider``
+    runtime resolver (``newroz auth`` sign-in) rather than an env-var key.
+    Patches at the ``newroz_cli.runtime_provider.resolve_runtime_provider``
     boundary so the full ``tools.xai_http.resolve_xai_http_credentials``
     chain is exercised end-to-end.
     """
@@ -744,7 +744,7 @@ class TestXAIProviderOAuthPath:
             "api_mode": "codex_responses",
             "base_url": "https://api.x.ai/v1",
             "api_key": "ya29.fake-oauth-access-token",
-            "source": "hermes-auth-store",
+            "source": "newroz-auth-store",
         }
 
         captured: dict = {}
@@ -755,7 +755,7 @@ class TestXAIProviderOAuthPath:
             return _mock_resp(_responses_payload(json.dumps({"results": []})))
 
         with patch(
-            "hermes_cli.runtime_provider.resolve_runtime_provider",
+            "newroz_cli.runtime_provider.resolve_runtime_provider",
             return_value=oauth_runtime,
         ), patch.object(xai_provider, "_load_xai_web_config", return_value={}), \
              patch("httpx.post", side_effect=fake_post):

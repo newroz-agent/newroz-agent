@@ -1,7 +1,7 @@
 """Tests for PluginContext.register_transcription_provider().
 
 Exercises the plugin context hook end-to-end: drops a fake plugin into
-``$HERMES_HOME/plugins/``, runs ``PluginManager().discover_and_load()``,
+``$NEWROZ_HOME/plugins/``, runs ``PluginManager().discover_and_load()``,
 and asserts the registration result.
 
 Mirrors the shape of ``test_plugins_tts_registration.py`` (companion
@@ -40,8 +40,8 @@ def _write_plugin(
     return plugin_dir
 
 
-def _enable(hermes_home: Path, name: str) -> None:
-    cfg_path = hermes_home / "config.yaml"
+def _enable(newroz_home: Path, name: str) -> None:
+    cfg_path = newroz_home / "config.yaml"
     cfg: dict = {}
     if cfg_path.exists():
         try:
@@ -57,14 +57,14 @@ def _enable(hermes_home: Path, name: str) -> None:
 
 class TestRegisterTranscriptionProvider:
     def test_accepts_valid_provider(self):
-        from hermes_cli.plugins import PluginManager
+        from newroz_cli.plugins import PluginManager
 
         from agent import transcription_registry
         transcription_registry._reset_for_tests()
 
-        hermes_home = Path(os.environ["HERMES_HOME"])
+        newroz_home = Path(os.environ["NEWROZ_HOME"])
         _write_plugin(
-            hermes_home / "plugins",
+            newroz_home / "plugins",
             "my-stt-plugin",
             register_body=(
                 "from agent.transcription_provider import TranscriptionProvider\n"
@@ -76,7 +76,7 @@ class TestRegisterTranscriptionProvider:
                 "    ctx.register_transcription_provider(P())"
             ),
         )
-        _enable(hermes_home, "my-stt-plugin")
+        _enable(newroz_home, "my-stt-plugin")
 
         mgr = PluginManager()
         mgr.discover_and_load()
@@ -89,18 +89,18 @@ class TestRegisterTranscriptionProvider:
         transcription_registry._reset_for_tests()
 
     def test_rejects_non_provider(self, caplog):
-        from hermes_cli.plugins import PluginManager
+        from newroz_cli.plugins import PluginManager
 
         from agent import transcription_registry
         transcription_registry._reset_for_tests()
 
-        hermes_home = Path(os.environ["HERMES_HOME"])
+        newroz_home = Path(os.environ["NEWROZ_HOME"])
         _write_plugin(
-            hermes_home / "plugins",
+            newroz_home / "plugins",
             "bad-stt-plugin",
             register_body="ctx.register_transcription_provider('not a provider')",
         )
-        _enable(hermes_home, "bad-stt-plugin")
+        _enable(newroz_home, "bad-stt-plugin")
 
         with caplog.at_level("WARNING"):
             mgr = PluginManager()
@@ -114,14 +114,14 @@ class TestRegisterTranscriptionProvider:
         transcription_registry._reset_for_tests()
 
     def test_rejects_builtin_shadow(self, caplog):
-        from hermes_cli.plugins import PluginManager
+        from newroz_cli.plugins import PluginManager
 
         from agent import transcription_registry
         transcription_registry._reset_for_tests()
 
-        hermes_home = Path(os.environ["HERMES_HOME"])
+        newroz_home = Path(os.environ["NEWROZ_HOME"])
         _write_plugin(
-            hermes_home / "plugins",
+            newroz_home / "plugins",
             "shadow-stt-plugin",
             register_body=(
                 "from agent.transcription_provider import TranscriptionProvider\n"
@@ -133,7 +133,7 @@ class TestRegisterTranscriptionProvider:
                 "    ctx.register_transcription_provider(P())"
             ),
         )
-        _enable(hermes_home, "shadow-stt-plugin")
+        _enable(newroz_home, "shadow-stt-plugin")
 
         with caplog.at_level("WARNING"):
             mgr = PluginManager()

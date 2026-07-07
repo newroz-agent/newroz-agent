@@ -4,10 +4,10 @@ from unittest.mock import patch
 
 
 class TestGetDefaultModelForProvider:
-    """Unit tests for hermes_cli.models.get_default_model_for_provider."""
+    """Unit tests for newroz_cli.models.get_default_model_for_provider."""
 
     def test_known_provider_returns_first_model(self):
-        from hermes_cli.models import get_default_model_for_provider
+        from newroz_cli.models import get_default_model_for_provider
         result = get_default_model_for_provider("openai-codex")
         # Should return first model from _PROVIDER_MODELS["openai-codex"]
         assert result
@@ -15,18 +15,18 @@ class TestGetDefaultModelForProvider:
 
     def test_openrouter_returns_empty(self):
         """OpenRouter uses dynamic model fetch, no static catalog entry."""
-        from hermes_cli.models import get_default_model_for_provider
+        from newroz_cli.models import get_default_model_for_provider
         # OpenRouter is not in _PROVIDER_MODELS — it uses live fetching
         result = get_default_model_for_provider("openrouter")
         assert result == ""
 
     def test_unknown_provider_returns_empty(self):
-        from hermes_cli.models import get_default_model_for_provider
+        from newroz_cli.models import get_default_model_for_provider
         assert get_default_model_for_provider("nonexistent-provider") == ""
 
     def test_custom_provider_returns_empty(self):
         """Custom provider has no model catalog — should return empty."""
-        from hermes_cli.models import get_default_model_for_provider
+        from newroz_cli.models import get_default_model_for_provider
         # Custom providers don't have entries in _PROVIDER_MODELS
         assert get_default_model_for_provider("some-random-custom") == ""
 
@@ -37,7 +37,7 @@ class TestGetDefaultModelForProvider:
         must NOT escalate to it — otherwise an unconfigured profile silently
         bills the most expensive model. Regression for the billing footgun.
         """
-        from hermes_cli.models import (
+        from newroz_cli.models import (
             _PROVIDER_MODELS,
             _PROVIDER_SILENT_DEFAULT_OVERRIDES,
             get_default_model_for_provider,
@@ -60,7 +60,7 @@ class TestGetDefaultModelForProvider:
         rather than returning a stale/absent id."""
         from unittest.mock import patch
 
-        from hermes_cli import models as models_mod
+        from newroz_cli import models as models_mod
 
         with patch.dict(
             models_mod._PROVIDER_SILENT_DEFAULT_OVERRIDES,

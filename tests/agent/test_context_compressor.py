@@ -10,7 +10,7 @@ from agent.context_compressor import (
     SUMMARY_PREFIX,
     COMPRESSED_SUMMARY_METADATA_KEY,
 )
-from hermes_state import SessionDB
+from newroz_state import SessionDB
 
 
 @pytest.fixture()
@@ -2881,13 +2881,13 @@ class TestTruncateToolCallArgsJson:
         import json as _json
         shrink = self._helper()
         original = _json.dumps({
-            "path": "~/.hermes/skills/shopping/browser-setup-notes.md",
+            "path": "~/.newroz/skills/shopping/browser-setup-notes.md",
             "content": "# Shopping Browser Setup Notes\n\n" + "abc " * 400,
         })
         assert len(original) > 500
         shrunk = shrink(original)
         parsed = _json.loads(shrunk)  # must not raise
-        assert parsed["path"] == "~/.hermes/skills/shopping/browser-setup-notes.md"
+        assert parsed["path"] == "~/.newroz/skills/shopping/browser-setup-notes.md"
         assert parsed["content"].endswith("...[truncated]")
         assert len(shrunk) < len(original)
 
@@ -2964,7 +2964,7 @@ class TestTruncateToolCallArgsJson:
             )
         huge_content = "# Shopping Browser Setup Notes\n\n## Overview\n" + "x " * 400
         args_payload = _json.dumps({
-            "path": "~/.hermes/skills/shopping/browser-setup-notes.md",
+            "path": "~/.newroz/skills/shopping/browser-setup-notes.md",
             "content": huge_content,
         })
         assert len(args_payload) > 500  # triggers the Pass-3 shrink
@@ -2983,7 +2983,7 @@ class TestTruncateToolCallArgsJson:
         shrunk = result[1]["tool_calls"][0]["function"]["arguments"]
         # Must parse — otherwise downstream provider returns 400
         parsed = _json.loads(shrunk)
-        assert parsed["path"] == "~/.hermes/skills/shopping/browser-setup-notes.md"
+        assert parsed["path"] == "~/.newroz/skills/shopping/browser-setup-notes.md"
         assert parsed["content"].endswith("...[truncated]")
 
 

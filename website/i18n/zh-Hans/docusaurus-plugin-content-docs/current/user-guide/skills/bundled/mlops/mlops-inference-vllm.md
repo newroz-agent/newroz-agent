@@ -26,7 +26,7 @@ vLLM：高吞吐量 LLM 服务、OpenAI API、量化。
 ## 参考：完整 SKILL.md
 
 :::info
-以下是 Hermes 在触发此 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
+以下是 Newroz 在触发此 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
 :::
 
 # vLLM - 高性能 LLM 服务

@@ -10,7 +10,7 @@ Covers:
 
 from unittest.mock import patch
 
-from hermes_cli.model_switch import parse_model_flags, resolve_persist_behavior
+from newroz_cli.model_switch import parse_model_flags, resolve_persist_behavior
 
 
 # ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ class _config:
 
     def __enter__(self):
         self._patch = patch(
-            "hermes_cli.config.load_config",
+            "newroz_cli.config.load_config",
             return_value=self.cfg,
         )
         # resolve_persist_behavior imports load_config lazily inside the

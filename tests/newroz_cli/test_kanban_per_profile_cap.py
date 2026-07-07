@@ -16,15 +16,15 @@ import pytest
 
 @pytest.fixture()
 def isolated_kanban_home_with_profiles(monkeypatch):
-    """Spin up a fresh HERMES_HOME with kanban DB + alpha/beta profiles."""
+    """Spin up a fresh NEWROZ_HOME with kanban DB + alpha/beta profiles."""
     test_home = tempfile.mkdtemp(prefix="kanban_per_profile_cap_test_")
     for prof in ("alpha", "beta", "default"):
         os.makedirs(os.path.join(test_home, "profiles", prof), exist_ok=True)
-    monkeypatch.setenv("HERMES_HOME", test_home)
+    monkeypatch.setenv("NEWROZ_HOME", test_home)
     for mod in list(sys.modules.keys()):
-        if mod.startswith("hermes_cli") or mod.startswith("hermes_state") or mod == "hermes_constants":
+        if mod.startswith("newroz_cli") or mod.startswith("newroz_state") or mod == "newroz_constants":
             del sys.modules[mod]
-    from hermes_cli import kanban_db
+    from newroz_cli import kanban_db
     yield kanban_db
 
 
@@ -161,7 +161,7 @@ def test_dispatch_result_has_skipped_per_profile_capped_field():
     """Schema-level invariant: DispatchResult exposes the
     skipped_per_profile_capped field as a list of
     (task_id, assignee, current_running) tuples."""
-    from hermes_cli.kanban_db import DispatchResult
+    from newroz_cli.kanban_db import DispatchResult
     r = DispatchResult()
     assert hasattr(r, "skipped_per_profile_capped")
     assert r.skipped_per_profile_capped == []

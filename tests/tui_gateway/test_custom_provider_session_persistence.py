@@ -9,7 +9,7 @@ or ``_reset_session_agent``, ``_stored_session_runtime_overrides`` fed
 provider="custom" back into ``_make_agent`` →
 ``resolve_runtime_provider(requested="custom")``, which cannot match an entry
 named "mimo-v2.5-pro". Depending on config the rebuild either raised
-"No LLM provider configured. Run `hermes model`..." (resume failed) or
+"No LLM provider configured. Run `newroz model`..." (resume failed) or
 silently resolved placeholder credentials ("no-key-required") against the
 patched-back base_url.
 
@@ -27,7 +27,7 @@ import json
 import types
 from unittest.mock import MagicMock, patch
 
-import hermes_cli.runtime_provider as rp
+import newroz_cli.runtime_provider as rp
 
 MIMO_URL = "https://token-plan-cn.xiaomimimo.com/v1"
 MIMO_KEY = "sk-mimo-entry-key"
@@ -116,7 +116,7 @@ def _make_agent_with_override(override, monkeypatch, config, model_cfg=None):
     patched config, returning the kwargs AIAgent was constructed with."""
     monkeypatch.setattr(rp, "load_config", lambda: config)
     monkeypatch.setattr(rp, "_get_model_config", lambda: model_cfg or {})
-    # Keep credential-pool resolution off the developer's real HERMES home.
+    # Keep credential-pool resolution off the developer's real NEWROZ home.
     monkeypatch.setattr(rp, "_try_resolve_from_custom_pool", lambda *a, **k: None)
 
     fake_cfg = {"agent": {"system_prompt": ""}, "model": {"default": "unused"}}
@@ -245,7 +245,7 @@ class TestBareCustomNoBaseUrlHealsFromConfig:
         # routable identity to recover; caller keeps its fallback behaviour.
         monkeypatch.setattr(rp, "load_config", lambda: {})
         monkeypatch.setattr(rp, "_get_model_config", lambda: {"provider": "custom"})
-        monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
+        monkeypatch.delenv("NEWROZ_INFERENCE_PROVIDER", raising=False)
 
         assert rp.canonical_custom_identity(base_url=None) is None
 
@@ -286,7 +286,7 @@ class TestBareCustomNoBaseUrlHealsFromConfig:
         default instead of the broken OpenRouter route."""
         monkeypatch.setattr(rp, "load_config", lambda: {})
         monkeypatch.setattr(rp, "_get_model_config", lambda: {})
-        monkeypatch.delenv("HERMES_INFERENCE_PROVIDER", raising=False)
+        monkeypatch.delenv("NEWROZ_INFERENCE_PROVIDER", raising=False)
 
         from tui_gateway.server import _stored_session_runtime_overrides
 

@@ -1,4 +1,4 @@
-"""Unit tests for hermes_cli.pty_bridge — PTY spawning + byte forwarding.
+"""Unit tests for newroz_cli.pty_bridge — PTY spawning + byte forwarding.
 
 These tests drive the bridge with minimal POSIX processes (echo, env, sleep,
 printf) to verify it behaves like a PTY you can read/write/resize/close.
@@ -16,7 +16,7 @@ import pytest
 
 pytest.importorskip("ptyprocess", reason="ptyprocess not installed")
 
-from hermes_cli.pty_bridge import PtyBridge, PtyUnavailableError
+from newroz_cli.pty_bridge import PtyBridge, PtyUnavailableError
 
 
 skip_on_windows = pytest.mark.skipif(
@@ -58,10 +58,10 @@ class TestPtyBridgeSpawn:
 @skip_on_windows
 class TestPtyBridgeIO:
     def test_reads_child_stdout(self):
-        bridge = PtyBridge.spawn(["/bin/sh", "-c", "printf hermes-ok"])
+        bridge = PtyBridge.spawn(["/bin/sh", "-c", "printf newroz-ok"])
         try:
-            output = _read_until(bridge, b"hermes-ok")
-            assert b"hermes-ok" in output
+            output = _read_until(bridge, b"newroz-ok")
+            assert b"newroz-ok" in output
         finally:
             bridge.close()
 
@@ -152,25 +152,25 @@ class TestPtyBridgeResize:
 @skip_on_windows
 class TestClampDimension:
     def test_clamps_above_max(self):
-        from hermes_cli.pty_bridge import _MAX_COLS, _MAX_ROWS, _clamp_dimension
+        from newroz_cli.pty_bridge import _MAX_COLS, _MAX_ROWS, _clamp_dimension
 
         assert _clamp_dimension(131072, _MAX_COLS) == _MAX_COLS
         assert _clamp_dimension(131072, _MAX_ROWS) == _MAX_ROWS
 
     def test_floors_at_one(self):
-        from hermes_cli.pty_bridge import _MAX_COLS, _clamp_dimension
+        from newroz_cli.pty_bridge import _MAX_COLS, _clamp_dimension
 
         assert _clamp_dimension(0, _MAX_COLS) == 1
         assert _clamp_dimension(-5, _MAX_COLS) == 1
 
     def test_passes_through_sane_values(self):
-        from hermes_cli.pty_bridge import _MAX_COLS, _clamp_dimension
+        from newroz_cli.pty_bridge import _MAX_COLS, _clamp_dimension
 
         assert _clamp_dimension(80, _MAX_COLS) == 80
         assert _clamp_dimension(2000, _MAX_COLS) == 2000
 
     def test_non_numeric_falls_back_to_min(self):
-        from hermes_cli.pty_bridge import _MAX_COLS, _clamp_dimension
+        from newroz_cli.pty_bridge import _MAX_COLS, _clamp_dimension
 
         assert _clamp_dimension(None, _MAX_COLS) == 1  # type: ignore[arg-type]
         assert _clamp_dimension(float("nan"), _MAX_COLS) == 1  # type: ignore[arg-type]
@@ -180,7 +180,7 @@ class TestClampDimension:
         # The whole point: clamped output must never raise struct.error.
         import struct as _struct
 
-        from hermes_cli.pty_bridge import _MAX_COLS, _MAX_ROWS, _clamp_dimension
+        from newroz_cli.pty_bridge import _MAX_COLS, _MAX_ROWS, _clamp_dimension
 
         cols = _clamp_dimension(131072, _MAX_COLS)
         rows = _clamp_dimension(1, _MAX_ROWS)
@@ -297,8 +297,8 @@ class TestPtyBridgeEnv:
 
     def test_env_is_forwarded(self):
         bridge = PtyBridge.spawn(
-            ["/bin/sh", "-c", "printf %s \"$HERMES_PTY_TEST\""],
-            env={**os.environ, "HERMES_PTY_TEST": "pty-env-works"},
+            ["/bin/sh", "-c", "printf %s \"$NEWROZ_PTY_TEST\""],
+            env={**os.environ, "NEWROZ_PTY_TEST": "pty-env-works"},
         )
         try:
             output = _read_until(bridge, b"pty-env-works")

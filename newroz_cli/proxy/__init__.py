@@ -15,6 +15,6 @@ First-class adapter:
 Future adapters can plug in by implementing ``UpstreamAdapter``.
 """
 
-from hermes_cli.proxy.adapters.base import UpstreamAdapter
+from newroz_cli.proxy.adapters.base import UpstreamAdapter
 
 __all__ = ["UpstreamAdapter"]

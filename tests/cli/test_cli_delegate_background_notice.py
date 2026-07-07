@@ -9,11 +9,11 @@ dispatch so the idle prompt doesn't read as "nothing happened".
 import json
 
 import cli
-from cli import HermesCLI
+from cli import NewrozCLI
 
 
 def _make_cli():
-    cli_obj = HermesCLI.__new__(HermesCLI)
+    cli_obj = NewrozCLI.__new__(NewrozCLI)
     cli_obj._pending_edit_snapshots = {}
     return cli_obj
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from gateway.config import Platform
 from gateway.run import GatewayRunner
-from hermes_cli import kanban_db as kb
+from newroz_cli import kanban_db as kb
 
 
 class RecordingAdapter:
@@ -71,7 +71,7 @@ def _unseen_terminal_events(tid):
 
 def test_kanban_notifier_dedupes_board_slugs_pointing_to_same_db(tmp_path, monkeypatch):
     db_path = tmp_path / "shared-kanban.db"
-    monkeypatch.setenv("HERMES_KANBAN_DB", str(db_path))
+    monkeypatch.setenv("NEWROZ_KANBAN_DB", str(db_path))
     kb.init_db()
     kb.write_board_metadata("alias-a", name="Alias A")
     kb.write_board_metadata("alias-b", name="Alias B")
@@ -90,7 +90,7 @@ def test_kanban_notifier_dedupes_board_slugs_pointing_to_same_db(tmp_path, monke
 
 def test_kanban_notifier_claim_prevents_second_watcher_send(tmp_path, monkeypatch):
     db_path = tmp_path / "single-owner.db"
-    monkeypatch.setenv("HERMES_KANBAN_DB", str(db_path))
+    monkeypatch.setenv("NEWROZ_KANBAN_DB", str(db_path))
     kb.init_db()
 
     tid = _create_completed_subscription()
@@ -107,7 +107,7 @@ def test_kanban_notifier_claim_prevents_second_watcher_send(tmp_path, monkeypatc
 
 def test_kanban_notifier_rewinds_claim_if_adapter_disconnects(tmp_path, monkeypatch):
     db_path = tmp_path / "adapter-disconnect.db"
-    monkeypatch.setenv("HERMES_KANBAN_DB", str(db_path))
+    monkeypatch.setenv("NEWROZ_KANBAN_DB", str(db_path))
     kb.init_db()
     tid = _create_completed_subscription()
 
@@ -122,8 +122,8 @@ def test_kanban_notifier_rewinds_claim_if_adapter_disconnects(tmp_path, monkeypa
 
 
 def test_kanban_db_path_is_test_isolated_from_real_home():
-    hermes_home = Path(kb.kanban_home())
-    production_db = Path.home() / ".hermes" / "kanban.db"
+    newroz_home = Path(kb.kanban_home())
+    production_db = Path.home() / ".newroz" / "kanban.db"
     assert kb.kanban_db_path().resolve() != production_db.resolve()
 
     conn = kb.connect()
@@ -133,7 +133,7 @@ def test_kanban_db_path_is_test_isolated_from_real_home():
     finally:
         conn.close()
 
-    assert kb.kanban_db_path().resolve().is_relative_to(hermes_home.resolve())
+    assert kb.kanban_db_path().resolve().is_relative_to(newroz_home.resolve())
     assert kb.kanban_db_path().resolve() != production_db.resolve()
 
 
@@ -157,7 +157,7 @@ def test_kanban_notifier_rewinds_claim_on_send_exception(tmp_path, monkeypatch):
     still rewind so the event isn't lost when send() raises mid-tick.
     """
     db_path = tmp_path / "send-failure.db"
-    monkeypatch.setenv("HERMES_KANBAN_DB", str(db_path))
+    monkeypatch.setenv("NEWROZ_KANBAN_DB", str(db_path))
     kb.init_db()
     tid = _create_completed_subscription()
 
@@ -186,7 +186,7 @@ def test_notifier_redelivers_same_kind_on_dispatch_cycle(tmp_path, monkeypatch):
     the adapter.
     """
     db_path = tmp_path / "redeliver-cycle.db"
-    monkeypatch.setenv("HERMES_KANBAN_DB", str(db_path))
+    monkeypatch.setenv("NEWROZ_KANBAN_DB", str(db_path))
     kb.init_db()
 
     conn = kb.connect()
@@ -249,7 +249,7 @@ def test_notifier_owning_profile_adapter_no_default_fallback(tmp_path, monkeypat
     makes this test FAIL (the default adapter receives the delivery).
     """
     db_path = tmp_path / "profile-no-fallback.db"
-    monkeypatch.setenv("HERMES_KANBAN_DB", str(db_path))
+    monkeypatch.setenv("NEWROZ_KANBAN_DB", str(db_path))
     kb.init_db()
 
     conn = kb.connect()

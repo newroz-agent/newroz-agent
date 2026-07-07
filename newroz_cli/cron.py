@@ -1,5 +1,5 @@
 """
-Cron subcommand for hermes CLI.
+Cron subcommand for newroz CLI.
 
 Handles standalone cron management commands like list, create, edit,
 pause/resume/run/remove, status, and tick.
@@ -13,14 +13,14 @@ from typing import Iterable, List, Optional
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from hermes_cli.colors import Colors, color
+from newroz_cli.colors import Colors, color
 
 # Gateway-lifecycle command detection lives in ``cron.lifecycle_guard`` so it
 # can be shared across every job-creation path (CLI + the agent's ``cronjob``
 # model tool via ``cron.jobs.create_job``) without a circular import. Re-export
 # ``_contains_gateway_lifecycle_command`` here for back-compat: ``tools/
 # terminal_tool.py`` imports it from this module to hard-block the same
-# commands at execution time when ``_HERMES_GATEWAY=1``.
+# commands at execution time when ``_NEWROZ_GATEWAY=1``.
 from cron.lifecycle_guard import (  # noqa: F401  (re-exported for terminal_tool)
     contains_gateway_lifecycle_command as _contains_gateway_lifecycle_command,
 )
@@ -82,7 +82,7 @@ def _warn_if_gateway_not_running() -> None:
         if _active_cron_provider_name() != "builtin":
             return
 
-        from hermes_cli.gateway import find_gateway_pids
+        from newroz_cli.gateway import find_gateway_pids
 
         if find_gateway_pids():
             return
@@ -91,9 +91,9 @@ def _warn_if_gateway_not_running() -> None:
         return
 
     print(color("  ⚠  Gateway is not running — jobs won't fire automatically.", Colors.YELLOW))
-    print(color("     Start it with: hermes gateway install", Colors.DIM))
-    print(color("                    sudo hermes gateway install --system  # Linux servers", Colors.DIM))
-    print(color("     Check status:  hermes cron status", Colors.DIM))
+    print(color("     Start it with: newroz gateway install", Colors.DIM))
+    print(color("                    sudo newroz gateway install --system  # Linux servers", Colors.DIM))
+    print(color("     Check status:  newroz cron status", Colors.DIM))
 
 
 def cron_list(show_all: bool = False):
@@ -104,7 +104,7 @@ def cron_list(show_all: bool = False):
 
     if not jobs:
         print(color("No scheduled jobs.", Colors.DIM))
-        print(color("Create one with 'hermes cron create ...' or the /cron command in chat.", Colors.DIM))
+        print(color("Create one with 'newroz cron create ...' or the /cron command in chat.", Colors.DIM))
         return
 
     print()
@@ -192,7 +192,7 @@ def cron_tick():
 def cron_status():
     """Show cron execution status."""
     from cron.jobs import list_jobs
-    from hermes_cli.gateway import find_gateway_pids
+    from newroz_cli.gateway import find_gateway_pids
 
     print()
 
@@ -248,7 +248,7 @@ def cron_status():
                 Colors.YELLOW,
             ))
             print(f"  PID: {', '.join(map(str, pids))}")
-            print("  Cron jobs may NOT be firing. Restart: hermes gateway restart")
+            print("  Cron jobs may NOT be firing. Restart: newroz gateway restart")
         elif hb_age is not None and ok_age is not None and ok_age > STALE_AFTER:
             # Loop is alive (fresh heartbeat) but no tick has SUCCEEDED in a
             # long time → ticks are failing every iteration.
@@ -268,9 +268,9 @@ def cron_status():
         print(color("✗ Gateway is not running — cron jobs will NOT fire", Colors.RED))
         print()
         print("  To enable automatic execution:")
-        print("    hermes gateway install    # Install as a user service")
-        print("    sudo hermes gateway install --system  # Linux servers: boot-time system service")
-        print("    hermes gateway            # Or run in foreground")
+        print("    newroz gateway install    # Install as a user service")
+        print("    sudo newroz gateway install --system  # Linux servers: boot-time system service")
+        print("    newroz gateway            # Or run in foreground")
 
     print()
 
@@ -452,5 +452,5 @@ def cron_command(args):
         return _job_action("remove", args.job_id, "Removed")
 
     print(f"Unknown cron command: {subcmd}")
-    print("Usage: hermes cron [list|create|edit|pause|resume|run|remove|status|tick]")
+    print("Usage: newroz cron [list|create|edit|pause|resume|run|remove|status|tick]")
     sys.exit(1)

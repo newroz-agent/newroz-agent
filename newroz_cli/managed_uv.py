@@ -1,10 +1,10 @@
 """Managed uv — one path, no guessing.
 
-Hermes owns its own uv binary at ``$HERMES_HOME/bin/uv`` (or ``uv.exe`` on
+Newroz owns its own uv binary at ``$NEWROZ_HOME/bin/uv`` (or ``uv.exe`` on
 Windows).  Every code path that needs uv resolves it from that single location.
 If the binary is missing, ``ensure_uv()`` bootstraps it via the official
 standalone installer with ``UV_UNMANAGED_INSTALL`` / ``UV_INSTALL_DIR`` pointed
-at ``$HERMES_HOME/bin`` so the installer writes directly there — no PATH
+at ``$NEWROZ_HOME/bin`` so the installer writes directly there — no PATH
 probing, no conda guards, no multi-location resolution chains.
 """
 
@@ -19,7 +19,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from hermes_constants import get_hermes_home
+from newroz_constants import get_newroz_home
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +28,13 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def managed_uv_path() -> Path:
-    """Return the path where Hermes keeps *its* uv binary.
+    """Return the path where Newroz keeps *its* uv binary.
 
-    ``$HERMES_HOME/bin/uv`` on POSIX, ``$HERMES_HOME\\bin\\uv.exe`` on
+    ``$NEWROZ_HOME/bin/uv`` on POSIX, ``$NEWROZ_HOME\\bin\\uv.exe`` on
     Windows.  The directory may not exist yet — callers should use
     ``ensure_uv()`` to bootstrap it.
     """
-    home = get_hermes_home()
+    home = get_newroz_home()
     if platform.system() == "Windows":
         return home / "bin" / "uv.exe"
     return home / "bin" / "uv"
@@ -55,8 +55,8 @@ class _UvResult(str):
     """``ensure_uv()`` return value that survives an update boundary.
 
     ``ensure_uv()``'s arity has flipped between a single path string and a
-    ``(path, fresh_bootstrap)`` tuple across releases. ``hermes update`` runs
-    the call site from the *old*, already-imported ``hermes_cli.main`` against
+    ``(path, fresh_bootstrap)`` tuple across releases. ``newroz update`` runs
+    the call site from the *old*, already-imported ``newroz_cli.main`` against
     this *freshly pulled* module, so the two can disagree on how many values
     ``ensure_uv()`` returns. An install parked on a 2-tuple release runs
     ``uv_bin, fresh_bootstrap = ensure_uv()`` against the single-value module
@@ -158,7 +158,7 @@ def ensure_uv():
 def update_managed_uv() -> Optional[str]:
     """Run ``uv self update`` on the managed uv binary.
 
-    Call this during ``hermes update`` so the managed copy stays current.
+    Call this during ``newroz update`` so the managed copy stays current.
     Returns the managed path on success, ``None`` if uv isn't available or
     the self-update fails (non-fatal — the old version still works).
     """
@@ -196,7 +196,7 @@ def _install_uv(target: Path) -> None:
 
     Uses ``UV_UNMANAGED_INSTALL`` (POSIX) or ``UV_INSTALL_DIR`` (Windows)
     so the astral installer writes the binary directly into
-    ``$HERMES_HOME/bin/`` instead of ``~/.local/bin/``.
+    ``$NEWROZ_HOME/bin/`` instead of ``~/.local/bin/``.
     """
     system = platform.system()
     env = {

@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.tools_config platform tool persistence."""
+"""Tests for newroz_cli.tools_config platform tool persistence."""
 
 import logging
 from types import SimpleNamespace
@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli.nous_account import NousPortalAccountInfo
-from hermes_cli.tools_config import (
+from newroz_cli.nous_account import NousPortalAccountInfo
+from newroz_cli.tools_config import (
     _DEFAULT_OFF_TOOLSETS,
     _apply_toolset_change,
     _checklist_toolset_keys,
@@ -61,29 +61,29 @@ def test_agent_disabled_toolsets_with_explicit_platform_config():
 
 def test_all_invalid_platform_toolsets_logs_runtime_warning(caplog):
     """#38798: an explicit platform config whose toolset names are all invalid
-    (e.g. 'hermes' instead of 'hermes-cli') must warn at resolve time so an
+    (e.g. 'newroz' instead of 'newroz-cli') must warn at resolve time so an
     already-corrupted config is caught at runtime, not just during migration."""
-    import hermes_cli.tools_config as _tc
+    import newroz_cli.tools_config as _tc
     # The runtime warning fires once per platform per process; clear the guard
     # so this test is deterministic regardless of prior resolutions.
     _tc._warned_invalid_platform_toolsets.discard("cli")
-    config = {"platform_toolsets": {"cli": ["hermes"]}}
+    config = {"platform_toolsets": {"cli": ["newroz"]}}
 
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.tools_config"):
+    with caplog.at_level(logging.WARNING, logger="newroz_cli.tools_config"):
         _get_platform_tools(config, "cli")
 
     warnings = [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING]
-    assert any("#38798" in m and "hermes" in m for m in warnings), warnings
+    assert any("#38798" in m and "newroz" in m for m in warnings), warnings
 
 
 def test_invalid_platform_toolsets_runtime_warning_fires_once(caplog):
     """The runtime warning is deduped per platform — a persistently-corrupt
     config must not spam an identical warning on every tool resolution."""
-    import hermes_cli.tools_config as _tc
+    import newroz_cli.tools_config as _tc
     _tc._warned_invalid_platform_toolsets.discard("cli")
-    config = {"platform_toolsets": {"cli": ["hermes"]}}
+    config = {"platform_toolsets": {"cli": ["newroz"]}}
 
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.tools_config"):
+    with caplog.at_level(logging.WARNING, logger="newroz_cli.tools_config"):
         _get_platform_tools(config, "cli")
         _get_platform_tools(config, "cli")
         _get_platform_tools(config, "cli")
@@ -94,9 +94,9 @@ def test_invalid_platform_toolsets_runtime_warning_fires_once(caplog):
 
 def test_valid_platform_toolsets_no_runtime_warning(caplog):
     """A correctly-configured platform must not emit the #38798 warning."""
-    config = {"platform_toolsets": {"cli": ["hermes-cli"]}}
+    config = {"platform_toolsets": {"cli": ["newroz-cli"]}}
 
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.tools_config"):
+    with caplog.at_level(logging.WARNING, logger="newroz_cli.tools_config"):
         _get_platform_tools(config, "cli")
 
     assert not any("#38798" in r.getMessage() for r in caplog.records)
@@ -106,9 +106,9 @@ def test_partially_valid_platform_toolsets_no_runtime_warning(caplog):
     """When at least one configured toolset is valid, tools still resolve, so
     the runtime zero-tools warning must not fire (the migration-time check still
     flags the individual bad name)."""
-    config = {"platform_toolsets": {"cli": ["hermes-cli", "bogus"]}}
+    config = {"platform_toolsets": {"cli": ["newroz-cli", "bogus"]}}
 
-    with caplog.at_level(logging.WARNING, logger="hermes_cli.tools_config"):
+    with caplog.at_level(logging.WARNING, logger="newroz_cli.tools_config"):
         _get_platform_tools(config, "cli")
 
     assert not any("#38798" in r.getMessage() for r in caplog.records)
@@ -229,13 +229,13 @@ def test_get_platform_tools_x_search_auto_enabled_when_xai_oauth_present(monkeyp
     tokens are present, mirroring the HASS_TOKEN → homeassistant rule.
 
     The user already authenticated via SuperGrok OAuth; they shouldn't have
-    to also click through `hermes tools` → X (Twitter) Search to flip the
+    to also click through `newroz tools` → X (Twitter) Search to flip the
     toolset on. Tool's check_fn still gates schema registration if creds
     later go missing.
     """
     monkeypatch.delenv("XAI_API_KEY", raising=False)
     monkeypatch.setattr(
-        "hermes_cli.tools_config._xai_credentials_present", lambda: True
+        "newroz_cli.tools_config._xai_credentials_present", lambda: True
     )
 
     for plat in ("cli", "cron", "telegram"):
@@ -257,7 +257,7 @@ def test_get_platform_tools_x_search_off_when_no_xai_credentials(monkeypatch):
     "don't ship the schema to users who can't use it" default."""
     monkeypatch.delenv("XAI_API_KEY", raising=False)
     monkeypatch.setattr(
-        "hermes_cli.tools_config._xai_credentials_present", lambda: False
+        "newroz_cli.tools_config._xai_credentials_present", lambda: False
     )
 
     cli_enabled = _get_platform_tools({}, "cli")
@@ -265,34 +265,34 @@ def test_get_platform_tools_x_search_off_when_no_xai_credentials(monkeypatch):
 
 
 def test_get_platform_tools_x_search_respects_explicit_config(monkeypatch):
-    """Once the user has saved an explicit toolset list via `hermes tools`,
+    """Once the user has saved an explicit toolset list via `newroz tools`,
     that list is authoritative — x_search auto-enable does NOT fire even
     when xAI creds exist. The saved list represents deliberate choices."""
     monkeypatch.delenv("XAI_API_KEY", raising=False)
     monkeypatch.setattr(
-        "hermes_cli.tools_config._xai_credentials_present", lambda: True
+        "newroz_cli.tools_config._xai_credentials_present", lambda: True
     )
 
-    # User explicitly opted into spotify but not x_search via `hermes tools`.
-    config = {"platform_toolsets": {"cli": ["hermes-cli", "spotify"]}}
+    # User explicitly opted into spotify but not x_search via `newroz tools`.
+    config = {"platform_toolsets": {"cli": ["newroz-cli", "spotify"]}}
     enabled = _get_platform_tools(config, "cli")
     assert "x_search" not in enabled
     assert "spotify" in enabled
 
 
 def test_get_platform_tools_expands_composite_when_mixed_with_configurable():
-    """``[hermes-cli, spotify]`` (composite + configurable) must keep the full
-    ``hermes-cli`` toolset alongside the explicit Spotify opt-in. The
-    has_explicit_config branch used to drop ``hermes-cli`` on the floor,
+    """``[newroz-cli, spotify]`` (composite + configurable) must keep the full
+    ``newroz-cli`` toolset alongside the explicit Spotify opt-in. The
+    has_explicit_config branch used to drop ``newroz-cli`` on the floor,
     leaving sessions with only ``{spotify, kanban}``."""
-    config = {"platform_toolsets": {"cli": ["hermes-cli", "spotify"]}}
+    config = {"platform_toolsets": {"cli": ["newroz-cli", "spotify"]}}
 
     enabled = _get_platform_tools(config, "cli", include_default_mcp_servers=False)
 
     # Native tools must reappear.
     for ts in ("terminal", "file", "web", "browser", "memory", "delegation",
                "code_execution", "todo", "session_search", "skills"):
-        assert ts in enabled, f"{ts} should be enabled when hermes-cli is listed"
+        assert ts in enabled, f"{ts} should be enabled when newroz-cli is listed"
     # User explicitly opted into Spotify — must survive _DEFAULT_OFF_TOOLSETS subtraction.
     assert "spotify" in enabled
 
@@ -302,7 +302,7 @@ def test_get_platform_tools_composite_only_unchanged():
     else-branch path and produce the full toolset — guards against the new
     code accidentally hijacking the composite-only case."""
     composite_only = _get_platform_tools(
-        {"platform_toolsets": {"cli": ["hermes-cli"]}},
+        {"platform_toolsets": {"cli": ["newroz-cli"]}},
         "cli",
         include_default_mcp_servers=False,
     )
@@ -327,9 +327,9 @@ def test_get_platform_tools_configurable_only_no_expansion():
 
 def test_get_platform_tools_mixed_does_not_resurrect_default_off():
     """Expansion must subtract _DEFAULT_OFF_TOOLSETS from the implicit
-    pull-in. Without this, ``hermes-cli`` expansion would re-enable
+    pull-in. Without this, ``newroz-cli`` expansion would re-enable
     ``moa`` / ``rl`` / ``homeassistant`` for users who never opted in."""
-    config = {"platform_toolsets": {"cli": ["hermes-cli", "terminal"]}}
+    config = {"platform_toolsets": {"cli": ["newroz-cli", "terminal"]}}
 
     enabled = _get_platform_tools(config, "cli", include_default_mcp_servers=False)
 
@@ -346,8 +346,8 @@ def test_get_platform_tools_preserves_explicit_empty_selection():
     # An explicit empty list disables every CONFIGURABLE toolset (web,
     # terminal, memory, …). Non-configurable platform toolsets that ride
     # along on the platform's default composite (e.g. `kanban`, whose tools
-    # live in _HERMES_CORE_TOOLS but aren't user-toggleable) are still
-    # auto-recovered by _get_platform_tools so saving via `hermes tools`
+    # live in _NEWROZ_CORE_TOOLS but aren't user-toggleable) are still
+    # auto-recovered by _get_platform_tools so saving via `newroz tools`
     # doesn't silently drop them. The contract this test guards is the
     # configurable side: nothing the user could have checked in the TUI
     # checklist should reappear here.
@@ -361,7 +361,7 @@ def test_apply_toolset_change_from_default_does_not_enable_default_off_toolsets(
     """
     config = {}
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _apply_toolset_change(config, "cli", ["memory"], "disable")
 
     saved = set(config["platform_toolsets"]["cli"])
@@ -373,7 +373,7 @@ def test_apply_toolset_change_from_default_does_not_enable_default_off_toolsets(
 def test_apply_toolset_change_can_enable_default_off_toolset_from_default():
     config = {}
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _apply_toolset_change(config, "cli", ["homeassistant"], "enable")
 
     saved = set(config["platform_toolsets"]["cli"])
@@ -476,7 +476,7 @@ def test_get_platform_tools_no_mcp_sentinel_does_not_affect_other_platforms():
 
 
 def test_toolset_has_keys_for_vision_accepts_codex_auth(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
     (tmp_path / "auth.json").write_text(
         '{"active_provider":"openai-codex","providers":{"openai-codex":{"tokens":{"access_token": "codex-...oken","refresh_token": "codex-...oken"}}}}'
     )
@@ -505,7 +505,7 @@ def test_save_platform_tools_preserves_mcp_server_names():
 
     new_selection = {"web", "browser"}
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", new_selection)
 
     saved_toolsets = config["platform_toolsets"]["cli"]
@@ -522,7 +522,7 @@ def test_save_platform_tools_handles_empty_existing_config():
     """Saving platform tools works when no existing config exists."""
     config = {}
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "telegram", {"web", "terminal"})
 
     saved_toolsets = config["platform_toolsets"]["telegram"]
@@ -538,7 +538,7 @@ def test_save_platform_tools_handles_invalid_existing_config():
         }
     }
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", {"web"})
 
     saved_toolsets = config["platform_toolsets"]["cli"]
@@ -546,7 +546,7 @@ def test_save_platform_tools_handles_invalid_existing_config():
 
 
 def test_save_platform_tools_does_not_preserve_platform_default_toolsets():
-    """Platform default toolsets (hermes-cli, hermes-telegram, etc.) must NOT
+    """Platform default toolsets (newroz-cli, newroz-telegram, etc.) must NOT
     be preserved across saves.
 
     These "super" toolsets resolve to ALL tools, so if they survive in the
@@ -556,14 +556,14 @@ def test_save_platform_tools_does_not_preserve_platform_default_toolsets():
     (like MCP server names), causing them to be kept unconditionally.
 
     Regression test: user unchecks image_gen and homeassistant via
-    ``hermes tools``, but hermes-cli stays in the config and re-enables
+    ``newroz tools``, but newroz-cli stays in the config and re-enables
     everything on the next read.
     """
     config = {
         "platform_toolsets": {
             "cli": [
                 "browser", "clarify", "code_execution", "cronjob",
-                "delegation", "file", "hermes-cli",  # <-- the culprit
+                "delegation", "file", "newroz-cli",  # <-- the culprit
                 "memory", "session_search", "skills", "terminal",
                 "todo", "tts", "vision", "web",
             ]
@@ -577,13 +577,13 @@ def test_save_platform_tools_does_not_preserve_platform_default_toolsets():
         "skills", "terminal", "todo", "tts", "vision", "web",
     }
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", new_selection)
 
     saved = config["platform_toolsets"]["cli"]
 
-    # hermes-cli must NOT survive — it's a platform default, not an MCP server
-    assert "hermes-cli" not in saved
+    # newroz-cli must NOT survive — it's a platform default, not an MCP server
+    assert "newroz-cli" not in saved
 
     # The individual toolset keys the user selected must be present
     assert "web" in saved
@@ -596,23 +596,23 @@ def test_save_platform_tools_does_not_preserve_platform_default_toolsets():
     assert "moa" not in saved
 
 
-def test_save_platform_tools_does_not_preserve_hermes_telegram():
-    """Same bug for Telegram — hermes-telegram must not be preserved."""
+def test_save_platform_tools_does_not_preserve_newroz_telegram():
+    """Same bug for Telegram — newroz-telegram must not be preserved."""
     config = {
         "platform_toolsets": {
             "telegram": [
-                "browser", "file", "hermes-telegram", "terminal", "web",
+                "browser", "file", "newroz-telegram", "terminal", "web",
             ]
         }
     }
 
     new_selection = {"browser", "file", "terminal", "web"}
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "telegram", new_selection)
 
     saved = config["platform_toolsets"]["telegram"]
-    assert "hermes-telegram" not in saved
+    assert "newroz-telegram" not in saved
     assert "web" in saved
 
 
@@ -622,14 +622,14 @@ def test_save_platform_tools_still_preserves_mcp_with_platform_default_present()
     config = {
         "platform_toolsets": {
             "cli": [
-                "web", "terminal", "hermes-cli", "my-mcp-server", "github-tools",
+                "web", "terminal", "newroz-cli", "my-mcp-server", "github-tools",
             ]
         }
     }
 
     new_selection = {"web", "browser"}
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", new_selection)
 
     saved = config["platform_toolsets"]["cli"]
@@ -639,7 +639,7 @@ def test_save_platform_tools_still_preserves_mcp_with_platform_default_present()
     assert "github-tools" in saved
 
     # Platform default stripped
-    assert "hermes-cli" not in saved
+    assert "newroz-cli" not in saved
 
     # User selections present
     assert "web" in saved
@@ -653,7 +653,7 @@ def test_visible_providers_include_nous_subscription_when_logged_in(monkeypatch)
     config = {"model": {"provider": "nous"}}
 
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.get_nous_portal_account_info",
+        "newroz_cli.nous_subscription.get_nous_portal_account_info",
         lambda: NousPortalAccountInfo(
             logged_in=True,
             source="jwt",
@@ -681,7 +681,7 @@ def test_visible_providers_show_nous_subscription_when_logged_out(monkeypatch):
     config = {"model": {"provider": "openrouter"}}
 
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.get_nous_portal_account_info",
+        "newroz_cli.nous_subscription.get_nous_portal_account_info",
         lambda: NousPortalAccountInfo(
             logged_in=False,
             source="none",
@@ -704,7 +704,7 @@ def test_visible_providers_show_nous_subscription_when_paid_access_is_false(monk
     config = {"model": {"provider": "nous"}}
 
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.get_nous_portal_account_info",
+        "newroz_cli.nous_subscription.get_nous_portal_account_info",
         lambda: NousPortalAccountInfo(
                 logged_in=True,
                 source="jwt",
@@ -735,7 +735,7 @@ def test_visible_providers_force_fresh_shows_nous_subscription_after_upgrade(mon
         )
 
     monkeypatch.setattr(
-        "hermes_cli.tools_config.get_nous_subscription_features",
+        "newroz_cli.tools_config.get_nous_subscription_features",
         fake_subscription_features,
     )
 
@@ -758,7 +758,7 @@ def test_local_browser_provider_is_saved_explicitly(monkeypatch):
         for provider in TOOL_CATEGORIES["browser"]["providers"]
         if provider.get("browser_provider") == "local"
     )
-    monkeypatch.setattr("hermes_cli.tools_config._run_post_setup", lambda key: None)
+    monkeypatch.setattr("newroz_cli.tools_config._run_post_setup", lambda key: None)
     _configure_provider(local_provider, config)
 
     assert config["browser"]["cloud_provider"] == "local"
@@ -772,7 +772,7 @@ def test_fresh_install_browser_default_is_free_local_not_paid_nous():
     to index 0 (Nous) and pressing Enter walked users straight into a Nous
     Portal login for a paid offering (Javier's bug, June 2026).
     """
-    from hermes_cli.tools_config import _detect_active_provider_index
+    from newroz_cli.tools_config import _detect_active_provider_index
 
     providers = TOOL_CATEGORIES["browser"]["providers"]
     assert providers[0]["name"] == "Local Browser"
@@ -783,7 +783,7 @@ def test_fresh_install_browser_default_is_free_local_not_paid_nous():
 
 def test_fresh_install_tts_default_is_free_edge_not_paid_nous():
     """TTS picker defaults to the free Edge backend on a fresh install."""
-    from hermes_cli.tools_config import _detect_active_provider_index
+    from newroz_cli.tools_config import _detect_active_provider_index
 
     providers = TOOL_CATEGORIES["tts"]["providers"]
     assert providers[0]["name"] == "Microsoft Edge TTS"
@@ -797,7 +797,7 @@ def test_reconfigure_lists_enabled_web_without_existing_provider_config(monkeypa
     configured = []
 
     monkeypatch.setattr(
-        "hermes_cli.tools_config._toolset_has_keys",
+        "newroz_cli.tools_config._toolset_has_keys",
         lambda ts_key, config=None, **kwargs: False,
     )
 
@@ -805,12 +805,12 @@ def test_reconfigure_lists_enabled_web_without_existing_provider_config(monkeypa
         seen["choices"] = choices
         return 0
 
-    monkeypatch.setattr("hermes_cli.tools_config._prompt_choice", fake_prompt_choice)
+    monkeypatch.setattr("newroz_cli.tools_config._prompt_choice", fake_prompt_choice)
     monkeypatch.setattr(
-        "hermes_cli.tools_config._configure_tool_category_for_reconfig",
+        "newroz_cli.tools_config._configure_tool_category_for_reconfig",
         lambda ts_key, cat, config, **kwargs: configured.append(ts_key),
     )
-    monkeypatch.setattr("hermes_cli.tools_config.save_config", lambda config: None)
+    monkeypatch.setattr("newroz_cli.tools_config.save_config", lambda config: None)
 
     _reconfigure_tool(config)
 
@@ -819,7 +819,7 @@ def test_reconfigure_lists_enabled_web_without_existing_provider_config(monkeypa
 
 
 def test_first_install_nous_auto_configures_managed_defaults(monkeypatch):
-    monkeypatch.setattr("hermes_cli.nous_subscription.managed_nous_tools_enabled", lambda: True)
+    monkeypatch.setattr("newroz_cli.nous_subscription.managed_nous_tools_enabled", lambda: True)
     config = {
         "model": {"provider": "nous"},
         "platform_toolsets": {"cli": []},
@@ -840,20 +840,20 @@ def test_first_install_nous_auto_configures_managed_defaults(monkeypatch):
         monkeypatch.delenv(env_var, raising=False)
 
     monkeypatch.setattr(
-        "hermes_cli.tools_config._prompt_toolset_checklist",
+        "newroz_cli.tools_config._prompt_toolset_checklist",
         lambda *args, **kwargs: {"web", "image_gen", "tts", "browser"},
     )
-    monkeypatch.setattr("hermes_cli.tools_config.save_config", lambda config: None)
+    monkeypatch.setattr("newroz_cli.tools_config.save_config", lambda config: None)
     # Prevent leaked platform tokens (e.g. DISCORD_BOT_TOKEN from gateway.run
     # import) from adding extra platforms. The loop in tools_command runs
     # apply_nous_managed_defaults per platform; a second iteration sees values
     # set by the first as "explicit" and skips them.
     monkeypatch.setattr(
-        "hermes_cli.tools_config._get_enabled_platforms",
+        "newroz_cli.tools_config._get_enabled_platforms",
         lambda: ["cli"],
     )
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.get_nous_portal_account_info",
+        "newroz_cli.nous_subscription.get_nous_portal_account_info",
         lambda *args, **kwargs: NousPortalAccountInfo(
             logged_in=True,
             source="jwt",
@@ -864,7 +864,7 @@ def test_first_install_nous_auto_configures_managed_defaults(monkeypatch):
 
     configured = []
     monkeypatch.setattr(
-        "hermes_cli.tools_config._configure_toolset",
+        "newroz_cli.tools_config._configure_toolset",
         lambda ts_key, config: configured.append(ts_key),
     )
 
@@ -883,7 +883,7 @@ def test_first_install_nous_auto_configures_video_gen(monkeypatch):
     video_gen.use_gateway so the FAL plugin can route through the gateway
     at runtime.  Regression test for the bug where video_gen was marked as
     auto-configured but no config was actually written."""
-    monkeypatch.setattr("hermes_cli.nous_subscription.managed_nous_tools_enabled", lambda: True)
+    monkeypatch.setattr("newroz_cli.nous_subscription.managed_nous_tools_enabled", lambda: True)
     config = {
         "model": {"provider": "nous"},
         "platform_toolsets": {"cli": []},
@@ -904,16 +904,16 @@ def test_first_install_nous_auto_configures_video_gen(monkeypatch):
         monkeypatch.delenv(env_var, raising=False)
 
     monkeypatch.setattr(
-        "hermes_cli.tools_config._prompt_toolset_checklist",
+        "newroz_cli.tools_config._prompt_toolset_checklist",
         lambda *args, **kwargs: {"video_gen"},
     )
-    monkeypatch.setattr("hermes_cli.tools_config.save_config", lambda config: None)
+    monkeypatch.setattr("newroz_cli.tools_config.save_config", lambda config: None)
     monkeypatch.setattr(
-        "hermes_cli.tools_config._get_enabled_platforms",
+        "newroz_cli.tools_config._get_enabled_platforms",
         lambda: ["cli"],
     )
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.get_nous_portal_account_info",
+        "newroz_cli.nous_subscription.get_nous_portal_account_info",
         lambda *args, **kwargs: NousPortalAccountInfo(
             logged_in=True,
             source="jwt",
@@ -924,7 +924,7 @@ def test_first_install_nous_auto_configures_video_gen(monkeypatch):
 
     configured = []
     monkeypatch.setattr(
-        "hermes_cli.tools_config._configure_toolset",
+        "newroz_cli.tools_config._configure_toolset",
         lambda ts_key, config: configured.append(ts_key),
     )
 
@@ -943,7 +943,7 @@ class TestPlatformToolsetConsistency:
 
     def test_all_platforms_have_toolset_definitions(self):
         """Each platform's default_toolset must exist in TOOLSETS."""
-        from hermes_cli.tools_config import PLATFORMS
+        from newroz_cli.tools_config import PLATFORMS
         from toolsets import TOOLSETS
 
         for platform, meta in PLATFORMS.items():
@@ -954,11 +954,11 @@ class TestPlatformToolsetConsistency:
             )
 
     def test_gateway_toolset_includes_all_messaging_platforms(self):
-        """hermes-gateway includes list should cover all messaging platforms."""
-        from hermes_cli.tools_config import PLATFORMS
+        """newroz-gateway includes list should cover all messaging platforms."""
+        from newroz_cli.tools_config import PLATFORMS
         from toolsets import TOOLSETS
 
-        gateway_includes = set(TOOLSETS["hermes-gateway"]["includes"])
+        gateway_includes = set(TOOLSETS["newroz-gateway"]["includes"])
         # Exclude non-messaging platforms from the check
         non_messaging = {"cli", "api_server", "cron"}
         for platform, meta in PLATFORMS.items():
@@ -967,13 +967,13 @@ class TestPlatformToolsetConsistency:
             ts_name = meta["default_toolset"]
             assert ts_name in gateway_includes, (
                 f"Platform {platform!r} toolset {ts_name!r} missing from "
-                f"hermes-gateway includes"
+                f"newroz-gateway includes"
             )
 
     def test_skills_config_covers_tools_config_platforms(self):
         """skills_config.PLATFORMS should have entries for all gateway platforms."""
-        from hermes_cli.tools_config import PLATFORMS as TOOLS_PLATFORMS
-        from hermes_cli.skills_config import PLATFORMS as SKILLS_PLATFORMS
+        from newroz_cli.tools_config import PLATFORMS as TOOLS_PLATFORMS
+        from newroz_cli.skills_config import PLATFORMS as SKILLS_PLATFORMS
 
         non_messaging = {"api_server"}
         for platform in TOOLS_PLATFORMS:
@@ -1024,7 +1024,7 @@ def test_toolset_has_keys_treats_no_key_providers_as_configured():
 def test_computer_use_needs_configuration_when_cua_driver_post_setup_pending():
     """No-key providers can still need setup when their post_setup is unsatisfied.
 
-    Returning users enabling Computer Use through `hermes tools` must reach the
+    Returning users enabling Computer Use through `newroz tools` must reach the
     cua-driver post-setup installer even though the provider has no API keys.
     """
     with patch("shutil.which", return_value=None):
@@ -1041,11 +1041,11 @@ def test_computer_use_skips_configuration_when_cua_driver_already_installed():
 
 
 def test_computer_use_respects_custom_cua_driver_command():
-    """The setup gate should match runtime's HERMES_CUA_DRIVER_CMD override."""
+    """The setup gate should match runtime's NEWROZ_CUA_DRIVER_CMD override."""
     def fake_which(name: str):
         return "/opt/bin/custom-cua" if name == "custom-cua" else None
 
-    with patch.dict("os.environ", {"HERMES_CUA_DRIVER_CMD": "custom-cua"}), \
+    with patch.dict("os.environ", {"NEWROZ_CUA_DRIVER_CMD": "custom-cua"}), \
          patch("shutil.which", side_effect=fake_which):
         assert _toolset_needs_configuration_prompt("computer_use", {}) is False
 
@@ -1055,7 +1055,7 @@ def test_computer_use_blank_custom_driver_command_falls_back_to_default():
     def fake_which(name: str):
         return "/usr/local/bin/cua-driver" if name == "cua-driver" else None
 
-    with patch.dict("os.environ", {"HERMES_CUA_DRIVER_CMD": "   "}), \
+    with patch.dict("os.environ", {"NEWROZ_CUA_DRIVER_CMD": "   "}), \
          patch("shutil.which", side_effect=fake_which):
         assert _toolset_needs_configuration_prompt("computer_use", {}) is False
 
@@ -1065,7 +1065,7 @@ def test_computer_use_post_setup_respects_custom_driver_command_when_installed()
     def fake_which(name: str):
         return "/opt/bin/custom-cua" if name == "custom-cua" else None
 
-    with patch.dict("os.environ", {"HERMES_CUA_DRIVER_CMD": "custom-cua"}), \
+    with patch.dict("os.environ", {"NEWROZ_CUA_DRIVER_CMD": "custom-cua"}), \
          patch("platform.system", return_value="Darwin"), \
          patch("shutil.which", side_effect=fake_which), \
          patch("subprocess.run") as run:
@@ -1089,7 +1089,7 @@ def test_computer_use_post_setup_missing_override_does_not_accept_default_binary
             return None
         return None
 
-    with patch.dict("os.environ", {"HERMES_CUA_DRIVER_CMD": "custom-cua"}), \
+    with patch.dict("os.environ", {"NEWROZ_CUA_DRIVER_CMD": "custom-cua"}), \
          patch("platform.system", return_value="Darwin"), \
          patch("shutil.which", side_effect=fake_which), \
          patch("subprocess.run") as run:
@@ -1104,12 +1104,12 @@ class TestImagegenBackendRegistry:
     """IMAGEGEN_BACKENDS tags drive the model picker flow in tools_config."""
 
     def test_fal_backend_registered(self):
-        from hermes_cli.tools_config import IMAGEGEN_BACKENDS
+        from newroz_cli.tools_config import IMAGEGEN_BACKENDS
         assert "fal" in IMAGEGEN_BACKENDS
 
     def test_fal_catalog_loads_lazily(self):
         """catalog_fn should defer import to avoid import cycles."""
-        from hermes_cli.tools_config import IMAGEGEN_BACKENDS
+        from newroz_cli.tools_config import IMAGEGEN_BACKENDS
         catalog, default = IMAGEGEN_BACKENDS["fal"]["catalog_fn"]()
         assert default == "fal-ai/flux-2/klein/9b"
         assert "fal-ai/flux-2/klein/9b" in catalog
@@ -1118,7 +1118,7 @@ class TestImagegenBackendRegistry:
     def test_image_gen_providers_tagged_with_fal_backend(self):
         """Both Nous Subscription and FAL.ai providers must carry the
         imagegen_backend tag so _configure_provider fires the picker."""
-        from hermes_cli.tools_config import TOOL_CATEGORIES
+        from newroz_cli.tools_config import TOOL_CATEGORIES
         providers = TOOL_CATEGORIES["image_gen"]["providers"]
         for p in providers:
             assert p.get("imagegen_backend") == "fal", (
@@ -1131,10 +1131,10 @@ class TestImagegenModelPicker:
     curses fallback semantics (returns default when stdin isn't a TTY)."""
 
     def test_picker_writes_chosen_model_to_config(self):
-        from hermes_cli.tools_config import _configure_imagegen_model
+        from newroz_cli.tools_config import _configure_imagegen_model
         config = {}
         # Force _prompt_choice to pick index 1 (second-in-ordered-list).
-        with patch("hermes_cli.tools_config._prompt_choice", return_value=1):
+        with patch("newroz_cli.tools_config._prompt_choice", return_value=1):
             _configure_imagegen_model("fal", config)
         # ordered[0] == current (default klein), ordered[1] == first non-default
         assert config["image_gen"]["model"] != "fal-ai/flux-2/klein/9b"
@@ -1143,7 +1143,7 @@ class TestImagegenModelPicker:
     def test_picker_with_gpt_image_does_not_prompt_quality(self):
         """GPT-Image quality is pinned to medium in the tool's defaults —
         no follow-up prompt, no config write for quality_setting."""
-        from hermes_cli.tools_config import (
+        from newroz_cli.tools_config import (
             _configure_imagegen_model,
             IMAGEGEN_BACKENDS,
         )
@@ -1159,7 +1159,7 @@ class TestImagegenModelPicker:
             return gpt_idx
 
         config = {}
-        with patch("hermes_cli.tools_config._prompt_choice", side_effect=fake_prompt):
+        with patch("newroz_cli.tools_config._prompt_choice", side_effect=fake_prompt):
             _configure_imagegen_model("fal", config)
 
         assert call_count["n"] == 1, (
@@ -1169,7 +1169,7 @@ class TestImagegenModelPicker:
         assert "quality_setting" not in config["image_gen"]
 
     def test_picker_no_op_for_unknown_backend(self):
-        from hermes_cli.tools_config import _configure_imagegen_model
+        from newroz_cli.tools_config import _configure_imagegen_model
         config = {}
         _configure_imagegen_model("nonexistent-backend", config)
         assert config == {}  # untouched
@@ -1177,9 +1177,9 @@ class TestImagegenModelPicker:
     def test_picker_repairs_corrupt_config_section(self):
         """When image_gen is a non-dict (user-edit YAML), the picker should
         replace it with a fresh dict rather than crash."""
-        from hermes_cli.tools_config import _configure_imagegen_model
+        from newroz_cli.tools_config import _configure_imagegen_model
         config = {"image_gen": "some-garbage-string"}
-        with patch("hermes_cli.tools_config._prompt_choice", return_value=0):
+        with patch("newroz_cli.tools_config._prompt_choice", return_value=0):
             _configure_imagegen_model("fal", config)
         assert isinstance(config["image_gen"], dict)
         assert config["image_gen"]["model"] == "fal-ai/flux-2/klein/9b"
@@ -1195,7 +1195,7 @@ def test_save_platform_tools_normalizes_numeric_entries():
         }
     }
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", {"web", "browser"})
 
     saved = config["platform_toolsets"]["cli"]
@@ -1204,7 +1204,7 @@ def test_save_platform_tools_normalizes_numeric_entries():
 
 
 def test_save_platform_tools_clears_no_mcp_sentinel():
-    """`hermes tools` has no UI for no_mcp, so saving from the picker clears
+    """`newroz tools` has no UI for no_mcp, so saving from the picker clears
     the sentinel unconditionally — otherwise a user who once set no_mcp by
     hand could never re-enable MCP servers through the UI.
     """
@@ -1214,7 +1214,7 @@ def test_save_platform_tools_clears_no_mcp_sentinel():
         }
     }
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", {"web", "browser"})
 
     saved = config["platform_toolsets"]["cli"]
@@ -1231,7 +1231,7 @@ def test_save_platform_tools_preserves_mcp_server_names():
         }
     }
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", {"web", "browser"})
 
     saved = config["platform_toolsets"]["cli"]
@@ -1244,7 +1244,7 @@ def test_get_platform_tools_recovers_non_configurable_toolsets_from_composite():
     CONFIGURABLE_TOOLSETS should still appear in the result.
     """
     from toolsets import TOOLSETS
-    from hermes_cli.tools_config import PLATFORMS
+    from newroz_cli.tools_config import PLATFORMS
     from unittest.mock import patch as mock_patch
 
     fake_toolsets = dict(TOOLSETS)
@@ -1253,17 +1253,17 @@ def test_get_platform_tools_recovers_non_configurable_toolsets_from_composite():
         "tools": ["_test_special_tool"],
         "includes": [],
     }
-    fake_toolsets["hermes-_test_platform"] = {
+    fake_toolsets["newroz-_test_platform"] = {
         "description": "test composite",
         "tools": ["web_search", "web_extract", "terminal", "process", "_test_special_tool"],
         "includes": [],
     }
 
     test_platforms = {
-        "_test_platform": {"label": "Test", "default_toolset": "hermes-_test_platform"},
+        "_test_platform": {"label": "Test", "default_toolset": "newroz-_test_platform"},
     }
 
-    with mock_patch("hermes_cli.tools_config.PLATFORMS", {**PLATFORMS, **test_platforms}):
+    with mock_patch("newroz_cli.tools_config.PLATFORMS", {**PLATFORMS, **test_platforms}):
         with mock_patch("toolsets.TOOLSETS", fake_toolsets):
             enabled = _get_platform_tools({}, "_test_platform")
 
@@ -1274,7 +1274,7 @@ def test_get_platform_tools_recovers_non_configurable_toolsets_from_composite():
 
 def test_get_platform_tools_second_pass_skips_fully_claimed_toolsets():
     """Toolsets whose tools are fully covered by configurable keys should NOT
-    be added by the second pass (prevents 'search', 'hermes-acp' noise).
+    be added by the second pass (prevents 'search', 'newroz-acp' noise).
     """
     enabled = _get_platform_tools({}, "cli")
 
@@ -1282,7 +1282,7 @@ def test_get_platform_tools_second_pass_skips_fully_claimed_toolsets():
 
 
 def test_get_platform_tools_discord_both_off_by_default():
-    """Both `discord` and `discord_admin` are opt-in via `hermes tools`,
+    """Both `discord` and `discord_admin` are opt-in via `newroz tools`,
     even on the Discord platform itself.  Users shouldn't auto-inherit 19
     extra tools just because DISCORD_BOT_TOKEN is set."""
     enabled = _get_platform_tools({}, "discord")
@@ -1304,7 +1304,7 @@ def test_discord_toolsets_in_default_off():
 def test_discord_toolsets_not_available_on_other_platforms():
     """Platform-scoping: discord / discord_admin should not appear on CLI,
     Telegram, etc. — not even as an opt-in."""
-    from hermes_cli.tools_config import _toolset_allowed_for_platform
+    from newroz_cli.tools_config import _toolset_allowed_for_platform
     for plat in ["cli", "telegram", "slack", "whatsapp", "signal"]:
         assert not _toolset_allowed_for_platform("discord", plat), (
             f"`discord` toolset leaked onto {plat}"
@@ -1317,7 +1317,7 @@ def test_discord_toolsets_not_available_on_other_platforms():
 
 
 def test_discord_toolsets_user_enabled_are_honored():
-    """When the user opts in via `hermes tools`, the toolset appears."""
+    """When the user opts in via `newroz tools`, the toolset appears."""
     config = {"platform_toolsets": {"discord": ["web", "terminal", "discord"]}}
     enabled = _get_platform_tools(config, "discord")
     assert "discord" in enabled
@@ -1327,7 +1327,7 @@ def test_discord_toolsets_user_enabled_are_honored():
 def test_save_platform_tools_strips_restricted_toolsets():
     """Hand-edited or all-platforms checklist with `discord` selected for
     Telegram must be stripped at save time."""
-    from hermes_cli.tools_config import _save_platform_tools
+    from newroz_cli.tools_config import _save_platform_tools
     config = {}
     _save_platform_tools(config, "telegram", {"web", "terminal", "discord", "discord_admin"})
     saved = config["platform_toolsets"]["telegram"]
@@ -1353,10 +1353,10 @@ def test_get_platform_tools_feishu_tools_not_on_other_platforms():
 def test_get_effective_configurable_toolsets_dedupes_bundled_plugins():
     """Bundled plugins (plugins/spotify) share their toolset key with the
     built-in CONFIGURABLE_TOOLSETS entry. The effective list must not list
-    them twice — otherwise `hermes tools` → "reconfigure existing" shows
+    them twice — otherwise `newroz tools` → "reconfigure existing" shows
     the same toolset two rows in a row.
     """
-    from hermes_cli.tools_config import _get_effective_configurable_toolsets
+    from newroz_cli.tools_config import _get_effective_configurable_toolsets
 
     all_ts = _get_effective_configurable_toolsets()
     keys = [ts_key for ts_key, _, _ in all_ts]
@@ -1385,7 +1385,7 @@ def test_reconfigure_provider_syncs_use_gateway(monkeypatch, provider, config_ke
     # Managed providers run the inline Portal entitlement gate; treat the user
     # as already entitled so the test exercises the use_gateway sync.
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.ensure_nous_portal_access",
+        "newroz_cli.nous_subscription.ensure_nous_portal_access",
         lambda **kwargs: True,
     )
     config = {}
@@ -1410,10 +1410,10 @@ def test_reconfigure_provider_runs_post_setup_for_env_var_providers(
     """_reconfigure_provider() must call _run_post_setup() for providers that have
     both env_vars and post_setup — parity with _configure_provider() line 2286."""
     called = []
-    monkeypatch.setattr("hermes_cli.tools_config._run_post_setup", lambda key: called.append(key))
-    monkeypatch.setattr("hermes_cli.tools_config.get_env_value", lambda k: None)
-    monkeypatch.setattr("hermes_cli.tools_config._prompt", lambda *a, **kw: "")
-    monkeypatch.setattr("hermes_cli.tools_config.save_env_value", lambda k, v: None)
+    monkeypatch.setattr("newroz_cli.tools_config._run_post_setup", lambda key: called.append(key))
+    monkeypatch.setattr("newroz_cli.tools_config.get_env_value", lambda k: None)
+    monkeypatch.setattr("newroz_cli.tools_config._prompt", lambda *a, **kw: "")
+    monkeypatch.setattr("newroz_cli.tools_config.save_env_value", lambda k, v: None)
 
     provider = next(
         p
@@ -1433,7 +1433,7 @@ def test_reconfigure_provider_runs_post_setup_for_env_var_providers(
 def test_configure_managed_provider_blocks_when_not_entitled(monkeypatch):
     """Selecting a Nous-managed backend without paid access writes no config."""
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.ensure_nous_portal_access",
+        "newroz_cli.nous_subscription.ensure_nous_portal_access",
         lambda **kwargs: False,
     )
     provider = {
@@ -1453,7 +1453,7 @@ def test_configure_managed_provider_blocks_when_not_entitled(monkeypatch):
 def test_configure_managed_provider_enables_when_entitled(monkeypatch):
     """Once entitled, selecting the managed backend sets use_gateway=True."""
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.ensure_nous_portal_access",
+        "newroz_cli.nous_subscription.ensure_nous_portal_access",
         lambda **kwargs: True,
     )
     provider = {
@@ -1479,7 +1479,7 @@ def test_configure_non_managed_provider_skips_portal_gate(monkeypatch):
         return False
 
     monkeypatch.setattr(
-        "hermes_cli.nous_subscription.ensure_nous_portal_access", _boom
+        "newroz_cli.nous_subscription.ensure_nous_portal_access", _boom
     )
     provider = {"name": "Tavily", "web_backend": "tavily", "env_vars": []}
     config = {}
@@ -1493,7 +1493,7 @@ def test_configure_non_managed_provider_skips_portal_gate(monkeypatch):
 
 def test_apply_provider_selection_web_sets_backend():
     """Selecting a web provider persists the backend without prompting for keys."""
-    from hermes_cli.tools_config import apply_provider_selection
+    from newroz_cli.tools_config import apply_provider_selection
 
     config = {}
     apply_provider_selection("web", "Firecrawl Self-Hosted", config)
@@ -1504,7 +1504,7 @@ def test_apply_provider_selection_web_sets_backend():
 
 def test_apply_provider_selection_tts_sets_provider():
     """Selecting a TTS provider persists tts.provider."""
-    from hermes_cli.tools_config import apply_provider_selection
+    from newroz_cli.tools_config import apply_provider_selection
 
     config = {}
     apply_provider_selection("tts", "Microsoft Edge TTS", config)
@@ -1514,14 +1514,14 @@ def test_apply_provider_selection_tts_sets_provider():
 
 
 def test_apply_provider_selection_unknown_provider_raises_keyerror():
-    from hermes_cli.tools_config import apply_provider_selection
+    from newroz_cli.tools_config import apply_provider_selection
 
     with pytest.raises(KeyError):
         apply_provider_selection("web", "No Such Provider", {})
 
 
 def test_apply_provider_selection_unknown_toolset_raises_keyerror():
-    from hermes_cli.tools_config import apply_provider_selection
+    from newroz_cli.tools_config import apply_provider_selection
 
     with pytest.raises(KeyError):
         apply_provider_selection("not_a_toolset", "whatever", {})
@@ -1529,7 +1529,7 @@ def test_apply_provider_selection_unknown_toolset_raises_keyerror():
 
 def test_apply_provider_selection_does_not_prompt_or_post_setup(monkeypatch):
     """The non-interactive selection must not invoke prompts or post-setup hooks."""
-    from hermes_cli import tools_config
+    from newroz_cli import tools_config
 
     monkeypatch.setattr(
         tools_config, "_run_post_setup",
@@ -1545,7 +1545,7 @@ def test_apply_provider_selection_does_not_prompt_or_post_setup(monkeypatch):
 
 
 # ── Checklist diff scope: non-configurable toolsets (kanban) must not be
-#    reported as added/removed by `hermes tools` ──────────────────────────
+#    reported as added/removed by `newroz tools` ──────────────────────────
 
 
 def test_checklist_toolset_keys_excludes_kanban():
@@ -1559,7 +1559,7 @@ def test_checklist_toolset_keys_excludes_kanban():
 
 
 def test_kanban_not_reported_as_removed_in_diff():
-    """Reproduces the false-signal bug: `hermes tools` printed ``- kanban``
+    """Reproduces the false-signal bug: `newroz tools` printed ``- kanban``
     when saving a platform that resolves kanban as enabled, even though the
     checklist never offered kanban as a toggle.
 
@@ -1602,12 +1602,12 @@ def test_vision_picker_writes_provider_and_model(tmp_path, monkeypatch):
     """Picking a provider+model persists auxiliary.vision.{provider,model}.
 
     Vision must not force OpenRouter — it offers the same any-provider surface
-    as ``hermes model`` and writes the selection to the auxiliary config keys
+    as ``newroz model`` and writes the selection to the auxiliary config keys
     the resolver reads.
     """
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-    import hermes_cli.tools_config as tc
-    from hermes_cli.config import load_config
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+    import newroz_cli.tools_config as tc
+    from newroz_cli.config import load_config
 
     fake_providers = [
         {"slug": "anthropic", "name": "Anthropic", "total_models": 2,
@@ -1618,7 +1618,7 @@ def test_vision_picker_writes_provider_and_model(tmp_path, monkeypatch):
     # Top-level choice 1 (pick provider+model) → provider idx 0 (anthropic)
     # → model idx 1 (claude-opus-4.6).
     seq = iter([1, 0, 1])
-    with patch("hermes_cli.model_switch.list_authenticated_providers",
+    with patch("newroz_cli.model_switch.list_authenticated_providers",
                return_value=fake_providers), \
          patch.object(tc, "_prompt_choice", side_effect=lambda *a, **k: next(seq)), \
          patch.object(tc, "_toolset_has_keys", return_value=False):
@@ -1633,9 +1633,9 @@ def test_vision_picker_writes_provider_and_model(tmp_path, monkeypatch):
 
 def test_vision_picker_auto_clears_override(tmp_path, monkeypatch):
     """Choosing Auto clears any pinned provider/model so resolution auto-detects."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-    import hermes_cli.tools_config as tc
-    from hermes_cli.config import load_config, save_config
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+    import newroz_cli.tools_config as tc
+    from newroz_cli.config import load_config, save_config
 
     cfg = load_config()
     cfg.setdefault("auxiliary", {})["vision"] = {
@@ -1656,9 +1656,9 @@ def test_vision_picker_auto_clears_override(tmp_path, monkeypatch):
 
 def test_vision_picker_custom_endpoint(tmp_path, monkeypatch):
     """Custom endpoint writes base_url+model to config and the key to env."""
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-    import hermes_cli.tools_config as tc
-    from hermes_cli.config import load_config
+    monkeypatch.setenv("NEWROZ_HOME", str(tmp_path))
+    import newroz_cli.tools_config as tc
+    from newroz_cli.config import load_config
 
     seq = iter([2])  # Custom OpenAI-compatible endpoint
     prompts = iter(["https://my.endpoint/v1", "sk-secret", "my-vision-model"])
@@ -1690,7 +1690,7 @@ def test_save_platform_tools_clears_newly_enabled_from_disabled_toolsets():
         "agent": {"disabled_toolsets": ["todo", "memory", "browser"]},
     }
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", {"file", "terminal", "todo"})
 
     # The toolset the user just enabled is cleared from the block-list...
@@ -1715,7 +1715,7 @@ def test_save_platform_tools_resolves_to_enabled_after_disabled_toolsets_reconci
     # Before: todo is masked off despite not being in platform_toolsets yet.
     assert "todo" not in _get_platform_tools(config, "cli")
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", {"file", "terminal", "todo"})
 
     # After: todo must resolve as enabled, and untouched 'memory' must
@@ -1731,7 +1731,7 @@ def test_save_platform_tools_no_disabled_toolsets_is_noop():
     """
     config = {"platform_toolsets": {"cli": ["file", "terminal"]}}
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         _save_platform_tools(config, "cli", {"file", "terminal", "todo"})
 
     assert "todo" in config["platform_toolsets"]["cli"]
@@ -1749,7 +1749,7 @@ def test_save_platform_tools_disabling_a_toolset_does_not_touch_disabled_toolset
         "agent": {"disabled_toolsets": ["memory"]},
     }
 
-    with patch("hermes_cli.tools_config.save_config"):
+    with patch("newroz_cli.tools_config.save_config"):
         # User unchecks 'todo' -- it's no longer in enabled_toolset_keys.
         _save_platform_tools(config, "cli", {"file", "terminal"})
 

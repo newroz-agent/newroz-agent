@@ -40,7 +40,7 @@ def test_all_builtins_have_checker_or_generic_token_path():
     # registry fallback rather than _PLATFORM_CONNECTED_CHECKERS.
     plugin_checker_values: set[str] = set()
     try:
-        from hermes_cli.plugins import discover_plugins
+        from newroz_cli.plugins import discover_plugins
         from gateway.platform_registry import platform_registry
         discover_plugins()
         for _entry in platform_registry.all_entries():
@@ -94,7 +94,7 @@ def test_checker_returns_true_when_configured(platform, checker, monkeypatch):
     elif platform == Platform.SIGNAL:
         mock_config.extra = {"http_url": "http://signal:8080"}
     elif platform == Platform.EMAIL:
-        mock_config.extra = {"address": "hermes@example.com"}
+        mock_config.extra = {"address": "newroz@example.com"}
     elif platform == Platform.SMS:
         monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACtest")
         mock_config.extra = {}

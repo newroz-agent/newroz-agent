@@ -15,7 +15,7 @@ def test_tini_compat_symlink_exists(built_image: str) -> None:
     """/usr/bin/tini must exist as a symlink to /init.
 
     Regression for #34192: orchestration templates (e.g. Hostinger's
-    'Hermes WebUI' catalog) still pin /usr/bin/tini as the entrypoint.
+    'Newroz WebUI' catalog) still pin /usr/bin/tini as the entrypoint.
     The shim symlinks it to /init so legacy wrappers exec the right
     PID-1 reaper without behavior change.
     """
@@ -47,7 +47,7 @@ def test_entrypoint_is_init_not_tini(built_image: str) -> None:
     assert "/init" in entrypoint, (
         f"ENTRYPOINT is not /init: {entrypoint!r}"
     )
-    # The entrypoint array should be ["/init", "/opt/hermes/docker/main-wrapper.sh"]
+    # The entrypoint array should be ["/init", "/opt/newroz/docker/main-wrapper.sh"]
     # /usr/bin/tini should NOT be in the entrypoint.
     assert "tini" not in entrypoint.lower(), (
         f"ENTRYPOINT references tini instead of /init: {entrypoint!r}"

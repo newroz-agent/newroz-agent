@@ -15,7 +15,7 @@ import { atom, computed } from 'nanostores'
 import { BUILTIN_THEMES } from './presets'
 import type { DesktopTheme, DesktopThemeColors } from './types'
 
-const USER_THEMES_KEY = 'hermes-desktop-user-themes-v1'
+const USER_THEMES_KEY = 'newroz-desktop-user-themes-v1'
 
 // Marketplace imports stamp their description "VS Code · <publisher.extension>"
 // (see `convertVscodeColorTheme`). This is the one place that convention is read

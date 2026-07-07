@@ -1,4 +1,4 @@
-"""CLI handlers for ``hermes secrets onepassword ...``.
+"""CLI handlers for ``newroz secrets onepassword ...``.
 
 Subcommands:
     setup    — verify the op CLI, set account / token env var, enable
@@ -9,7 +9,7 @@ Subcommands:
     disable  — flip ``secrets.onepassword.enabled`` to False
 
 Unlike Bitwarden, the ``op`` binary is NOT auto-installed: 1Password publishes
-the CLI through OS package managers and signed installers, so Hermes expects
+the CLI through OS package managers and signed installers, so Newroz expects
 an already-installed, already-authenticated ``op`` and never downloads one.
 """
 
@@ -26,7 +26,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from agent.secret_sources import onepassword as op_src
-from hermes_cli.config import (
+from newroz_cli.config import (
     get_env_path,
     load_config,
     save_config,
@@ -38,7 +38,7 @@ _DOCS_URL = "https://developer.1password.com/docs/cli/get-started/"
 
 
 # ---------------------------------------------------------------------------
-# Argparse wiring — called from hermes_cli.main
+# Argparse wiring — called from newroz_cli.main
 # ---------------------------------------------------------------------------
 
 
@@ -102,7 +102,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     console.print(
         Panel.fit(
             "[bold]1Password secret source setup[/bold]\n\n"
-            "Hermes resolves [cyan]op://vault/item/field[/cyan] references through your\n"
+            "Newroz resolves [cyan]op://vault/item/field[/cyan] references through your\n"
             "already-installed, already-authenticated 1Password CLI (`op`).\n\n"
             f"Don't have it yet? Install + sign in: [cyan]{_DOCS_URL}[/cyan]",
             border_style="cyan",
@@ -170,10 +170,10 @@ def cmd_setup(args: argparse.Namespace) -> int:
     console.print()
     console.print("[green]✓ 1Password secret source is enabled.[/green]")
     console.print(
-        "  Map credentials:  [cyan]hermes secrets onepassword set OPENAI_API_KEY "
+        "  Map credentials:  [cyan]newroz secrets onepassword set OPENAI_API_KEY "
         "\"op://Private/OpenAI/api key\"[/cyan]\n"
-        "  Preview:          [cyan]hermes secrets onepassword sync[/cyan]\n"
-        "  Status:           [cyan]hermes secrets onepassword status[/cyan]"
+        "  Preview:          [cyan]newroz secrets onepassword sync[/cyan]\n"
+        "  Status:           [cyan]newroz secrets onepassword status[/cyan]"
     )
     return 0
 
@@ -218,7 +218,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         console.print(ref_table)
 
     if not enabled:
-        console.print("\n  Run [cyan]hermes secrets onepassword setup[/cyan] to enable.")
+        console.print("\n  Run [cyan]newroz secrets onepassword setup[/cyan] to enable.")
         return 0
     if binary and not token_set:
         who = _op_whoami(binary, account)
@@ -227,12 +227,12 @@ def cmd_status(args: argparse.Namespace) -> int:
         else:
             console.print(
                 f"\n  [yellow]No active op session and {token_env} is unset — "
-                "Hermes will warn and skip 1Password on next startup.[/yellow]"
+                "Newroz will warn and skip 1Password on next startup.[/yellow]"
             )
     if not references:
         console.print(
             "\n  [yellow]No references mapped yet.[/yellow]  Add one: "
-            "[cyan]hermes secrets onepassword set ENV_VAR \"op://…\"[/cyan]"
+            "[cyan]newroz secrets onepassword set ENV_VAR \"op://…\"[/cyan]"
         )
     return 0
 
@@ -263,7 +263,7 @@ def cmd_set(args: argparse.Namespace) -> int:
     if not op_cfg.get("enabled"):
         console.print(
             "  [yellow]Note: the integration is disabled — run "
-            "[cyan]hermes secrets onepassword setup[/cyan] to turn it on.[/yellow]"
+            "[cyan]newroz secrets onepassword setup[/cyan] to turn it on.[/yellow]"
         )
     return 0
 
@@ -289,7 +289,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
     if not op_cfg.get("enabled"):
         console.print(
             "[yellow]1Password integration is disabled.  Run "
-            "`hermes secrets onepassword setup` first.[/yellow]"
+            "`newroz secrets onepassword setup` first.[/yellow]"
         )
         return 1
 
@@ -297,7 +297,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
     if not references:
         console.print(
             "[yellow]No op:// references configured.  Add one with "
-            "`hermes secrets onepassword set ENV_VAR \"op://…\"`.[/yellow]"
+            "`newroz secrets onepassword set ENV_VAR \"op://…\"`.[/yellow]"
         )
         return 0
 
@@ -371,7 +371,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
         console.print(f"[yellow]warning:[/yellow] {w}")
     console.print(
         "\n  This was a dry-run — references resolve automatically on the next "
-        "[cyan]hermes[/cyan] invocation.  Re-run with [cyan]--apply[/cyan] to export "
+        "[cyan]newroz[/cyan] invocation.  Re-run with [cyan]--apply[/cyan] to export "
         "into the current shell instead."
     )
     return 0
@@ -385,9 +385,9 @@ def cmd_disable(args: argparse.Namespace) -> int:
     save_config(cfg)
     console.print(
         "[green]Disabled.[/green]  1Password references will NOT be resolved on the "
-        "next Hermes invocation.\n"
+        "next Newroz invocation.\n"
         "  Your reference mappings are left in config.yaml — remove them with "
-        "[cyan]hermes secrets onepassword remove ENV_VAR[/cyan] if you no longer "
+        "[cyan]newroz secrets onepassword remove ENV_VAR[/cyan] if you no longer "
         "need them."
     )
     return 0

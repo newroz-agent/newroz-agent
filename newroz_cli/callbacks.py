@@ -1,7 +1,7 @@
 """Interactive prompt callbacks for terminal_tool integration.
 
 These bridge terminal_tool's interactive prompts (clarify, sudo, approval)
-into prompt_toolkit's event loop. Each function takes the HermesCLI instance
+into prompt_toolkit's event loop. Each function takes the NewrozCLI instance
 as its first argument and uses its state (queues, app reference) to coordinate
 with the TUI.
 """
@@ -9,10 +9,10 @@ with the TUI.
 import queue
 import time as _time
 
-from hermes_cli.banner import cprint, _DIM, _RST
-from hermes_cli.config import save_env_value_secure
-from hermes_cli.secret_prompt import masked_secret_prompt
-from hermes_constants import display_hermes_home
+from newroz_cli.banner import cprint, _DIM, _RST
+from newroz_cli.config import save_env_value_secure
+from newroz_cli.secret_prompt import masked_secret_prompt
+from newroz_constants import display_newroz_home
 
 
 def clarify_callback(cli, question, choices):
@@ -67,7 +67,7 @@ def prompt_for_secret(cli, var_name: str, prompt: str, metadata=None) -> dict:
     """Prompt for a secret value through the TUI (e.g. API keys for skills).
 
     Returns a dict with keys: success, stored_as, validated, skipped, message.
-    The secret is stored in ~/.hermes/.env and never exposed to the model.
+    The secret is stored in ~/.newroz/.env and never exposed to the model.
     """
     if not getattr(cli, "_app", None):
         if not hasattr(cli, "_secret_state"):
@@ -91,7 +91,7 @@ def prompt_for_secret(cli, var_name: str, prompt: str, metadata=None) -> dict:
             }
 
         stored = save_env_value_secure(var_name, value)
-        _dhh = display_hermes_home()
+        _dhh = display_newroz_home()
         cprint(f"\n{_DIM}  ✓ Stored secret in {_dhh}/.env as {var_name}{_RST}")
         return {
             **stored,
@@ -144,7 +144,7 @@ def prompt_for_secret(cli, var_name: str, prompt: str, metadata=None) -> dict:
                 }
 
             stored = save_env_value_secure(var_name, value)
-            _dhh = display_hermes_home()
+            _dhh = display_newroz_home()
             cprint(f"\n{_DIM}  ✓ Stored secret in {_dhh}/.env as {var_name}{_RST}")
             return {
                 **stored,

@@ -3,12 +3,12 @@
 import os
 from unittest.mock import patch
 
-from hermes_cli.model_switch import list_authenticated_providers
+from newroz_cli.model_switch import list_authenticated_providers
 
 
 # Minimum set of models that must be present for opencode-go no matter
 # whether the picker sourced its list from curated-only or curated+models.dev.
-# The curated list in hermes_cli/models.py defines the floor; models.dev only
+# The curated list in newroz_cli/models.py defines the floor; models.dev only
 # ever adds names on top of it via _merge_with_models_dev.
 _OPENCODE_GO_REQUIRED = {
     "kimi-k2.6",
@@ -42,9 +42,9 @@ def test_opencode_go_appears_when_api_key_set():
         f"Got: {opencode_go['models']}"
     )
     # opencode-go can appear as "built-in" (from PROVIDER_TO_MODELS_DEV when
-    # models.dev is reachable) or "hermes" (from HERMES_OVERLAYS fallback when
+    # models.dev is reachable) or "newroz" (from NEWROZ_OVERLAYS fallback when
     # the API is unavailable, e.g. in CI).
-    assert opencode_go["source"] in {"built-in", "hermes"}
+    assert opencode_go["source"] in {"built-in", "newroz"}
 
 
 def test_opencode_go_not_appears_when_no_creds():

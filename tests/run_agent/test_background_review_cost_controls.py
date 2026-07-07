@@ -40,7 +40,7 @@ class _FakeAgent:
 def test_routing_auto_inherits_parent_and_downgrades_codex_app_server():
     agent = _FakeAgent()
     cfg = {"auxiliary": {"background_review": {"provider": "auto", "model": ""}}}
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         rt = br._resolve_review_runtime(agent)
     assert rt["routed"] is False
     assert rt["provider"] == "openai-codex"
@@ -57,8 +57,8 @@ def test_routing_to_different_model_marks_routed_and_resolves_credentials():
         "provider": "openrouter", "api_key": "or-key",
         "base_url": "https://openrouter.ai/api/v1", "api_mode": "chat_completions",
     }
-    with patch("hermes_cli.config.load_config", return_value=cfg), \
-         patch("hermes_cli.runtime_provider.resolve_runtime_provider", return_value=fake_rp):
+    with patch("newroz_cli.config.load_config", return_value=cfg), \
+         patch("newroz_cli.runtime_provider.resolve_runtime_provider", return_value=fake_rp):
         rt = br._resolve_review_runtime(agent)
     assert rt["routed"] is True
     assert rt["provider"] == "openrouter"
@@ -71,7 +71,7 @@ def test_routing_same_model_as_parent_is_not_routed():
     cfg = {"auxiliary": {"background_review": {
         "provider": "openrouter", "model": "anthropic/claude-opus-4.8",
     }}}
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         rt = br._resolve_review_runtime(agent)
     assert rt["routed"] is False  # same model/provider → keep full-replay path
 
@@ -81,8 +81,8 @@ def test_routing_resolution_failure_falls_back_to_parent():
     cfg = {"auxiliary": {"background_review": {
         "provider": "openrouter", "model": "google/gemini-3-flash-preview",
     }}}
-    with patch("hermes_cli.config.load_config", return_value=cfg), \
-         patch("hermes_cli.runtime_provider.resolve_runtime_provider",
+    with patch("newroz_cli.config.load_config", return_value=cfg), \
+         patch("newroz_cli.runtime_provider.resolve_runtime_provider",
                side_effect=RuntimeError("boom")):
         rt = br._resolve_review_runtime(agent)
     assert rt["routed"] is False

@@ -1,4 +1,4 @@
-"""Behavior tests for hermes_cli.inventory.
+"""Behavior tests for newroz_cli.inventory.
 
 Locks the invariants the three migrated consumers (web_server.py
 /api/model/options, tui_gateway model.options, tui_gateway model.save_key)
@@ -22,7 +22,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 
-from hermes_cli.inventory import (
+from newroz_cli.inventory import (
     ConfigContext,
     build_models_payload,
     load_picker_context,
@@ -50,7 +50,7 @@ def test_load_picker_context_full_dict():
         providers={"openrouter": {}},
         custom_providers=[{"name": "Ollama", "base_url": "http://localhost:11434/v1"}],
     )
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         ctx = load_picker_context()
     assert ctx.current_model == "anthropic/claude-sonnet-4.6"
     assert ctx.current_provider == "openrouter"
@@ -77,7 +77,7 @@ def test_load_picker_context_normalizes_list_of_dict_models():
             }
         },
     )
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         ctx = load_picker_context()
 
     assert len(ctx.custom_providers) == 1
@@ -90,7 +90,7 @@ def test_load_picker_context_normalizes_list_of_dict_models():
 
 def test_load_picker_context_falls_back_to_name_when_default_missing():
     cfg = _cfg(model={"name": "gpt-5.4", "provider": "openai"})
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         ctx = load_picker_context()
     assert ctx.current_model == "gpt-5.4"
     assert ctx.current_provider == "openai"
@@ -99,7 +99,7 @@ def test_load_picker_context_falls_back_to_name_when_default_missing():
 def test_load_picker_context_string_model_legacy_shape():
     """config.model can be a bare string in older configs."""
     cfg = {"model": "some-model", "providers": {}, "custom_providers": []}
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         ctx = load_picker_context()
     assert ctx.current_model == "some-model"
     assert ctx.current_provider == ""
@@ -108,7 +108,7 @@ def test_load_picker_context_string_model_legacy_shape():
 
 def test_load_picker_context_empty_config():
     cfg = _cfg()
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         ctx = load_picker_context()
     assert ctx.current_provider == ""
     assert ctx.current_model == ""
@@ -162,7 +162,7 @@ def test_with_overrides_no_args_returns_self_or_equivalent():
 def _list_auth_returning(rows: list[dict]):
     """Patch list_authenticated_providers to return a fixed row list."""
     return patch(
-        "hermes_cli.model_switch.list_authenticated_providers",
+        "newroz_cli.model_switch.list_authenticated_providers",
         return_value=rows,
     )
 
@@ -208,7 +208,7 @@ def test_build_models_payload_does_not_call_provider_model_ids():
              "source": "built-in"}]
     ctx = _empty_ctx()
     with _list_auth_returning(rows), \
-         patch("hermes_cli.models.provider_model_ids") as mock_pm:
+         patch("newroz_cli.models.provider_model_ids") as mock_pm:
         build_models_payload(ctx)
     mock_pm.assert_not_called()
 
@@ -223,7 +223,7 @@ def test_build_models_payload_uses_cached_nous_tier_by_default():
     ctx = _empty_ctx(provider="nous", model="openai/gpt-5.5")
     rows = [_nous_row()]
     with patch(
-        "hermes_cli.model_switch.list_authenticated_providers",
+        "newroz_cli.model_switch.list_authenticated_providers",
         return_value=rows,
     ) as mock_list:
         build_models_payload(ctx)
@@ -236,7 +236,7 @@ def test_build_models_payload_can_force_fresh_nous_tier():
     ctx = _empty_ctx(provider="nous", model="openai/gpt-5.5")
     rows = [_nous_row()]
     with patch(
-        "hermes_cli.model_switch.list_authenticated_providers",
+        "newroz_cli.model_switch.list_authenticated_providers",
         return_value=rows,
     ) as mock_list:
         build_models_payload(ctx, force_fresh_nous_tier=True)
@@ -249,7 +249,7 @@ def test_build_models_payload_can_skip_custom_provider_probes():
     ctx = _empty_ctx()
     rows = []
     with patch(
-        "hermes_cli.model_switch.list_authenticated_providers",
+        "newroz_cli.model_switch.list_authenticated_providers",
         return_value=rows,
     ) as mock_list:
         build_models_payload(ctx, probe_custom_providers=False)
@@ -262,7 +262,7 @@ def test_build_models_payload_can_probe_only_current_custom_provider():
     ctx = _empty_ctx()
     rows = []
     with patch(
-        "hermes_cli.model_switch.list_authenticated_providers",
+        "newroz_cli.model_switch.list_authenticated_providers",
         return_value=rows,
     ) as mock_list:
         build_models_payload(
@@ -286,7 +286,7 @@ def test_list_authenticated_providers_force_fresh_is_keyword_only():
     """
     import inspect
 
-    from hermes_cli.model_switch import list_authenticated_providers
+    from newroz_cli.model_switch import list_authenticated_providers
 
     sig = inspect.signature(list_authenticated_providers)
     param = sig.parameters["force_fresh_nous_tier"]
@@ -300,7 +300,7 @@ def test_pricing_uses_cached_nous_tier_by_default():
     with (
         _list_auth_returning(rows),
         patch(
-            "hermes_cli.models.get_pricing_for_provider",
+            "newroz_cli.models.get_pricing_for_provider",
             return_value={
                 "openai/gpt-5.5": {
                     "prompt": "0.000001",
@@ -308,7 +308,7 @@ def test_pricing_uses_cached_nous_tier_by_default():
                 },
             },
         ),
-        patch("hermes_cli.models.check_nous_free_tier", return_value=False) as mock_free,
+        patch("newroz_cli.models.check_nous_free_tier", return_value=False) as mock_free,
     ):
         build_models_payload(ctx, pricing=True)
 
@@ -321,7 +321,7 @@ def test_pricing_can_force_fresh_nous_tier():
     with (
         _list_auth_returning(rows),
         patch(
-            "hermes_cli.models.get_pricing_for_provider",
+            "newroz_cli.models.get_pricing_for_provider",
             return_value={
                 "openai/gpt-5.5": {
                     "prompt": "0.000001",
@@ -329,7 +329,7 @@ def test_pricing_can_force_fresh_nous_tier():
                 },
             },
         ),
-        patch("hermes_cli.models.check_nous_free_tier", return_value=False) as mock_free,
+        patch("newroz_cli.models.check_nous_free_tier", return_value=False) as mock_free,
     ):
         build_models_payload(ctx, pricing=True, force_fresh_nous_tier=True)
 
@@ -350,7 +350,7 @@ def test_include_unconfigured_appends_canonical_skeletons():
         payload = build_models_payload(ctx, include_unconfigured=True)
     # All canonical providers other than openrouter should appear as
     # skeleton rows.
-    from hermes_cli.models import CANONICAL_PROVIDERS
+    from newroz_cli.models import CANONICAL_PROVIDERS
 
     seen_slugs = {r["slug"] for r in payload["providers"]}
     for entry in CANONICAL_PROVIDERS:
@@ -410,10 +410,10 @@ def test_picker_hints_adds_warning_to_skeleton_rows():
         assert "auth_type" in row
         assert "warning" in row
         # api_key providers get "paste X to activate" / others get the
-        # hermes model fallback.
+        # newroz model fallback.
         assert (
             row["warning"].startswith("paste ")
-            or row["warning"].startswith("run `hermes model`")
+            or row["warning"].startswith("run `newroz model`")
         )
 
 
@@ -444,7 +444,7 @@ def test_canonical_order_uses_slug_not_is_user_defined_flag():
     canonical providers configured via the keyed schema get demoted to
     the tail.
     """
-    from hermes_cli.models import CANONICAL_PROVIDERS
+    from newroz_cli.models import CANONICAL_PROVIDERS
 
     canonical_slug = CANONICAL_PROVIDERS[2].slug  # any canonical
     rows = [
@@ -478,7 +478,7 @@ def test_canonical_order_with_unconfigured_preserves_full_universe():
     has CANONICAL_PROVIDERS in declaration order, hints applied,
     custom rows trailing.
     """
-    from hermes_cli.models import CANONICAL_PROVIDERS
+    from newroz_cli.models import CANONICAL_PROVIDERS
 
     rows = [
         {"slug": "custom:Ollama", "name": "Ollama", "models": [],
@@ -511,7 +511,7 @@ def test_end_to_end_with_real_context_no_credentials_leak(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", canary)
     monkeypatch.setenv("ANTHROPIC_API_KEY", canary)
     cfg = _cfg(model={"provider": "openrouter"})
-    with patch("hermes_cli.config.load_config", return_value=cfg):
+    with patch("newroz_cli.config.load_config", return_value=cfg):
         ctx = load_picker_context()
     payload = build_models_payload(
         ctx, include_unconfigured=True, picker_hints=True,
@@ -784,11 +784,11 @@ def test_build_models_payload_keeps_static_provider_models_from_providers_dict()
         },
     )
     with (
-        patch("hermes_cli.config.load_config", return_value=cfg),
+        patch("newroz_cli.config.load_config", return_value=cfg),
         patch("agent.models_dev.fetch_models_dev", return_value={}),
-        patch("hermes_cli.providers.HERMES_OVERLAYS", {}),
+        patch("newroz_cli.providers.NEWROZ_OVERLAYS", {}),
         patch(
-            "hermes_cli.models.fetch_api_models",
+            "newroz_cli.models.fetch_api_models",
             side_effect=AssertionError("fetch_api_models must not be called"),
         ),
     ):
@@ -850,11 +850,11 @@ def test_build_models_payload_forwards_refresh_flag():
         captured["refresh"] = kwargs.get("refresh")
         return []
 
-    with patch("hermes_cli.model_switch.list_authenticated_providers", side_effect=_capture):
+    with patch("newroz_cli.model_switch.list_authenticated_providers", side_effect=_capture):
         build_models_payload(_empty_ctx())
     assert captured["refresh"] is False
 
-    with patch("hermes_cli.model_switch.list_authenticated_providers", side_effect=_capture):
+    with patch("newroz_cli.model_switch.list_authenticated_providers", side_effect=_capture):
         build_models_payload(_empty_ctx(), refresh=True)
     assert captured["refresh"] is True
 
@@ -862,9 +862,9 @@ def test_build_models_payload_forwards_refresh_flag():
 def test_list_authenticated_providers_refresh_busts_cache():
     """refresh=True clears the provider-model disk cache exactly once;
     refresh=False leaves it untouched (so normal picker opens stay snappy)."""
-    from hermes_cli import model_switch
+    from newroz_cli import model_switch
 
-    with patch("hermes_cli.models.clear_provider_models_cache") as clear:
+    with patch("newroz_cli.models.clear_provider_models_cache") as clear:
         model_switch.list_authenticated_providers(refresh=False)
         assert clear.call_count == 0
         model_switch.list_authenticated_providers(refresh=True)

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/context-menu'
 import { DiffCount } from '@/components/ui/diff-count'
 import { Tip } from '@/components/ui/tooltip'
-import type { HermesReviewFile } from '@/global'
+import type { NewrozReviewFile } from '@/global'
 import { useI18n } from '@/i18n'
 import { isDesktopFsRemoteMode } from '@/lib/desktop-fs'
 import { normalizeOrLocalPreviewTarget } from '@/lib/local-preview'
@@ -311,7 +311,7 @@ function ReviewFileRow({ node, depth }: { node: ReviewTreeNode; depth: number })
         onDragStart={event => {
           event.dataTransfer.effectAllowed = 'copy'
           event.dataTransfer.setData(
-            'application/x-hermes-paths',
+            'application/x-newroz-paths',
             JSON.stringify([{ isDirectory: false, path: dragPath }])
           )
           event.dataTransfer.setData('text/plain', dragPath)
@@ -392,7 +392,7 @@ function ReviewFileContextMenu({
   children: ReactNode
   cwd: null | string
   dragPath: string
-  file: HermesReviewFile
+  file: NewrozReviewFile
   onOpenChanges: () => void
   onOpenFile: () => void
 }) {

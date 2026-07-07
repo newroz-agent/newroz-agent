@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ChatMessage } from '@/lib/chat-messages'
-import type { SessionInfo } from '@/types/hermes'
+import type { SessionInfo } from '@/types/newroz'
 
 import {
   chatMessageArraysEquivalent,

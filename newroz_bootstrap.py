@@ -1,4 +1,4 @@
-"""Windows UTF-8 bootstrap for Hermes entry points.
+"""Windows UTF-8 bootstrap for Newroz entry points.
 
 Python on Windows has two long-standing text-encoding footguns:
 
@@ -13,8 +13,8 @@ Python on Windows has two long-standing text-encoding footguns:
    cp1252 defaults and hits the same UnicodeEncodeError.
 
 This module fixes both on Windows *only* — POSIX is untouched.  It
-should be imported at the very top of every Hermes entry point
-(``hermes``, ``hermes-agent``, ``hermes-acp``, ``python -m gateway.run``,
+should be imported at the very top of every Newroz entry point
+(``newroz``, ``newroz-agent``, ``newroz-acp``, ``python -m gateway.run``,
 ``batch_runner.py``, ``cron/scheduler.py``) before any other imports
 that might do file I/O or print to stdout.
 
@@ -123,9 +123,9 @@ def apply_windows_utf8_bootstrap() -> bool:
 
 
 def harden_import_path(src_root: str | None = None) -> None:
-    """Stop a package in the current directory from shadowing Hermes modules.
+    """Stop a package in the current directory from shadowing Newroz modules.
 
-    Hermes ships top-level modules with common names (``utils``, ``proxy``,
+    Newroz ships top-level modules with common names (``utils``, ``proxy``,
     ``ui``).  Python always seeds ``sys.path`` with the current directory, so
     launching an entry point from a project that has its own ``utils/`` package
     makes ``from utils import ...`` resolve to the *user's* package and crash
@@ -139,7 +139,7 @@ def harden_import_path(src_root: str | None = None) -> None:
       - As its own *absolute* path, when a venv activation or a project that
         adds itself to ``PYTHONPATH`` puts the directory there explicitly.
 
-    We drop the relative forms outright, then force the real Hermes source root
+    We drop the relative forms outright, then force the real Newroz source root
     to the front — relocating it ahead of any absolute cwd entry rather than
     only inserting when absent, so an absolute cwd path can't keep winning.
 
@@ -147,7 +147,7 @@ def harden_import_path(src_root: str | None = None) -> None:
     repository root for every shipped entry point, so the guard is
     self-sufficient and does not depend on the spawner exporting an env var.
     """
-    root = src_root or os.environ.get("HERMES_PYTHON_SRC_ROOT") or os.path.dirname(
+    root = src_root or os.environ.get("NEWROZ_PYTHON_SRC_ROOT") or os.path.dirname(
         os.path.abspath(__file__)
     )
 
@@ -163,7 +163,7 @@ def activate_durable_lazy_target() -> None:
 
     On immutable Docker images the agent venv is sealed and lazy installs
     are redirected to a writable dir on the data volume
-    (``HERMES_LAZY_INSTALL_TARGET``, e.g. ``/opt/data/lazy-packages``).
+    (``NEWROZ_LAZY_INSTALL_TARGET``, e.g. ``/opt/data/lazy-packages``).
     Packages installed there on a previous run must be importable on this
     run, so we activate the dir here — at the very first import, before any
     backend module imports its SDK.
@@ -172,7 +172,7 @@ def activate_durable_lazy_target() -> None:
     always wins name collisions (see ``tools.lazy_deps`` for the full
     security rationale). Never raises; a missing/empty target is a no-op.
     """
-    if not os.environ.get("HERMES_LAZY_INSTALL_TARGET", "").strip():
+    if not os.environ.get("NEWROZ_LAZY_INSTALL_TARGET", "").strip():
         return
     try:
         from tools import lazy_deps
@@ -183,8 +183,8 @@ def activate_durable_lazy_target() -> None:
         pass
 
 
-# Apply on import — entry points just need ``import hermes_bootstrap``
-# (or ``from hermes_bootstrap import apply_windows_utf8_bootstrap``) at
+# Apply on import — entry points just need ``import newroz_bootstrap``
+# (or ``from newroz_bootstrap import apply_windows_utf8_bootstrap``) at
 # the very top of their module, before importing anything else.  The
 # import side effect does the right thing.
 apply_windows_utf8_bootstrap()

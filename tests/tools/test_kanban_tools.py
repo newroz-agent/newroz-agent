@@ -1,7 +1,7 @@
 """Tests for the Kanban tool surface (tools/kanban_tools.py).
 
 Verifies:
-  - Tools are gated on HERMES_KANBAN_TASK: a normal chat session sees
+  - Tools are gated on NEWROZ_KANBAN_TASK: a normal chat session sees
     zero kanban tools in its schema; a worker session sees the kanban set.
   - Each handler's happy path.
   - Error paths (missing required args, bad metadata type, etc).
@@ -19,19 +19,19 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def test_kanban_tools_hidden_without_env_var(monkeypatch, tmp_path):
-    """Normal `hermes chat` sessions (no HERMES_KANBAN_TASK) must have
+    """Normal `newroz chat` sessions (no NEWROZ_KANBAN_TASK) must have
     zero kanban_* tools in their schema."""
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    home = tmp_path / ".hermes"
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
     from toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
-    schema = registry.get_definitions(set(resolve_toolset("hermes-cli")), quiet=True)
+    schema = registry.get_definitions(set(resolve_toolset("newroz-cli")), quiet=True)
     names = {s["function"].get("name") for s in schema if "function" in s}
     kanban = {n for n in names if n and n.startswith("kanban_")}
     assert kanban == set(), (
@@ -41,17 +41,17 @@ def test_kanban_tools_hidden_without_env_var(monkeypatch, tmp_path):
 
 def test_kanban_tools_visible_with_env_var(monkeypatch, tmp_path):
     """Worker sessions get task lifecycle tools, not board-routing tools."""
-    monkeypatch.setenv("HERMES_KANBAN_TASK", "t_fake")
-    home = tmp_path / ".hermes"
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", "t_fake")
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
     from toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
-    schema = registry.get_definitions(set(resolve_toolset("hermes-cli")), quiet=True)
+    schema = registry.get_definitions(set(resolve_toolset("newroz-cli")), quiet=True)
     names = {s["function"].get("name") for s in schema if "function" in s}
     kanban = {n for n in names if n and n.startswith("kanban_")}
     expected = {
@@ -65,10 +65,10 @@ def test_kanban_worker_env_overrides_profile_toolset_filter(monkeypatch, tmp_pat
     """Dispatcher-spawned workers must get lifecycle tools even when the
     assignee profile restricts enabled toolsets and does not list kanban.
     """
-    monkeypatch.setenv("HERMES_KANBAN_TASK", "t_fake")
-    home = tmp_path / ".hermes"
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", "t_fake")
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     import tools.kanban_tools  # ensure registered
     from model_tools import _clear_tool_defs_cache, get_tool_definitions
@@ -91,21 +91,21 @@ def test_worker_with_kanban_toolset_still_hides_board_routing(monkeypatch, tmp_p
     """Task scope wins over profile config for board-routing tools.
 
     Even if a worker process happens to also have ``toolsets: [kanban]``
-    in its config, the HERMES_KANBAN_TASK env var means it's a focused
+    in its config, the NEWROZ_KANBAN_TASK env var means it's a focused
     worker and must not see kanban_list / kanban_unblock.
     """
-    monkeypatch.setenv("HERMES_KANBAN_TASK", "t_fake")
-    home = tmp_path / ".hermes"
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", "t_fake")
+    home = tmp_path / ".newroz"
     home.mkdir()
     (home / "config.yaml").write_text("toolsets:\n  - kanban\n")
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
     from toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
-    schema = registry.get_definitions(set(resolve_toolset("hermes-cli")), quiet=True)
+    schema = registry.get_definitions(set(resolve_toolset("newroz-cli")), quiet=True)
     names = {s["function"].get("name") for s in schema if "function" in s}
     kanban = {n for n in names if n and n.startswith("kanban_")}
     assert {
@@ -119,18 +119,18 @@ def test_worker_with_kanban_toolset_still_hides_board_routing(monkeypatch, tmp_p
 
 def test_kanban_tools_visible_with_toolset_config(monkeypatch, tmp_path):
     """Orchestrator profiles with toolsets: [kanban] see all kanban tools."""
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    home = tmp_path / ".hermes"
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    home = tmp_path / ".newroz"
     home.mkdir()
     (home / "config.yaml").write_text("toolsets:\n  - kanban\n")
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
     from toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
-    schema = registry.get_definitions(set(resolve_toolset("hermes-cli")), quiet=True)
+    schema = registry.get_definitions(set(resolve_toolset("newroz-cli")), quiet=True)
     names = {s["function"].get("name") for s in schema if "function" in s}
     kanban = {n for n in names if n and n.startswith("kanban_")}
     expected = {
@@ -148,17 +148,17 @@ def test_kanban_tools_visible_with_toolset_config(monkeypatch, tmp_path):
 
 @pytest.fixture
 def worker_env(monkeypatch, tmp_path):
-    """Simulate being a worker: HERMES_HOME isolated, HERMES_KANBAN_TASK set
+    """Simulate being a worker: NEWROZ_HOME isolated, NEWROZ_KANBAN_TASK set
     after we've created the task."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_PROFILE", "test-worker")
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_PROFILE", "test-worker")
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
     from pathlib import Path as _Path
     monkeypatch.setattr(_Path, "home", lambda: tmp_path)
 
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     kb._INITIALIZED_PATHS.clear()
     kb.init_db()
     conn = kb.connect()
@@ -167,7 +167,7 @@ def worker_env(monkeypatch, tmp_path):
         kb.claim_task(conn, tid)
     finally:
         conn.close()
-    monkeypatch.setenv("HERMES_KANBAN_TASK", tid)
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", tid)
     return tid
 
 
@@ -184,7 +184,7 @@ def test_show_defaults_to_env_task_id(worker_env):
 
 def test_show_explicit_task_id(worker_env):
     """Peek at a different task than the one in env."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         other = kb.create_task(conn, title="other task", assignee="peer")
@@ -198,8 +198,8 @@ def test_show_explicit_task_id(worker_env):
 
 def test_list_filters_tasks(monkeypatch, worker_env):
     """kanban_list gives orchestrators filtered board discovery."""
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    from hermes_cli import kanban_db as kb
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         a = kb.create_task(conn, title="alpha", assignee="factory", priority=5)
@@ -228,22 +228,22 @@ def test_list_filters_tasks(monkeypatch, worker_env):
 
 
 def test_list_rejects_invalid_status(monkeypatch, worker_env):
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
     from tools import kanban_tools as kt
     out = kt._handle_list({"status": "not-a-state"})
     assert "status must be one of" in json.loads(out).get("error", "")
 
 
 def test_list_rejects_bad_limit(monkeypatch, worker_env):
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
     from tools import kanban_tools as kt
     assert json.loads(kt._handle_list({"limit": "nope"})).get("error")
     assert json.loads(kt._handle_list({"limit": 0})).get("error")
 
 
 def test_list_parses_include_archived_string_false(monkeypatch, worker_env):
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    from hermes_cli import kanban_db as kb
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         live = kb.create_task(conn, title="live task", assignee="factory")
@@ -263,8 +263,8 @@ def test_list_parses_include_archived_string_false(monkeypatch, worker_env):
 
 
 def test_list_parses_include_archived_string_true(monkeypatch, worker_env):
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    from hermes_cli import kanban_db as kb
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         live = kb.create_task(conn, title="live task", assignee="factory")
@@ -284,7 +284,7 @@ def test_list_parses_include_archived_string_true(monkeypatch, worker_env):
 
 
 def test_list_rejects_bad_include_archived(monkeypatch, worker_env):
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
     from tools import kanban_tools as kt
     out = kt._handle_list({"include_archived": "sometimes"})
     assert "include_archived must be" in json.loads(out).get("error", "")
@@ -300,7 +300,7 @@ def test_complete_happy_path(worker_env):
     assert d["ok"] is True
     assert d["task_id"] == worker_env
     # Verify via kernel
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         run = kb.latest_run(conn, worker_env)
@@ -316,7 +316,7 @@ def test_complete_metadata_round_trips_through_show(worker_env):
     from tools import kanban_tools as kt
 
     handoff = {
-        "changed_files": ["hermes_cli/kanban.py"],
+        "changed_files": ["newroz_cli/kanban.py"],
         "verification": ["pytest tests/tools/test_kanban_tools.py -q"],
         "dependencies": [],
         "blocked_reason": None,
@@ -340,7 +340,7 @@ def test_complete_metadata_round_trips_through_show(worker_env):
 def test_complete_stamps_worker_session_id_from_env(monkeypatch, worker_env):
     from tools import kanban_tools as kt
 
-    monkeypatch.setenv("HERMES_SESSION_ID", "session-trusted")
+    monkeypatch.setenv("NEWROZ_SESSION_ID", "session-trusted")
     metadata = {"files": 2, "worker_session_id": "user-spoof"}
 
     out = kt._handle_complete({
@@ -350,7 +350,7 @@ def test_complete_stamps_worker_session_id_from_env(monkeypatch, worker_env):
     assert json.loads(out)["ok"] is True
     assert metadata["worker_session_id"] == "user-spoof"
 
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         run = kb.latest_run(conn, worker_env)
@@ -367,8 +367,8 @@ def test_complete_does_not_stamp_worker_session_id_without_scoped_task(
 ):
     from tools import kanban_tools as kt
 
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    monkeypatch.setenv("HERMES_SESSION_ID", "session-trusted")
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    monkeypatch.setenv("NEWROZ_SESSION_ID", "session-trusted")
 
     out = kt._handle_complete({
         "task_id": worker_env,
@@ -377,7 +377,7 @@ def test_complete_does_not_stamp_worker_session_id_without_scoped_task(
     })
     assert json.loads(out)["ok"] is True
 
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         run = kb.latest_run(conn, worker_env)
@@ -401,7 +401,7 @@ def test_complete_with_artifacts_lands_in_event_payload(worker_env):
     """``artifacts=[...]`` rides into the completed event payload so the
     gateway notifier can upload them as native attachments. See the
     kanban notifier in gateway/run.py for the consumer side."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     out = kt._handle_complete({
@@ -433,7 +433,7 @@ def test_complete_with_artifacts_lands_in_event_payload(worker_env):
 
 def test_complete_artifacts_accepts_single_string(worker_env):
     """A bare string is auto-promoted to a single-element list for convenience."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     out = kt._handle_complete({
@@ -453,7 +453,7 @@ def test_complete_artifacts_accepts_single_string(worker_env):
 def test_complete_artifacts_merges_with_explicit_metadata_field(worker_env):
     """If the worker passes metadata.artifacts AND the top-level artifacts
     param, merge the two without duplicates."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     out = kt._handle_complete({
@@ -503,7 +503,7 @@ def test_complete_phantom_card_message_advertises_retry(worker_env):
     where the previous wording read like a terminal failure and workers
     routinely abandoned the run instead of trying again.
     """
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     out = kt._handle_complete({
@@ -535,7 +535,7 @@ def test_complete_retry_with_empty_created_cards_succeeds(worker_env):
     """After a phantom rejection, retrying kanban_complete with
     created_cards=[] (the documented escape hatch) must complete the
     task. Regression for #22923."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     # Hit the gate first.
@@ -563,7 +563,7 @@ def test_complete_retry_with_corrected_created_cards_succeeds(worker_env):
     """After a phantom rejection, retrying kanban_complete with a
     corrected created_cards list (phantom ids removed) must complete the
     task. Regression for #22923."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     # Create a real child via the tool so it gets the worker-profile
@@ -594,15 +594,15 @@ def test_complete_goal_mode_rejected_by_judge(monkeypatch, tmp_path):
     """Goal-mode tasks must pass the auxiliary judge before completion.
     Regression for #38367: workers bypassing the judge via early kanban_complete."""
     from pathlib import Path as _Path
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
-    # Set up isolated HERMES_HOME
-    home = tmp_path / ".hermes"
+    # Set up isolated NEWROZ_HOME
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_PROFILE", "test-worker")
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_PROFILE", "test-worker")
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
     monkeypatch.setattr(_Path, "home", lambda: tmp_path)
 
     kb._INITIALIZED_PATHS.clear()
@@ -616,7 +616,7 @@ def test_complete_goal_mode_rejected_by_judge(monkeypatch, tmp_path):
         kb.claim_task(conn, goal_task_id)
     finally:
         conn.close()
-    monkeypatch.setenv("HERMES_KANBAN_TASK", goal_task_id)
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", goal_task_id)
 
     # Mock the judge to reject the completion. The gate only runs when a
     # judge is reachable, so force the availability probe True as well.
@@ -651,14 +651,14 @@ def test_complete_goal_mode_allows_when_judge_unavailable(monkeypatch, tmp_path)
     The gate probes availability first, so completion proceeds rather than
     being rejected forever when no judge can be reached."""
     from pathlib import Path as _Path
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_PROFILE", "test-worker")
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_PROFILE", "test-worker")
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
     monkeypatch.setattr(_Path, "home", lambda: tmp_path)
 
     kb._INITIALIZED_PATHS.clear()
@@ -672,7 +672,7 @@ def test_complete_goal_mode_allows_when_judge_unavailable(monkeypatch, tmp_path)
         kb.claim_task(conn, goal_task_id)
     finally:
         conn.close()
-    monkeypatch.setenv("HERMES_KANBAN_TASK", goal_task_id)
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", goal_task_id)
 
     # No judge reachable. judge_goal must not even be consulted; if it were,
     # this stub would reject — so reaching "done" proves the probe short-circuit.
@@ -698,7 +698,7 @@ def test_block_happy_path(worker_env):
     out = kt._handle_block({"reason": "need clarification"})
     d = json.loads(out)
     assert d["ok"] is True
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         assert kb.get_task(conn, worker_env).status == "blocked"
@@ -714,16 +714,16 @@ def test_block_rejects_empty_reason(worker_env):
 
 
 def _make_goal_mode_worker_env(monkeypatch, tmp_path):
-    """Set up an isolated HERMES_HOME with one claimed goal_mode task,
+    """Set up an isolated NEWROZ_HOME with one claimed goal_mode task,
     matching the pattern used by the kanban_complete judge gate tests."""
     from pathlib import Path as _Path
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_PROFILE", "test-worker")
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_PROFILE", "test-worker")
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
     monkeypatch.setattr(_Path, "home", lambda: tmp_path)
 
     kb._INITIALIZED_PATHS.clear()
@@ -737,7 +737,7 @@ def _make_goal_mode_worker_env(monkeypatch, tmp_path):
         kb.claim_task(conn, goal_task_id)
     finally:
         conn.close()
-    monkeypatch.setenv("HERMES_KANBAN_TASK", goal_task_id)
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", goal_task_id)
     return goal_task_id
 
 
@@ -746,7 +746,7 @@ def test_block_goal_mode_rejects_missing_kind(monkeypatch, tmp_path):
     to use it as an unguarded escape from the goal loop (Issue #38696,
     sibling of the kanban_complete judge gate / Issue #38367)."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     tid = _make_goal_mode_worker_env(monkeypatch, tmp_path)
     out = kt._handle_block({"reason": "giving up"})
@@ -765,7 +765,7 @@ def test_block_goal_mode_rejects_disallowed_kind(monkeypatch, tmp_path):
     """`capability` / `transient` are valid kinds in general but must not
     let a goal_mode worker exit the loop without going through the judge."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     tid = _make_goal_mode_worker_env(monkeypatch, tmp_path)
     for kind in ("capability", "transient"):
@@ -789,7 +789,7 @@ def test_block_goal_mode_allows_dependency_kind(monkeypatch, tmp_path):
     running/ready/done/blocked as a stop, so this is still a legitimate,
     judge-free exit; it's just not the literal 'blocked' status."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     tid = _make_goal_mode_worker_env(monkeypatch, tmp_path)
     out = kt._handle_block({"reason": "waiting on another task", "kind": "dependency"})
@@ -805,7 +805,7 @@ def test_block_goal_mode_allows_dependency_kind(monkeypatch, tmp_path):
 
 def test_block_goal_mode_allows_needs_input_kind(monkeypatch, tmp_path):
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     tid = _make_goal_mode_worker_env(monkeypatch, tmp_path)
     out = kt._handle_block({"reason": "need a decision from the user", "kind": "needs_input"})
@@ -853,7 +853,7 @@ def test_heartbeat_extends_claim_expires(worker_env):
     static while last_heartbeat_at advanced.
     """
     import time as _time
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     # Rewind claim_expires into the past so any forward movement is
@@ -906,12 +906,12 @@ def test_comment_happy_path(worker_env):
     d = json.loads(out)
     assert d["ok"] is True
     assert d["comment_id"]
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         comments = kb.list_comments(conn, worker_env)
         assert len(comments) == 1
-        # Author defaults to HERMES_PROFILE env we set in the fixture
+        # Author defaults to NEWROZ_PROFILE env we set in the fixture
         assert comments[0].author == "test-worker"
         assert comments[0].body == "hello thread"
     finally:
@@ -926,23 +926,23 @@ def test_comment_rejects_empty_body(worker_env):
 
 def test_comment_ignores_caller_supplied_author(worker_env):
     """``args["author"]`` is no longer honored — the author is always
-    derived from ``HERMES_PROFILE`` so a worker can't forge a comment
-    under an authoritative-looking name like ``hermes-system`` and
+    derived from ``NEWROZ_PROFILE`` so a worker can't forge a comment
+    under an authoritative-looking name like ``newroz-system`` and
     poison the next worker's prompt context. Cross-task commenting
     itself remains unrestricted (see #19713); only the author override
     is removed.
     """
     from tools import kanban_tools as kt
     out = kt._handle_comment({
-        "task_id": worker_env, "body": "hi", "author": "hermes-system",
+        "task_id": worker_env, "body": "hi", "author": "newroz-system",
     })
     assert json.loads(out)["ok"]
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         comments = kb.list_comments(conn, worker_env)
-        # Author comes from HERMES_PROFILE in the fixture, not the
-        # caller-supplied "hermes-system" override.
+        # Author comes from NEWROZ_PROFILE in the fixture, not the
+        # caller-supplied "newroz-system" override.
         assert comments[0].author == "test-worker"
     finally:
         conn.close()
@@ -969,7 +969,7 @@ def test_create_happy_path(worker_env):
     assert d["ok"] is True
     assert d["task_id"]
     assert d["status"] == "todo"  # parent isn't done yet
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         child = kb.get_task(conn, d["task_id"])
@@ -984,7 +984,7 @@ def test_create_inherits_worker_dir_workspace(monkeypatch, worker_env):
     workspace arg inherits the dir, not scratch (so follow-up code-gen
     lands in the same project)."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     proj = "/home/teknium/myproject"
     conn = kb.connect()
@@ -996,7 +996,7 @@ def test_create_inherits_worker_dir_workspace(monkeypatch, worker_env):
         kb.claim_task(conn, self_tid)
     finally:
         conn.close()
-    monkeypatch.setenv("HERMES_KANBAN_TASK", self_tid)
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", self_tid)
 
     d = json.loads(kt._handle_create({"title": "follow-up", "assignee": "peer"}))
     assert d["ok"] is True
@@ -1012,7 +1012,7 @@ def test_create_inherits_worker_dir_workspace(monkeypatch, worker_env):
 def test_create_explicit_workspace_beats_inheritance(monkeypatch, worker_env):
     """An explicit workspace arg overrides worker-task inheritance."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     conn = kb.connect()
     try:
@@ -1023,7 +1023,7 @@ def test_create_explicit_workspace_beats_inheritance(monkeypatch, worker_env):
         kb.claim_task(conn, self_tid)
     finally:
         conn.close()
-    monkeypatch.setenv("HERMES_KANBAN_TASK", self_tid)
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", self_tid)
 
     d = json.loads(kt._handle_create({
         "title": "scratch child", "assignee": "peer",
@@ -1039,12 +1039,12 @@ def test_create_explicit_workspace_beats_inheritance(monkeypatch, worker_env):
 
 
 def test_create_no_worker_task_stays_scratch(monkeypatch, worker_env):
-    """Orchestrator/CLI callers (no HERMES_KANBAN_TASK) still default to
+    """Orchestrator/CLI callers (no NEWROZ_KANBAN_TASK) still default to
     scratch — inheritance only applies to task-scoped workers."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
     d = json.loads(kt._handle_create({"title": "orch child", "assignee": "peer"}))
     assert d["ok"] is True
     conn = kb.connect()
@@ -1058,12 +1058,12 @@ def test_create_no_worker_task_stays_scratch(monkeypatch, worker_env):
 
 def test_create_stamps_session_id_from_env(monkeypatch, worker_env):
     """When the agent loop runs under ACP, the server propagates the
-    originating chat session id via HERMES_SESSION_ID. ``kanban_create``
+    originating chat session id via NEWROZ_SESSION_ID. ``kanban_create``
     reads it and stamps the new task so clients can render a per-session
     board (issue: ACP session linkage on kanban tasks)."""
-    monkeypatch.setenv("HERMES_SESSION_ID", "acp-sess-abc")
+    monkeypatch.setenv("NEWROZ_SESSION_ID", "acp-sess-abc")
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     out = kt._handle_create({
         "title": "from chat",
         "assignee": "peer",
@@ -1084,9 +1084,9 @@ def test_create_session_id_arg_overrides_env(monkeypatch, worker_env):
     propagation. Edge case but exercised: a tool call could carry a
     different session id (e.g. cross-session linking) and the explicit
     arg should not be silently overwritten."""
-    monkeypatch.setenv("HERMES_SESSION_ID", "from-env")
+    monkeypatch.setenv("NEWROZ_SESSION_ID", "from-env")
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     out = kt._handle_create({
         "title": "explicit override",
         "assignee": "peer",
@@ -1107,9 +1107,9 @@ def test_create_session_id_absent_when_env_unset(monkeypatch, worker_env):
     """No env var, no arg → session_id stays NULL. Important for backwards
     compatibility: pre-ACP-propagation hosts and CLI-driven creates must
     not accidentally inherit a stale id."""
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     out = kt._handle_create({
         "title": "no session",
         "assignee": "peer",
@@ -1144,7 +1144,7 @@ def test_create_rejects_non_list_parents(worker_env):
 
 def test_create_parses_triage_string_false(worker_env):
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     out = kt._handle_create({
         "title": "not triage",
         "assignee": "peer",
@@ -1162,7 +1162,7 @@ def test_create_parses_triage_string_false(worker_env):
 
 def test_create_parses_triage_string_true(worker_env):
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     out = kt._handle_create({
         "title": "needs triage",
         "assignee": "peer",
@@ -1200,7 +1200,7 @@ def test_create_accepts_string_parent(worker_env):
 def test_create_accepts_skills_list(worker_env):
     """Tool writes the per-task skills through to the kernel."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     out = kt._handle_create({
         "title": "skilled",
         "assignee": "linguist",
@@ -1216,7 +1216,7 @@ def test_create_accepts_skills_list(worker_env):
 def test_create_accepts_skills_string(worker_env):
     """Convenience: a single skill name as string is coerced to [name]."""
     from tools import kanban_tools as kt
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     out = kt._handle_create({
         "title": "one-skill",
         "assignee": "a",
@@ -1239,7 +1239,7 @@ def test_create_rejects_non_list_skills(worker_env):
 
 
 def test_link_happy_path(worker_env):
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         a = kb.create_task(conn, title="A", assignee="x")
@@ -1266,7 +1266,7 @@ def test_link_rejects_missing_args(worker_env):
 
 def test_link_rejects_cycle(worker_env):
     """A → B, then try to link B → A."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         a = kb.create_task(conn, title="A", assignee="x")
@@ -1279,8 +1279,8 @@ def test_link_rejects_cycle(worker_env):
 
 
 def test_unblock_happy_path(monkeypatch, worker_env):
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    from hermes_cli import kanban_db as kb
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         tid = kb.create_task(conn, title="blocked", assignee="worker")
@@ -1302,7 +1302,7 @@ def test_unblock_happy_path(monkeypatch, worker_env):
 
 
 def test_unblock_rejects_non_blocked_task(monkeypatch, worker_env):
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
     from tools import kanban_tools as kt
     out = kt._handle_unblock({"task_id": worker_env})
     assert json.loads(out).get("error")
@@ -1343,7 +1343,7 @@ def test_worker_lifecycle_through_tools(worker_env):
     assert comp["ok"]
 
     # Verify final state
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         parent = kb.get_task(conn, worker_env)
@@ -1372,12 +1372,12 @@ def test_worker_lifecycle_through_tools(worker_env):
 # ---------------------------------------------------------------------------
 
 def test_kanban_guidance_not_in_normal_prompt(monkeypatch, tmp_path):
-    """A normal chat session (no HERMES_KANBAN_TASK) must NOT have
+    """A normal chat session (no NEWROZ_KANBAN_TASK) must NOT have
     KANBAN_GUIDANCE in its system prompt."""
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    home = tmp_path / ".hermes"
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     from pathlib import Path as _P
     monkeypatch.setattr(_P, "home", lambda: tmp_path)
 
@@ -1400,12 +1400,12 @@ def test_kanban_guidance_not_in_normal_prompt(monkeypatch, tmp_path):
 
 
 def test_kanban_guidance_in_worker_prompt(monkeypatch, tmp_path):
-    """A worker session (HERMES_KANBAN_TASK set) MUST have the full
+    """A worker session (NEWROZ_KANBAN_TASK set) MUST have the full
     lifecycle guidance in its system prompt."""
-    monkeypatch.setenv("HERMES_KANBAN_TASK", "t_fake")
-    home = tmp_path / ".hermes"
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", "t_fake")
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     from pathlib import Path as _P
     monkeypatch.setattr(_P, "home", lambda: tmp_path)
 
@@ -1445,10 +1445,10 @@ def test_kanban_guidance_prompt_size_bounded(monkeypatch, tmp_path):
     skills were removed and folded into this always-injected guidance, so the
     ceiling is sized to fit that content with a little headroom.
     """
-    monkeypatch.setenv("HERMES_KANBAN_TASK", "t_fake")
-    home = tmp_path / ".hermes"
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", "t_fake")
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     from pathlib import Path as _P
     monkeypatch.setattr(_P, "home", lambda: tmp_path)
 
@@ -1462,7 +1462,7 @@ def test_kanban_guidance_prompt_size_bounded(monkeypatch, tmp_path):
 # Worker task-ownership enforcement (regression tests for #19534)
 # ---------------------------------------------------------------------------
 #
-# A worker process has HERMES_KANBAN_TASK set to its own task id. The
+# A worker process has NEWROZ_KANBAN_TASK set to its own task id. The
 # destructive tools (kanban_complete, kanban_block, kanban_heartbeat,
 # kanban_unblock) must refuse to operate
 # on any OTHER task id, even if the caller supplies an explicit `task_id`
@@ -1470,14 +1470,14 @@ def test_kanban_guidance_prompt_size_bounded(monkeypatch, tmp_path):
 # kanban_comment / kanban_create / kanban_link on other tasks, so those
 # are unrestricted.
 #
-# Orchestrator profiles (no HERMES_KANBAN_TASK in env) are intentionally
+# Orchestrator profiles (no NEWROZ_KANBAN_TASK in env) are intentionally
 # exempt — their job is routing, and they sometimes close out child
 # tasks on behalf of the child.
 
 
 def test_worker_complete_rejects_foreign_task_id(worker_env):
     """A worker cannot complete a task that isn't its own (#19534)."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         other = kb.create_task(conn, title="sibling")
@@ -1502,7 +1502,7 @@ def test_worker_complete_rejects_foreign_task_id(worker_env):
 
 def test_worker_block_rejects_foreign_task_id(worker_env):
     """A worker cannot block a task that isn't its own (#19534)."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         other = kb.create_task(conn, title="sibling")
@@ -1525,7 +1525,7 @@ def test_worker_block_rejects_foreign_task_id(worker_env):
 
 def test_worker_heartbeat_rejects_foreign_task_id(worker_env):
     """A worker cannot heartbeat a task that isn't its own (#19534)."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         other = kb.create_task(conn, title="sibling")
@@ -1550,7 +1550,7 @@ def test_worker_can_comment_on_foreign_task(worker_env):
     so a future change accidentally adding ``_enforce_worker_task_ownership``
     to ``_handle_comment`` would fail CI immediately.
     """
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         other = kb.create_task(conn, title="sibling")
@@ -1566,7 +1566,7 @@ def test_worker_can_comment_on_foreign_task(worker_env):
     assert d.get("ok") is True, f"cross-task comment must succeed: {d}"
 
     # The comment lands on the foreign task, attributed to the worker's
-    # HERMES_PROFILE — never to a caller-controlled string.
+    # NEWROZ_PROFILE — never to a caller-controlled string.
     conn = kb.connect()
     try:
         comments = kb.list_comments(conn, other)
@@ -1585,7 +1585,7 @@ def test_worker_unblock_rejects_foreign_task_id(worker_env):
     cross-task-ownership refusal. Either is fine — the property we're
     pinning is "worker cannot mutate foreign task via kanban_unblock".
     """
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         other = kb.create_task(conn, title="blocked sibling", assignee="peer")
@@ -1619,8 +1619,8 @@ def test_worker_complete_own_task_still_works(worker_env):
 
 def test_worker_complete_rejects_stale_run_id(worker_env, monkeypatch):
     """A retried worker cannot complete the task using an old run token."""
-    from hermes_cli import kanban_db as kb
-    import hermes_cli.kanban_db as _kb
+    from newroz_cli import kanban_db as kb
+    import newroz_cli.kanban_db as _kb
 
     # detect_crashed_workers now gates each running task behind a
     # launch-window grace period (c002668ff) so a freshly-spawned worker
@@ -1628,13 +1628,13 @@ def test_worker_complete_rejects_stale_run_id(worker_env, monkeypatch):
     # creates the task moments before this assertion, so the grace
     # period (default 30s) would skip the liveness check. Zero it out
     # for this test — we WANT immediate reclamation here.
-    monkeypatch.setenv("HERMES_KANBAN_CRASH_GRACE_SECONDS", "0")
+    monkeypatch.setenv("NEWROZ_KANBAN_CRASH_GRACE_SECONDS", "0")
 
     conn = kb.connect()
     try:
         run1 = kb.latest_run(conn, worker_env)
         kb._set_worker_pid(conn, worker_env, 98765)
-        monkeypatch.setenv("HERMES_KANBAN_CRASH_GRACE_SECONDS", "0")
+        monkeypatch.setenv("NEWROZ_KANBAN_CRASH_GRACE_SECONDS", "0")
         monkeypatch.setattr(_kb, "_pid_alive", lambda pid: False)
         assert kb.detect_crashed_workers(conn) == [worker_env]
 
@@ -1645,7 +1645,7 @@ def test_worker_complete_rejects_stale_run_id(worker_env, monkeypatch):
         conn.close()
 
     from tools import kanban_tools as kt
-    monkeypatch.setenv("HERMES_KANBAN_RUN_ID", str(run1.id))
+    monkeypatch.setenv("NEWROZ_KANBAN_RUN_ID", str(run1.id))
     out = kt._handle_complete({"summary": "late stale completion"})
     d = json.loads(out)
     assert d.get("ok") is not True
@@ -1658,23 +1658,23 @@ def test_worker_complete_rejects_stale_run_id(worker_env, monkeypatch):
     finally:
         conn.close()
 
-    monkeypatch.setenv("HERMES_KANBAN_RUN_ID", str(run2.id))
+    monkeypatch.setenv("NEWROZ_KANBAN_RUN_ID", str(run2.id))
     out = kt._handle_complete({"summary": "current completion"})
     d = json.loads(out)
     assert d.get("ok") is True
 
 
 def test_orchestrator_complete_any_task_allowed(monkeypatch, tmp_path):
-    """Orchestrator profiles (no HERMES_KANBAN_TASK) can still complete
+    """Orchestrator profiles (no NEWROZ_KANBAN_TASK) can still complete
     any task via explicit task_id. The check only applies to workers."""
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    home = tmp_path / ".hermes"
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     from pathlib import Path as _P
     monkeypatch.setattr(_P, "home", lambda: tmp_path)
 
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     kb._INITIALIZED_PATHS.clear()
     kb.init_db()
     conn = kb.connect()
@@ -1695,36 +1695,36 @@ def test_orchestrator_complete_any_task_allowed(monkeypatch, tmp_path):
 # Optional ``board`` parameter — per-call DB override
 # ---------------------------------------------------------------------------
 #
-# The dispatcher pins the active board via HERMES_KANBAN_BOARD env var,
+# The dispatcher pins the active board via NEWROZ_KANBAN_BOARD env var,
 # but a Telegram-side orchestrator handling multiple boards needs to be
 # able to route a single tool call to a specific board's DB without
-# restarting Hermes. These tests pin that ``board=<slug>`` argument
+# restarting Newroz. These tests pin that ``board=<slug>`` argument
 # routes each handler to that board's sqlite file, and that omitting
 # ``board`` preserves the legacy env-driven resolution.
 
 
 @pytest.fixture
 def multi_board_env(monkeypatch, tmp_path):
-    """Isolated Hermes home with two distinct kanban boards seeded.
+    """Isolated Newroz home with two distinct kanban boards seeded.
 
     Returns ``("default", "alt")`` slugs. The default board has one
     pre-existing task ``seed_default``; ``alt`` has ``seed_alt``. No
-    HERMES_KANBAN_TASK is pinned (orchestrator context) — workers test
+    NEWROZ_KANBAN_TASK is pinned (orchestrator context) — workers test
     the env-task case via the existing ``worker_env`` fixture.
     """
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    # Make sure neither HERMES_KANBAN_DB nor HERMES_KANBAN_BOARD pin a
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    # Make sure neither NEWROZ_KANBAN_DB nor NEWROZ_KANBAN_BOARD pin a
     # board — the test is specifically about the per-call override.
-    monkeypatch.delenv("HERMES_KANBAN_DB", raising=False)
-    monkeypatch.delenv("HERMES_KANBAN_BOARD", raising=False)
-    monkeypatch.delenv("HERMES_KANBAN_TASK", raising=False)
-    monkeypatch.setenv("HERMES_PROFILE", "test-orchestrator")
+    monkeypatch.delenv("NEWROZ_KANBAN_DB", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_BOARD", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_TASK", raising=False)
+    monkeypatch.setenv("NEWROZ_PROFILE", "test-orchestrator")
     from pathlib import Path as _Path
     monkeypatch.setattr(_Path, "home", lambda: tmp_path)
 
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     kb._INITIALIZED_PATHS.clear()
     # Default board — implicit
     conn = kb.connect()
@@ -1753,7 +1753,7 @@ def multi_board_env(monkeypatch, tmp_path):
 def test_board_param_routes_create_to_alt_board(multi_board_env):
     """kanban_create with ``board="alt"`` must write into the alt board's DB,
     not the default one."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     out = kt._handle_create({
@@ -1814,7 +1814,7 @@ def test_board_param_routes_assign_via_create_to_alt(multi_board_env):
     """Workflow test for the 'assign' UX — create with assignee on a
     specific board. (The CLI has a separate ``kanban assign`` verb; the
     MCP surface assigns at task creation time.)"""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     out = kt._handle_create({
@@ -1832,7 +1832,7 @@ def test_board_param_routes_assign_via_create_to_alt(multi_board_env):
 
 def test_board_param_routes_comment_to_alt_board(multi_board_env):
     """kanban_comment routes the insert to the alt board's DB."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     alt_seed = multi_board_env["alt_seed"]
@@ -1856,7 +1856,7 @@ def test_board_param_routes_comment_to_alt_board(multi_board_env):
 def test_board_param_routes_complete_to_alt_board(multi_board_env):
     """kanban_complete on the alt board closes the alt task, leaving
     the default seed untouched."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     alt_seed = multi_board_env["alt_seed"]
@@ -1882,7 +1882,7 @@ def test_board_param_routes_complete_to_alt_board(multi_board_env):
 
 def test_board_param_routes_block_to_alt_board(multi_board_env):
     """kanban_block targets the alt board's DB."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     alt_seed = multi_board_env["alt_seed"]
@@ -1903,7 +1903,7 @@ def test_board_param_routes_block_to_alt_board(multi_board_env):
 
 def test_board_param_routes_unblock_to_alt_board(multi_board_env):
     """kanban_unblock targets the alt board's DB."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     alt_seed = multi_board_env["alt_seed"]
@@ -1922,24 +1922,24 @@ def test_board_param_routes_unblock_to_alt_board(multi_board_env):
 
 def test_board_param_routes_heartbeat_to_alt_board(monkeypatch, tmp_path):
     """kanban_heartbeat targets the alt board's DB. Worker-scoped, so we
-    use the worker-env style fixture inline (pinning HERMES_KANBAN_TASK
+    use the worker-env style fixture inline (pinning NEWROZ_KANBAN_TASK
     to a task that exists in the alt board)."""
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_PROFILE", "alt-worker")
-    monkeypatch.delenv("HERMES_KANBAN_DB", raising=False)
-    monkeypatch.delenv("HERMES_KANBAN_BOARD", raising=False)
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_PROFILE", "alt-worker")
+    monkeypatch.delenv("NEWROZ_KANBAN_DB", raising=False)
+    monkeypatch.delenv("NEWROZ_KANBAN_BOARD", raising=False)
     from pathlib import Path as _Path
     monkeypatch.setattr(_Path, "home", lambda: tmp_path)
 
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     kb._INITIALIZED_PATHS.clear()
     # Seed the alt board with a claimed task.
     with kb.connect(board="alt") as conn:
         tid = kb.create_task(conn, title="alt hb", assignee="alt-worker")
         kb.claim_task(conn, tid)
-    monkeypatch.setenv("HERMES_KANBAN_TASK", tid)
+    monkeypatch.setenv("NEWROZ_KANBAN_TASK", tid)
 
     from tools import kanban_tools as kt
     out = kt._handle_heartbeat({"note": "alive on alt", "board": "alt"})
@@ -1954,7 +1954,7 @@ def test_board_param_routes_heartbeat_to_alt_board(monkeypatch, tmp_path):
 
 def test_board_param_routes_link_to_alt_board(multi_board_env):
     """kanban_link operates on the alt board's DB."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     with kb.connect(board="alt") as conn:
@@ -1977,7 +1977,7 @@ def test_board_param_none_falls_back_to_env(worker_env):
     """When ``board`` is omitted or None, behaviour is unchanged from
     before this feature — calls land on whatever the env resolves to.
     Regression guard against accidentally rewiring default resolution."""
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     from tools import kanban_tools as kt
 
     out = kt._handle_show({})  # no board, no task_id
@@ -2039,8 +2039,8 @@ def test_board_param_in_all_schemas():
 # When a worker calls kanban_create from inside a session that has a
 # persistent delivery channel, the originating session should be
 # subscribed to the new task's completion/block events automatically.
-# - Gateway sessions: HERMES_SESSION_PLATFORM + HERMES_SESSION_CHAT_ID set.
-# - TUI sessions: HERMES_SESSION_KEY (or HERMES_SESSION_ID) set, with
+# - Gateway sessions: NEWROZ_SESSION_PLATFORM + NEWROZ_SESSION_CHAT_ID set.
+# - TUI sessions: NEWROZ_SESSION_KEY (or NEWROZ_SESSION_ID) set, with
 #   the platform/chat_id ContextVars intentionally empty.
 # - CLI / cron / test sessions: no delivery channel -> no subscription.
 # - Config gate kanban.auto_subscribe_on_create: false -> no subscription
@@ -2048,7 +2048,7 @@ def test_board_param_in_all_schemas():
 # ---------------------------------------------------------------------------
 
 def _list_subs_for_task(task_id):
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
     conn = kb.connect()
     try:
         return list(kb.list_notify_subs(conn, task_id))
@@ -2079,10 +2079,10 @@ def test_create_subscribes_gateway_session(monkeypatch, worker_env):
     to its own kanban_create result, and the response surfaces the
     ``subscribed`` flag so the orchestrator can react."""
     from tools import kanban_tools as kt
-    monkeypatch.setenv("HERMES_SESSION_PLATFORM", "telegram")
-    monkeypatch.setenv("HERMES_SESSION_CHAT_ID", "chat-42")
-    monkeypatch.setenv("HERMES_SESSION_THREAD_ID", "thread-7")
-    monkeypatch.setenv("HERMES_SESSION_USER_ID", "user-9")
+    monkeypatch.setenv("NEWROZ_SESSION_PLATFORM", "telegram")
+    monkeypatch.setenv("NEWROZ_SESSION_CHAT_ID", "chat-42")
+    monkeypatch.setenv("NEWROZ_SESSION_THREAD_ID", "thread-7")
+    monkeypatch.setenv("NEWROZ_SESSION_USER_ID", "user-9")
 
     out = kt._handle_create({
         "title": "auto-sub gateway",
@@ -2104,16 +2104,16 @@ def test_create_subscribes_gateway_session(monkeypatch, worker_env):
 
 def test_create_subscribes_tui_session_via_session_key(monkeypatch, worker_env):
     """TUI / desktop sessions don't have a platform/chat_id (single
-    local channel), but the parent process exports HERMES_SESSION_KEY.
+    local channel), but the parent process exports NEWROZ_SESSION_KEY.
     We should still auto-subscribe, with platform='tui' and
     chat_id=<key>."""
     from tools import kanban_tools as kt
-    monkeypatch.delenv("HERMES_SESSION_PLATFORM", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_CHAT_ID", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_THREAD_ID", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_USER_ID", raising=False)
-    monkeypatch.setenv("HERMES_SESSION_KEY", "tui-session-abc")
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_PLATFORM", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_CHAT_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_THREAD_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_USER_ID", raising=False)
+    monkeypatch.setenv("NEWROZ_SESSION_KEY", "tui-session-abc")
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
 
     out = kt._handle_create({
         "title": "auto-sub tui",
@@ -2134,10 +2134,10 @@ def test_create_does_not_subscribe_in_cli_session(monkeypatch, worker_env):
     """CLI / cron / test sessions have no persistent delivery channel.
     _maybe_auto_subscribe returns False and no row is written."""
     from tools import kanban_tools as kt
-    monkeypatch.delenv("HERMES_SESSION_PLATFORM", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_CHAT_ID", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_KEY", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_PLATFORM", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_CHAT_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_KEY", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
 
     out = kt._handle_create({
         "title": "no sub cli",
@@ -2156,16 +2156,16 @@ def test_create_respects_auto_subscribe_on_create_false(monkeypatch, worker_env,
     channel. This is the knob that addresses the upstream design
     concern from PR #19718 (reverted in #19721) — users who want
     explicit kanban_notify-subscribe calls per task get that."""
-    # worker_env already created <tmp>/.hermes; use a fresh sibling
+    # worker_env already created <tmp>/.newroz; use a fresh sibling
     # home to avoid mkdir() colliding with the worker's directory.
-    home = tmp_path / "gate-home" / ".hermes"
+    home = tmp_path / "gate-home" / ".newroz"
     home.mkdir(parents=True)
     (home / "config.yaml").write_text(
         "kanban:\n  auto_subscribe_on_create: false\n"
     )
-    monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.setenv("HERMES_SESSION_PLATFORM", "discord")
-    monkeypatch.setenv("HERMES_SESSION_CHAT_ID", "channel-1")
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_SESSION_PLATFORM", "discord")
+    monkeypatch.setenv("NEWROZ_SESSION_CHAT_ID", "channel-1")
 
     from tools import kanban_tools as kt
     out = kt._handle_create({
@@ -2184,10 +2184,10 @@ def test_create_partial_session_context_no_subscribe(monkeypatch, worker_env):
     Either both are set (gateway) or neither (TUI / CLI); partial is
     ambiguous and the safe default is to skip."""
     from tools import kanban_tools as kt
-    monkeypatch.setenv("HERMES_SESSION_PLATFORM", "slack")
-    monkeypatch.delenv("HERMES_SESSION_CHAT_ID", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_KEY", raising=False)
-    monkeypatch.delenv("HERMES_SESSION_ID", raising=False)
+    monkeypatch.setenv("NEWROZ_SESSION_PLATFORM", "slack")
+    monkeypatch.delenv("NEWROZ_SESSION_CHAT_ID", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_KEY", raising=False)
+    monkeypatch.delenv("NEWROZ_SESSION_ID", raising=False)
 
     out = kt._handle_create({
         "title": "no sub partial",
@@ -2204,10 +2204,10 @@ def test_maybe_auto_subscribe_swallows_add_notify_sub_failure(monkeypatch, worke
     kanban_create. The function returns False and the parent create
     still succeeds with subscribed=False."""
     from tools import kanban_tools as kt
-    monkeypatch.setenv("HERMES_SESSION_PLATFORM", "telegram")
-    monkeypatch.setenv("HERMES_SESSION_CHAT_ID", "chat-42")
+    monkeypatch.setenv("NEWROZ_SESSION_PLATFORM", "telegram")
+    monkeypatch.setenv("NEWROZ_SESSION_CHAT_ID", "chat-42")
 
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     def _boom(*a, **kw):
         raise RuntimeError("simulated DB failure")

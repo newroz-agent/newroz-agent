@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read the in-app terminal pane in the Hermes desktop GUI.
+"""Read the in-app terminal pane in the Newroz desktop GUI.
 
 The embedded terminal's buffer lives in the desktop renderer (xterm.js), so this
 tool round-trips through the gateway's blocking-prompt bridge — the same one
@@ -23,7 +23,7 @@ def read_terminal_tool(
 ) -> str:
     """Return the in-app terminal's contents (+ line metadata) as a JSON string."""
     if callback is None:
-        return tool_error("read_terminal is only available in the Hermes desktop app.")
+        return tool_error("read_terminal is only available in the Newroz desktop app.")
 
     try:
         window = {
@@ -50,14 +50,14 @@ def read_terminal_tool(
 
 
 def check_read_terminal_requirements() -> bool:
-    """Desktop GUI only — HERMES_DESKTOP is set on the gateway the app spawns."""
-    return env_var_enabled("HERMES_DESKTOP")
+    """Desktop GUI only — NEWROZ_DESKTOP is set on the gateway the app spawns."""
+    return env_var_enabled("NEWROZ_DESKTOP")
 
 
 READ_TERMINAL_SCHEMA = {
     "name": "read_terminal",
     "description": (
-        "Read what's currently shown in the in-app terminal pane of the Hermes "
+        "Read what's currently shown in the in-app terminal pane of the Newroz "
         "desktop GUI (the embedded shell beside this chat). Call with no arguments "
         "to get the visible screen plus the total line count (`total_lines`). To "
         "page through scrollback, pass `start_line` (0 = oldest line) and `count`; "

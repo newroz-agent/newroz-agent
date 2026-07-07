@@ -70,7 +70,7 @@ class _FakeAS(BaseHTTPRequestHandler):
             body["config"] = {
                 "peerName": "lyra",
                 "environment": "production",
-                "hosts": {"hermes": {"saveMessages": True, "recallMode": "hybrid"}},
+                "hosts": {"newroz": {"saveMessages": True, "recallMode": "hybrid"}},
             }
         payload = json.dumps(body).encode()
         self.send_response(200)
@@ -92,7 +92,7 @@ def fake_as(monkeypatch):
     base = f"http://127.0.0.1:{port}"
     monkeypatch.setenv("HONCHO_OAUTH_AUTHORIZE_URL", f"{base}/authorize")
     monkeypatch.setenv("HONCHO_OAUTH_TOKEN_URL", f"{base}/oauth/token")
-    monkeypatch.setenv("HONCHO_OAUTH_CLIENT_ID", "hermes-desktop")
+    monkeypatch.setenv("HONCHO_OAUTH_CLIENT_ID", "newroz-desktop")
     try:
         yield base
     finally:
@@ -122,7 +122,7 @@ def test_full_loopback_flow_then_refresh(tmp_path, fake_as):
 
     cred = oauth_flow.authorize_via_loopback(
         config_path=config_path,
-        host="hermes",
+        host="newroz",
         open_url=lambda url: _browser_driver(url),
         timeout=10,
     )
@@ -130,19 +130,19 @@ def test_full_loopback_flow_then_refresh(tmp_path, fake_as):
     # Grant installed: token stored, config deep-merged, other host preserved.
     assert cred.access_token == "hch-at-1"
     saved = json.loads(config_path.read_text())
-    assert saved["hosts"]["hermes"]["apiKey"] == "hch-at-1"
-    assert saved["hosts"]["hermes"]["oauth"]["refreshToken"] == "hch-rt-1"
-    assert saved["hosts"]["hermes"]["recallMode"] == "hybrid"
+    assert saved["hosts"]["newroz"]["apiKey"] == "hch-at-1"
+    assert saved["hosts"]["newroz"]["oauth"]["refreshToken"] == "hch-rt-1"
+    assert saved["hosts"]["newroz"]["recallMode"] == "hybrid"
     assert saved["environment"] == "production"
     assert saved["hosts"]["obsidian"] == {"workspace": "obsidian"}
 
     # Force expiry; ensure_fresh_token refreshes against the same AS and rotates.
     token, refreshed = oauth.ensure_fresh_token(
-        config_path, "hermes", now=saved["hosts"]["hermes"]["oauth"]["expiresAt"] + 10
+        config_path, "newroz", now=saved["hosts"]["newroz"]["oauth"]["expiresAt"] + 10
     )
     assert refreshed is True
     assert token == "hch-at-2"
-    rotated = json.loads(config_path.read_text())["hosts"]["hermes"]["oauth"]
+    rotated = json.loads(config_path.read_text())["hosts"]["newroz"]["oauth"]
     assert rotated["refreshToken"] == "hch-rt-2"
 
 
@@ -152,51 +152,51 @@ def test_state_mismatch_is_rejected(fake_as, tmp_path):
     with pytest.raises(ValueError, match="unknown or expired"):
         oauth_flow.complete_authorization(
             endpoints, "code", "not-the-real-state",
-            config_path=tmp_path / "honcho.json", host="hermes",
+            config_path=tmp_path / "honcho.json", host="newroz",
         )
 
 
 def test_source_tags_the_authorize_link(fake_as):
     endpoints = oauth_flow.resolve_endpoints()
-    url, _ = oauth_flow.begin_authorization(endpoints, source="hermes-cli")
-    assert "source=hermes-cli" in url
+    url, _ = oauth_flow.begin_authorization(endpoints, source="newroz-cli")
+    assert "source=newroz-cli" in url
     untagged, _ = oauth_flow.begin_authorization(endpoints)
     assert "source=" not in untagged
 
 
-def test_client_id_defaults_to_hermes_agent(monkeypatch):
+def test_client_id_defaults_to_newroz_agent(monkeypatch):
     # One client for every surface; the env var overrides for unusual deployments.
     monkeypatch.delenv("HONCHO_OAUTH_CLIENT_ID", raising=False)
     common = {"environment": "production", "base_url": "https://api.honcho.dev"}
-    assert oauth_flow.resolve_endpoints(**common).client_id == "hermes-agent"
+    assert oauth_flow.resolve_endpoints(**common).client_id == "newroz-agent"
     monkeypatch.setenv("HONCHO_OAUTH_CLIENT_ID", "custom-id")
     assert oauth_flow.resolve_endpoints(**common).client_id == "custom-id"
 
 
 def test_grant_persists_default_client_id(tmp_path, fake_as, monkeypatch):
     # Drop the fixture's override so the default takes effect; the grant must
-    # store client_id=hermes-agent so refresh reuses the right client.
+    # store client_id=newroz-agent so refresh reuses the right client.
     monkeypatch.delenv("HONCHO_OAUTH_CLIENT_ID", raising=False)
     config_path = tmp_path / "honcho.json"
     config_path.write_text(json.dumps({"hosts": {}}))
 
     oauth_flow.authorize_via_loopback(
         config_path=config_path,
-        host="hermes",
-        source="hermes-cli",
+        host="newroz",
+        source="newroz-cli",
         apply_config=False,
         open_url=lambda url: _browser_driver(url),
         timeout=10,
     )
     saved = json.loads(config_path.read_text())
-    assert saved["hosts"]["hermes"]["oauth"]["clientId"] == "hermes-agent"
+    assert saved["hosts"]["newroz"]["oauth"]["clientId"] == "newroz-agent"
 
 
 def test_config_path_rides_the_authorize_link(fake_as):
     endpoints = oauth_flow.resolve_endpoints()
-    url, _ = oauth_flow.begin_authorization(endpoints, config_path="~/.hermes/honcho.json")
+    url, _ = oauth_flow.begin_authorization(endpoints, config_path="~/.newroz/honcho.json")
     q = parse_qs(urlparse(url).query)
-    assert q["config_path"][0] == "~/.hermes/honcho.json"
+    assert q["config_path"][0] == "~/.newroz/honcho.json"
     bare, _ = oauth_flow.begin_authorization(endpoints)
     assert "config_path=" not in bare
 
@@ -205,27 +205,27 @@ def test_display_config_path_never_leaks_absolute_path():
     from pathlib import Path
 
     # Under home → collapsed to ~/…; outside home → bare filename only.
-    under_home = Path.home() / ".hermes" / "profiles" / "work" / "honcho.json"
-    assert oauth_flow._display_config_path(under_home) == "~/.hermes/profiles/work/honcho.json"
+    under_home = Path.home() / ".newroz" / "profiles" / "work" / "honcho.json"
+    assert oauth_flow._display_config_path(under_home) == "~/.newroz/profiles/work/honcho.json"
     assert oauth_flow._display_config_path("/var/folders/tmp/honcho.json") == "honcho.json"
 
 
 def test_cli_flow_stores_tokens_without_applying_config(tmp_path, fake_as):
     # apply_config=False (the CLI path): grant config must NOT touch settings.
     config_path = tmp_path / "honcho.json"
-    config_path.write_text(json.dumps({"hosts": {"hermes": {"saveMessages": False}}}))
+    config_path.write_text(json.dumps({"hosts": {"newroz": {"saveMessages": False}}}))
 
     cred = oauth_flow.authorize_via_loopback(
         config_path=config_path,
-        host="hermes",
-        source="hermes-cli",
+        host="newroz",
+        source="newroz-cli",
         apply_config=False,
         open_url=lambda url: _browser_driver(url),
         timeout=10,
     )
 
     saved = json.loads(config_path.read_text())
-    host = saved["hosts"]["hermes"]
+    host = saved["hosts"]["newroz"]
     assert host["apiKey"] == cred.access_token
     assert host["oauth"]["refreshToken"] == cred.refresh_token
     # Wizard-owned setting untouched; grant config keys absent.
@@ -268,10 +268,10 @@ def test_launcher_runs_flow_in_background_and_reports_connected(monkeypatch, res
     monkeypatch.setattr(oauth_flow, "authorize_via_loopback", fake)
     monkeypatch.setattr(oauth_flow, "_detect_connection", lambda: (True, "oauth"))
 
-    st = oauth_flow.start_loopback_flow_background(config_path=Path("/t/honcho.json"), host="hermes")
+    st = oauth_flow.start_loopback_flow_background(config_path=Path("/t/honcho.json"), host="newroz")
     assert st["state"] == "pending"  # returns immediately, before the flow finishes
-    assert _wait_until(lambda: seen.get("source") == "hermes-desktop")  # default source tag
-    assert seen["host"] == "hermes"
+    assert _wait_until(lambda: seen.get("source") == "newroz-desktop")  # default source tag
+    assert seen["host"] == "newroz"
     gate.set()
     assert _wait_until(lambda: oauth_flow.get_flow_status()["state"] == "connected")
 
@@ -283,7 +283,7 @@ def test_launcher_reports_error_on_flow_failure(monkeypatch, reset_flow):
     monkeypatch.setattr(oauth_flow, "authorize_via_loopback", boom)
     monkeypatch.setattr(oauth_flow, "_detect_connection", lambda: (False, None))
 
-    oauth_flow.start_loopback_flow_background(config_path=Path("/t/honcho.json"), host="hermes")
+    oauth_flow.start_loopback_flow_background(config_path=Path("/t/honcho.json"), host="newroz")
     assert _wait_until(lambda: oauth_flow.get_flow_status()["state"] == "error")
     assert "loopback bind failed" in oauth_flow.get_flow_status()["detail"]
 
@@ -299,9 +299,9 @@ def test_launcher_is_idempotent_while_pending(monkeypatch, reset_flow):
     monkeypatch.setattr(oauth_flow, "authorize_via_loopback", fake)
     monkeypatch.setattr(oauth_flow, "_detect_connection", lambda: (False, None))
 
-    s1 = oauth_flow.start_loopback_flow_background(config_path=Path("/t/h.json"), host="hermes")
+    s1 = oauth_flow.start_loopback_flow_background(config_path=Path("/t/h.json"), host="newroz")
     assert _wait_until(lambda: len(calls) == 1)  # first flow is running
-    s2 = oauth_flow.start_loopback_flow_background(config_path=Path("/t/h.json"), host="hermes")
+    s2 = oauth_flow.start_loopback_flow_background(config_path=Path("/t/h.json"), host="newroz")
     block.set()
     assert s1["state"] == "pending" and s2["state"] == "pending"
     assert _wait_until(lambda: oauth_flow.get_flow_status()["state"] == "connected")
@@ -313,20 +313,20 @@ def test_get_flow_status_reports_stored_connection(tmp_path, monkeypatch, reset_
 
     cfgfile = tmp_path / "honcho.json"
     monkeypatch.setattr(honcho_client, "resolve_config_path", lambda: cfgfile)
-    monkeypatch.setattr(honcho_client, "resolve_active_host", lambda: "hermes")
+    monkeypatch.setattr(honcho_client, "resolve_active_host", lambda: "newroz")
     monkeypatch.delenv("HONCHO_API_KEY", raising=False)
 
-    cfgfile.write_text(json.dumps({"hosts": {"hermes": {}}}))
+    cfgfile.write_text(json.dumps({"hosts": {"newroz": {}}}))
     assert oauth_flow.get_flow_status()["connected"] is False
 
-    cfgfile.write_text(json.dumps({"hosts": {"hermes": {"apiKey": "hch-v3-static"}}}))
+    cfgfile.write_text(json.dumps({"hosts": {"newroz": {"apiKey": "hch-v3-static"}}}))
     s = oauth_flow.get_flow_status()
     assert s["connected"] is True and s["auth"] == "apikey"
 
-    cfgfile.write_text(json.dumps({"hosts": {"hermes": {
+    cfgfile.write_text(json.dumps({"hosts": {"newroz": {
         "apiKey": "hch-at-tok",
         "oauth": {"refreshToken": "hch-rt-x", "expiresAt": 9_999_999_999,
-                  "clientId": "hermes-desktop", "tokenEndpoint": "http://x/oauth/token"},
+                  "clientId": "newroz-desktop", "tokenEndpoint": "http://x/oauth/token"},
     }}}))
     s = oauth_flow.get_flow_status()
     assert s["connected"] is True and s["auth"] == "oauth"
@@ -336,7 +336,7 @@ def test_memory_oauth_router_dispatches_by_provider_convention():
     # The generic seam behind the two routes: provider → plugins.memory.<p>.oauth_flow.
     from fastapi import HTTPException
 
-    from hermes_cli.memory_oauth import _resolve_flow
+    from newroz_cli.memory_oauth import _resolve_flow
 
     mod = _resolve_flow("honcho")
     assert hasattr(mod, "start_loopback_flow_background") and hasattr(mod, "get_flow_status")

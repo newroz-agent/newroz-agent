@@ -1,4 +1,4 @@
-"""Tests for hermes_cli.model_catalog — remote manifest fetch + cache + fallback."""
+"""Tests for newroz_cli.model_catalog — remote manifest fetch + cache + fallback."""
 
 from __future__ import annotations
 
@@ -13,15 +13,15 @@ import pytest
 
 @pytest.fixture
 def isolated_home(tmp_path, monkeypatch):
-    """Isolate HERMES_HOME + reset any module-level catalog cache per test."""
-    home = tmp_path / ".hermes"
+    """Isolate NEWROZ_HOME + reset any module-level catalog cache per test."""
+    home = tmp_path / ".newroz"
     home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
 
     # Force a fresh catalog module state for each test.
     import importlib
-    from hermes_cli import model_catalog
+    from newroz_cli import model_catalog
     importlib.reload(model_catalog)
     yield home
     model_catalog.reset_cache()
@@ -54,41 +54,41 @@ def _valid_manifest() -> dict:
 
 class TestValidation:
     def test_accepts_well_formed_manifest(self, isolated_home):
-        from hermes_cli.model_catalog import _validate_manifest
+        from newroz_cli.model_catalog import _validate_manifest
         assert _validate_manifest(_valid_manifest()) is True
 
     def test_rejects_non_dict(self, isolated_home):
-        from hermes_cli.model_catalog import _validate_manifest
+        from newroz_cli.model_catalog import _validate_manifest
         assert _validate_manifest("string") is False
         assert _validate_manifest([]) is False
         assert _validate_manifest(None) is False
 
     def test_rejects_missing_version(self, isolated_home):
-        from hermes_cli.model_catalog import _validate_manifest
+        from newroz_cli.model_catalog import _validate_manifest
         m = _valid_manifest()
         del m["version"]
         assert _validate_manifest(m) is False
 
     def test_rejects_future_version(self, isolated_home):
-        from hermes_cli.model_catalog import _validate_manifest
+        from newroz_cli.model_catalog import _validate_manifest
         m = _valid_manifest()
         m["version"] = 999
         assert _validate_manifest(m) is False
 
     def test_rejects_missing_providers(self, isolated_home):
-        from hermes_cli.model_catalog import _validate_manifest
+        from newroz_cli.model_catalog import _validate_manifest
         m = _valid_manifest()
         del m["providers"]
         assert _validate_manifest(m) is False
 
     def test_rejects_malformed_model_entry(self, isolated_home):
-        from hermes_cli.model_catalog import _validate_manifest
+        from newroz_cli.model_catalog import _validate_manifest
         m = _valid_manifest()
         m["providers"]["openrouter"]["models"][0] = {"id": ""}  # empty id
         assert _validate_manifest(m) is False
 
     def test_rejects_non_string_model_id(self, isolated_home):
-        from hermes_cli.model_catalog import _validate_manifest
+        from newroz_cli.model_catalog import _validate_manifest
         m = _valid_manifest()
         m["providers"]["openrouter"]["models"][0] = {"id": 42}
         assert _validate_manifest(m) is False
@@ -96,7 +96,7 @@ class TestValidation:
 
 class TestFetchSuccess:
     def test_fetch_and_cache_writes_disk(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         manifest = _valid_manifest()
         with patch.object(
             model_catalog, "_fetch_manifest", return_value=manifest
@@ -112,7 +112,7 @@ class TestFetchSuccess:
             assert json.load(fh) == manifest
 
     def test_second_call_uses_in_process_cache(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         manifest = _valid_manifest()
         with patch.object(
             model_catalog, "_fetch_manifest", return_value=manifest
@@ -122,7 +122,7 @@ class TestFetchSuccess:
         assert fetch.call_count == 1
 
     def test_force_refresh_always_refetches(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         manifest = _valid_manifest()
         with patch.object(
             model_catalog, "_fetch_manifest", return_value=manifest
@@ -134,13 +134,13 @@ class TestFetchSuccess:
 
 class TestFetchFailure:
     def test_network_failure_returns_empty_when_no_cache(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         with patch.object(model_catalog, "_fetch_manifest", return_value=None):
             result = model_catalog.get_catalog(force_refresh=True)
         assert result == {}
 
     def test_network_failure_falls_back_to_disk_cache(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         # Prime disk cache with a fresh copy.
         manifest = _valid_manifest()
         with patch.object(model_catalog, "_fetch_manifest", return_value=manifest):
@@ -154,7 +154,7 @@ class TestFetchFailure:
         assert result == manifest
 
     def test_fetch_failure_falls_back_to_stale_cache(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         manifest = _valid_manifest()
         # Write stale cache directly (mtime in the past).
         cache = model_catalog._cache_path()
@@ -180,14 +180,14 @@ class TestFallbackChain:
     releases (opus 4.8, etc.) never reach the picker.
     """
 
-    PRIMARY = "https://hermes-agent.nousresearch.com/docs/api/model-catalog.json"
+    PRIMARY = "https://newroz-agent.nousresearch.com/docs/api/model-catalog.json"
     FALLBACK = (
         "https://raw.githubusercontent.com/NousResearch/hermes-agent"
         "/main/website/static/api/model-catalog.json"
     )
 
     def test_uses_primary_when_it_succeeds(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         calls: list[str] = []
 
         def fake_fetch(url, timeout):
@@ -201,7 +201,7 @@ class TestFallbackChain:
         assert calls == [self.PRIMARY], "fallback URLs must not be touched on primary success"
 
     def test_falls_through_to_raw_github_on_primary_failure(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         calls: list[str] = []
 
         def fake_fetch(url, timeout):
@@ -217,7 +217,7 @@ class TestFallbackChain:
         assert calls == [self.PRIMARY, self.FALLBACK]
 
     def test_returns_none_when_all_urls_fail(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
 
         with patch.object(model_catalog, "_fetch_manifest", return_value=None) as fetch:
             result = model_catalog._fetch_manifest_with_fallback(self.PRIMARY, 5.0)
@@ -229,7 +229,7 @@ class TestFallbackChain:
     def test_dedupes_when_primary_equals_fallback(self, isolated_home):
         """Operator who configured ``model_catalog.url`` to the raw GitHub URL
         should not get a duplicate fetch from the fallback list."""
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
 
         with patch.object(model_catalog, "_fetch_manifest", return_value=None) as fetch:
             model_catalog._fetch_manifest_with_fallback(self.FALLBACK, 5.0)
@@ -239,7 +239,7 @@ class TestFallbackChain:
     def test_get_catalog_uses_fallback_chain(self, isolated_home):
         """End-to-end: ``get_catalog`` routes through the fallback helper so
         a primary URL failure transparently produces a working catalog."""
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         manifest = _valid_manifest()
         calls: list[str] = []
 
@@ -258,7 +258,7 @@ class TestFallbackChain:
 
 class TestCuratedAccessors:
     def test_openrouter_returns_tuples(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         with patch.object(
             model_catalog, "_fetch_manifest", return_value=_valid_manifest()
         ):
@@ -270,7 +270,7 @@ class TestCuratedAccessors:
         ]
 
     def test_nous_returns_ids(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         with patch.object(
             model_catalog, "_fetch_manifest", return_value=_valid_manifest()
         ):
@@ -278,19 +278,19 @@ class TestCuratedAccessors:
         assert result == ["anthropic/claude-opus-4.7", "moonshotai/kimi-k2.6"]
 
     def test_openrouter_returns_none_when_catalog_empty(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         with patch.object(model_catalog, "_fetch_manifest", return_value=None):
             assert model_catalog.get_curated_openrouter_models() is None
 
     def test_nous_returns_none_when_catalog_empty(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         with patch.object(model_catalog, "_fetch_manifest", return_value=None):
             assert model_catalog.get_curated_nous_models() is None
 
 
 class TestDisabled:
     def test_disabled_config_short_circuits(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
         with patch.object(
             model_catalog,
             "_load_catalog_config",
@@ -309,7 +309,7 @@ class TestDisabled:
 
 class TestProviderOverride:
     def test_override_url_takes_precedence(self, isolated_home):
-        from hermes_cli import model_catalog
+        from newroz_cli import model_catalog
 
         override_payload = {
             "version": 1,
@@ -344,13 +344,13 @@ class TestProviderOverride:
 
 
 class TestIntegrationWithModelsModule:
-    """Exercise the fallback paths via the real callers in hermes_cli.models."""
+    """Exercise the fallback paths via the real callers in newroz_cli.models."""
 
     def test_curated_nous_ids_falls_back_to_hardcoded_on_empty_catalog(
         self, isolated_home
     ):
-        from hermes_cli import model_catalog
-        from hermes_cli.models import get_curated_nous_model_ids, _PROVIDER_MODELS
+        from newroz_cli import model_catalog
+        from newroz_cli.models import get_curated_nous_model_ids, _PROVIDER_MODELS
 
         with patch.object(model_catalog, "_fetch_manifest", return_value=None):
             result = get_curated_nous_model_ids()
@@ -358,8 +358,8 @@ class TestIntegrationWithModelsModule:
         assert result == list(_PROVIDER_MODELS["nous"])
 
     def test_curated_nous_ids_prefers_manifest(self, isolated_home):
-        from hermes_cli import model_catalog
-        from hermes_cli.models import get_curated_nous_model_ids
+        from newroz_cli import model_catalog
+        from newroz_cli.models import get_curated_nous_model_ids
 
         with patch.object(
             model_catalog, "_fetch_manifest", return_value=_valid_manifest()
@@ -370,7 +370,7 @@ class TestIntegrationWithModelsModule:
 
     def test_picker_nous_row_uses_curated_list(self, tmp_path, monkeypatch):
         """The /model picker surfaces the curated ``_PROVIDER_MODELS["nous"]``
-        list in curated order — matching the ``hermes model`` CLI — not the live
+        list in curated order — matching the ``newroz model`` CLI — not the live
         ``/v1/models`` catalog or the manifest. Portal free/paid recommendations
         are unioned in when reachable; offline (as here, with the Portal calls
         stubbed out) it's exactly the curated list.
@@ -378,17 +378,17 @@ class TestIntegrationWithModelsModule:
         # We deliberately do NOT use the ``isolated_home`` fixture here:
         # that fixture monkeypatches ``Path.home`` to ``tmp_path``, which
         # trips the auth-store seat-belt in ``_auth_file_path()`` because
-        # ``HERMES_HOME / auth.json`` then resolves to the same path the
+        # ``NEWROZ_HOME / auth.json`` then resolves to the same path the
         # seat-belt thinks is the "real" user store. Use the autouse
-        # ``_hermetic_environment`` HERMES_HOME directly instead.
+        # ``_hermetic_environment`` NEWROZ_HOME directly instead.
         import importlib
-        from hermes_cli import model_catalog
-        from hermes_cli.models import get_curated_nous_model_ids
+        from newroz_cli import model_catalog
+        from newroz_cli.models import get_curated_nous_model_ids
         importlib.reload(model_catalog)
         try:
-            from hermes_cli.model_switch import list_picker_providers
+            from newroz_cli.model_switch import list_picker_providers
 
-            active_home = Path(os.environ["HERMES_HOME"])
+            active_home = Path(os.environ["NEWROZ_HOME"])
             (active_home / "auth.json").write_text(
                 json.dumps(
                     {
@@ -405,11 +405,11 @@ class TestIntegrationWithModelsModule:
             # stays an invariant — it can't rot as the curated/manifest list grows.
             with patch.object(
                 model_catalog, "_fetch_manifest", return_value=_valid_manifest()
-            ), patch("hermes_cli.models.check_nous_free_tier", return_value=False), patch(
-                "hermes_cli.models.union_with_portal_free_recommendations",
+            ), patch("newroz_cli.models.check_nous_free_tier", return_value=False), patch(
+                "newroz_cli.models.union_with_portal_free_recommendations",
                 side_effect=lambda ids, *a, **k: (ids, {}),
             ), patch(
-                "hermes_cli.models.union_with_portal_paid_recommendations",
+                "newroz_cli.models.union_with_portal_paid_recommendations",
                 side_effect=lambda ids, *a, **k: (ids, {}),
             ):
                 expected = get_curated_nous_model_ids()
@@ -431,16 +431,16 @@ class TestIntegrationWithModelsModule:
         a ``if max_models`` (falsy) check would conflate ``0`` with unlimited.
         """
         import importlib
-        from hermes_cli import model_catalog
-        from hermes_cli.models import get_curated_nous_model_ids
+        from newroz_cli import model_catalog
+        from newroz_cli.models import get_curated_nous_model_ids
         importlib.reload(model_catalog)
         try:
-            from hermes_cli.model_switch import (
+            from newroz_cli.model_switch import (
                 list_authenticated_providers,
                 list_picker_providers,
             )
 
-            active_home = Path(os.environ["HERMES_HOME"])
+            active_home = Path(os.environ["NEWROZ_HOME"])
             (active_home / "auth.json").write_text(
                 json.dumps(
                     {
@@ -451,11 +451,11 @@ class TestIntegrationWithModelsModule:
             )
             with patch.object(
                 model_catalog, "_fetch_manifest", return_value=_valid_manifest()
-            ), patch("hermes_cli.models.check_nous_free_tier", return_value=False), patch(
-                "hermes_cli.models.union_with_portal_free_recommendations",
+            ), patch("newroz_cli.models.check_nous_free_tier", return_value=False), patch(
+                "newroz_cli.models.union_with_portal_free_recommendations",
                 side_effect=lambda ids, *a, **k: (ids, {}),
             ), patch(
-                "hermes_cli.models.union_with_portal_paid_recommendations",
+                "newroz_cli.models.union_with_portal_paid_recommendations",
                 side_effect=lambda ids, *a, **k: (ids, {}),
             ):
                 expected = get_curated_nous_model_ids()

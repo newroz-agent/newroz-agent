@@ -12,15 +12,15 @@ import argparse
 
 import pytest
 
-from hermes_cli.subcommands.acp import build_acp_parser
-from hermes_cli.subcommands.claw import build_claw_parser
-from hermes_cli.subcommands.insights import build_insights_parser
-from hermes_cli.subcommands.mcp import build_mcp_parser
-from hermes_cli.subcommands.memory import build_memory_parser
-from hermes_cli.subcommands.pairing import build_pairing_parser
-from hermes_cli.subcommands.plugins import build_plugins_parser
-from hermes_cli.subcommands.skills import build_skills_parser
-from hermes_cli.subcommands.tools import build_tools_parser
+from newroz_cli.subcommands.acp import build_acp_parser
+from newroz_cli.subcommands.claw import build_claw_parser
+from newroz_cli.subcommands.insights import build_insights_parser
+from newroz_cli.subcommands.mcp import build_mcp_parser
+from newroz_cli.subcommands.memory import build_memory_parser
+from newroz_cli.subcommands.pairing import build_pairing_parser
+from newroz_cli.subcommands.plugins import build_plugins_parser
+from newroz_cli.subcommands.skills import build_skills_parser
+from newroz_cli.subcommands.tools import build_tools_parser
 
 
 def _h(name):
@@ -46,7 +46,7 @@ CASES = [
 
 @pytest.mark.parametrize("name,builder,kw,argv", CASES, ids=[c[0] for c in CASES])
 def test_followup_builders_dispatch(name, builder, kw, argv):
-    parser = argparse.ArgumentParser(prog="hermes")
+    parser = argparse.ArgumentParser(prog="newroz")
     sub = parser.add_subparsers(dest="command")
     handler = _h(name)
     builder(sub, **{kw: handler})
@@ -57,7 +57,7 @@ def test_followup_builders_dispatch(name, builder, kw, argv):
 
 def test_mcp_and_acp_accept_hooks_flag():
     # mcp/acp parser blocks use the shared add_accept_hooks_flag helper.
-    parser = argparse.ArgumentParser(prog="hermes")
+    parser = argparse.ArgumentParser(prog="newroz")
     sub = parser.add_subparsers(dest="command")
     build_mcp_parser(sub, cmd_mcp=_h("mcp"))
     build_acp_parser(sub, cmd_acp=_h("acp"))

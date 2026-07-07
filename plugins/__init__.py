@@ -1,1 +1,1 @@
-# Hermes plugins package
+# Newroz plugins package

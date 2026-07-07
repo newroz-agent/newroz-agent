@@ -1,6 +1,6 @@
 """Tests for curses color compatibility on low-color terminals (Docker).
 
-Regression test for #13688: ``hermes plugins`` crashes with
+Regression test for #13688: ``newroz plugins`` crashes with
 ``curses.error: init_pair() : color number is greater than COLORS-1``
 in Docker containers where curses.COLORS == 8 (only colors 0-7 exist).
 
@@ -24,7 +24,7 @@ from unittest.mock import patch, MagicMock
 
 
 # Path to the source files under test
-_SRC_ROOT = Path(__file__).parent.parent.parent / "hermes_cli"
+_SRC_ROOT = Path(__file__).parent.parent.parent / "newroz_cli"
 
 
 class TestInitPairClampingBehavior:

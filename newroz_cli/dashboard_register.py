@@ -1,19 +1,19 @@
-"""``hermes dashboard register`` — register a self-hosted dashboard OAuth client.
+"""``newroz dashboard register`` — register a self-hosted dashboard OAuth client.
 
 Automates what a user otherwise does by hand: open the Nous Portal
 ``/local-dashboards`` page in a browser, click "register", copy the
-resulting ``agent:{id}`` OAuth client ID, and paste it into ``~/.hermes/.env``
-as ``HERMES_DASHBOARD_OAUTH_CLIENT_ID``.
+resulting ``agent:{id}`` OAuth client ID, and paste it into ``~/.newroz/.env``
+as ``NEWROZ_DASHBOARD_OAUTH_CLIENT_ID``.
 
 This command:
   1. Resolves a fresh Nous Portal access token from the existing login
-     (``~/.hermes/auth.json``), refreshing it if needed. Fails fast with a
-     "run `hermes setup`" hint when the user isn't logged in.
+     (``~/.newroz/auth.json``), refreshing it if needed. Fails fast with a
+     "run `newroz setup`" hint when the user isn't logged in.
   2. POSTs to ``{portal}/api/oauth/self-hosted-client`` with that bearer
      token, which creates a SELF_HOSTED agent client owned by the caller's
      org and returns the fully-formed ``agent:{id}`` client_id.
-  3. Writes ``HERMES_DASHBOARD_OAUTH_CLIENT_ID`` and (if absent)
-     ``HERMES_DASHBOARD_PORTAL_URL`` into ``~/.hermes/.env`` idempotently.
+  3. Writes ``NEWROZ_DASHBOARD_OAUTH_CLIENT_ID`` and (if absent)
+     ``NEWROZ_DASHBOARD_PORTAL_URL`` into ``~/.newroz/.env`` idempotently.
   4. Prints a post-register hint explaining that the OAuth gate only engages
      on a non-loopback bind.
 
@@ -67,7 +67,7 @@ def _resolve_portal_base_url(override: Optional[str] = None) -> str:
 
     Precedence:
       1. ``override`` — explicit ``--portal-url`` flag or
-         ``HERMES_DASHBOARD_PORTAL_URL`` env (used for testing against a
+         ``NEWROZ_DASHBOARD_PORTAL_URL`` env (used for testing against a
          preview/staging portal). NOTE: the access token must be valid at
          this portal — it's minted by whatever portal you logged into, so an
          override only works if the token's issuer matches (e.g. you logged
@@ -79,7 +79,7 @@ def _resolve_portal_base_url(override: Optional[str] = None) -> str:
     if isinstance(override, str) and override.strip():
         return override.rstrip("/")
     try:
-        from hermes_cli.auth import DEFAULT_NOUS_PORTAL_URL, get_provider_auth_state
+        from newroz_cli.auth import DEFAULT_NOUS_PORTAL_URL, get_provider_auth_state
 
         state = get_provider_auth_state("nous") or {}
         base = state.get("portal_base_url")
@@ -104,7 +104,7 @@ def _register_self_hosted_client(
     When ``existing_client_id`` is provided (the client_id this install
     persisted on a prior run), it is sent so the portal updates that existing
     dashboard record in place instead of minting a duplicate — this is what
-    makes re-running ``hermes dashboard register`` idempotent. The portal
+    makes re-running ``newroz dashboard register`` idempotent. The portal
     falls back to creating a fresh client if the id no longer resolves to a row
     in the caller's org (stale/deleted), so passing it is always safe.
 
@@ -155,7 +155,7 @@ def _register_self_hosted_client(
         if exc.code == 401:
             raise RuntimeError(
                 "Nous Portal rejected the access token (401). "
-                "Try `hermes auth add nous` to re-authenticate."
+                "Try `newroz auth add nous` to re-authenticate."
             ) from exc
         if exc.code == 403:
             raise RuntimeError(
@@ -185,21 +185,21 @@ def _print_post_register_hint(
     public_url: str = "",
 ) -> None:
     """Print the success summary + the gate-engagement caveat."""
-    from hermes_cli.config import get_env_path
+    from newroz_cli.config import get_env_path
 
     env_path = get_env_path()
     _cid = client_id
     print()
     print(f"  Wrote to {env_path}:")
-    print("    HERMES_DASHBOARD_OAUTH_CLIENT_ID=" + str(_cid))
+    print("    NEWROZ_DASHBOARD_OAUTH_CLIENT_ID=" + str(_cid))
     if wrote_portal_url:
-        print("    HERMES_DASHBOARD_PORTAL_URL=" + str(portal_base_url))
+        print("    NEWROZ_DASHBOARD_PORTAL_URL=" + str(portal_base_url))
     if public_url:
-        print("    HERMES_DASHBOARD_PUBLIC_URL=" + str(public_url))
+        print("    NEWROZ_DASHBOARD_PUBLIC_URL=" + str(public_url))
     print()
     print(
         "  Heads up — Nous login only *engages* on a non-loopback bind. A plain\n"
-        "  `hermes dashboard` (localhost) leaves the gate off and serves locally\n"
+        "  `newroz dashboard` (localhost) leaves the gate off and serves locally\n"
         "  without auth, which is fine for your own machine."
     )
     print()
@@ -216,7 +216,7 @@ def _print_post_register_hint(
         print("  at its /login page.")
     else:
         print("  To require Nous login (e.g. exposing on your LAN or a public host):")
-        print("    hermes dashboard --host 0.0.0.0")
+        print("    newroz dashboard --host 0.0.0.0")
         print("  …then log in at the dashboard's /login page.")
     print()
     print(
@@ -229,16 +229,16 @@ def _print_post_register_hint(
 
 def cmd_dashboard_register(args) -> None:
     """Register a self-hosted dashboard OAuth client with Nous Portal."""
-    from hermes_cli.auth import AuthError, resolve_nous_access_token
-    from hermes_cli.config import get_env_value, is_managed, save_env_value
+    from newroz_cli.auth import AuthError, resolve_nous_access_token
+    from newroz_cli.config import get_env_value, is_managed, save_env_value
 
     # Managed (Docker/hosted) installs get their dashboard OAuth client_id
-    # stamped in by the orchestrator (NAS sets HERMES_DASHBOARD_OAUTH_CLIENT_ID
+    # stamped in by the orchestrator (NAS sets NEWROZ_DASHBOARD_OAUTH_CLIENT_ID
     # via buildContainerEnvVars). Registering from inside such a container is a
     # mistake — and save_env_value refuses to write anyway.
     if is_managed():
         print(
-            "✗ `hermes dashboard register` is not available in a managed/hosted "
+            "✗ `newroz dashboard register` is not available in a managed/hosted "
             "install.\n"
             "  The dashboard OAuth client is provisioned by the hosting platform."
         )
@@ -251,7 +251,7 @@ def cmd_dashboard_register(args) -> None:
     except AuthError as exc:
         if getattr(exc, "relogin_required", False):
             print("✗ You're not logged into Nous Portal.")
-            print("  Run `hermes setup` (or `hermes auth add nous`) first, then retry.")
+            print("  Run `newroz setup` (or `newroz auth add nous`) first, then retry.")
         else:
             print(f"✗ Could not resolve a Nous Portal access token: {exc}")
         sys.exit(1)
@@ -260,7 +260,7 @@ def cmd_dashboard_register(args) -> None:
         sys.exit(1)
 
     # Portal override: explicit --portal-url flag wins, else the
-    # HERMES_DASHBOARD_PORTAL_URL env var, else the stored login's portal.
+    # NEWROZ_DASHBOARD_PORTAL_URL env var, else the stored login's portal.
     #
     # We track whether a custom URL was *explicitly supplied* (flag or env)
     # separately from the resolved value. An explicit custom URL is an
@@ -269,7 +269,7 @@ def cmd_dashboard_register(args) -> None:
     # keeps the older, more conservative write-only-if-absent behaviour so we
     # don't clutter .env for the common production case.
     portal_override = getattr(args, "portal_url", None) or os.environ.get(
-        "HERMES_DASHBOARD_PORTAL_URL"
+        "NEWROZ_DASHBOARD_PORTAL_URL"
     )
     custom_portal_supplied = bool(
         isinstance(portal_override, str) and portal_override.strip()
@@ -277,14 +277,14 @@ def cmd_dashboard_register(args) -> None:
     portal_base_url = _resolve_portal_base_url(portal_override)
 
     # Idempotency: if this install already registered a dashboard, we hold its
-    # client_id locally (HERMES_DASHBOARD_OAUTH_CLIENT_ID). Re-send it so the
+    # client_id locally (NEWROZ_DASHBOARD_OAUTH_CLIENT_ID). Re-send it so the
     # portal UPDATES that existing record instead of creating a duplicate. No
     # stored client_id -> this is a first registration -> create a fresh one
     # (the original behavior). This mirrors the portal's rule: no client id =
     # new dashboard; client id present = the stable key of the row to modify.
     existing_client_id = None
     try:
-        existing_client_id = get_env_value("HERMES_DASHBOARD_OAUTH_CLIENT_ID")
+        existing_client_id = get_env_value("NEWROZ_DASHBOARD_OAUTH_CLIENT_ID")
     except Exception:
         existing_client_id = None
     if isinstance(existing_client_id, str):
@@ -333,15 +333,15 @@ def cmd_dashboard_register(args) -> None:
 
     # 3. Write env vars idempotently. Always set the client_id.
     try:
-        save_env_value("HERMES_DASHBOARD_OAUTH_CLIENT_ID", client_id)
+        save_env_value("NEWROZ_DASHBOARD_OAUTH_CLIENT_ID", client_id)
     except Exception as exc:
-        print(f"✗ Failed to write HERMES_DASHBOARD_OAUTH_CLIENT_ID to .env: {exc}")
-        print(f"  Set it manually:  HERMES_DASHBOARD_OAUTH_CLIENT_ID={client_id}")
+        print(f"✗ Failed to write NEWROZ_DASHBOARD_OAUTH_CLIENT_ID to .env: {exc}")
+        print(f"  Set it manually:  NEWROZ_DASHBOARD_OAUTH_CLIENT_ID={client_id}")
         sys.exit(1)
 
     # Persist the portal URL. Two cases:
     #   a) The user explicitly supplied a custom portal (--portal-url flag or
-    #      HERMES_DASHBOARD_PORTAL_URL env). That's an intentional choice we
+    #      NEWROZ_DASHBOARD_PORTAL_URL env). That's an intentional choice we
     #      always persist so it survives across sessions — overwriting any
     #      existing entry in place (save_env_value updates a matching key
     #      rather than appending a duplicate). This is true even when it equals
@@ -355,7 +355,7 @@ def cmd_dashboard_register(args) -> None:
     default_portal = "https://portal.nousresearch.com"
     existing_portal = None
     try:
-        existing_portal = get_env_value("HERMES_DASHBOARD_PORTAL_URL")
+        existing_portal = get_env_value("NEWROZ_DASHBOARD_PORTAL_URL")
     except Exception:
         existing_portal = None
 
@@ -368,7 +368,7 @@ def cmd_dashboard_register(args) -> None:
 
     if should_write_portal:
         try:
-            save_env_value("HERMES_DASHBOARD_PORTAL_URL", portal_base_url)
+            save_env_value("NEWROZ_DASHBOARD_PORTAL_URL", portal_base_url)
             wrote_portal_url = True
         except Exception:
             # Non-fatal: the client_id is the load-bearing value.
@@ -377,13 +377,13 @@ def cmd_dashboard_register(args) -> None:
     # Persist the dashboard public URL derived from the OAuth redirect URI.
     #
     # --redirect-uri is the full public HTTPS callback the user registered with
-    # the portal, e.g. https://hermes.example.com/auth/callback. At serve time
+    # the portal, e.g. https://newroz.example.com/auth/callback. At serve time
     # the dashboard auth layer (dashboard_auth/routes._redirect_uri) reconstructs
-    # that same callback by taking HERMES_DASHBOARD_PUBLIC_URL and appending
+    # that same callback by taking NEWROZ_DASHBOARD_PUBLIC_URL and appending
     # "/auth/callback" verbatim. So the value the runtime actually consumes is
     # the ORIGIN (scheme://host[:port]), not the full callback path — persisting
     # the raw redirect URI would double up the path. We derive the origin from
-    # the supplied redirect URI and persist it as HERMES_DASHBOARD_PUBLIC_URL so
+    # the supplied redirect URI and persist it as NEWROZ_DASHBOARD_PUBLIC_URL so
     # the operator doesn't have to re-supply it and the public-URL override is
     # actually wired (the gate engages and the callback round-trips correctly).
     #
@@ -406,12 +406,12 @@ def cmd_dashboard_register(args) -> None:
     if public_url:
         existing_public_url = None
         try:
-            existing_public_url = get_env_value("HERMES_DASHBOARD_PUBLIC_URL")
+            existing_public_url = get_env_value("NEWROZ_DASHBOARD_PUBLIC_URL")
         except Exception:
             existing_public_url = None
         if existing_public_url != public_url:
             try:
-                save_env_value("HERMES_DASHBOARD_PUBLIC_URL", public_url)
+                save_env_value("NEWROZ_DASHBOARD_PUBLIC_URL", public_url)
                 wrote_public_url = True
             except Exception:
                 # Non-fatal: the client_id is the load-bearing value.

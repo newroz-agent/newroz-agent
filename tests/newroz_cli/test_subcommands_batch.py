@@ -13,31 +13,31 @@ import argparse
 
 import pytest
 
-from hermes_cli.subcommands.auth import build_auth_parser
-from hermes_cli.subcommands.backup import build_backup_parser
-from hermes_cli.subcommands.config import build_config_parser
-from hermes_cli.subcommands.dashboard import build_dashboard_parser
-from hermes_cli.subcommands.debug import build_debug_parser
-from hermes_cli.subcommands.doctor import build_doctor_parser
-from hermes_cli.subcommands.dump import build_dump_parser
-from hermes_cli.subcommands.gui import build_gui_parser
-from hermes_cli.subcommands.hooks import build_hooks_parser
-from hermes_cli.subcommands.import_cmd import build_import_cmd_parser
-from hermes_cli.subcommands.login import build_login_parser
-from hermes_cli.subcommands.logout import build_logout_parser
-from hermes_cli.subcommands.logs import build_logs_parser
-from hermes_cli.subcommands.model import build_model_parser
-from hermes_cli.subcommands.postinstall import build_postinstall_parser
-from hermes_cli.subcommands.prompt_size import build_prompt_size_parser
-from hermes_cli.subcommands.security import build_security_parser
-from hermes_cli.subcommands.setup import build_setup_parser
-from hermes_cli.subcommands.slack import build_slack_parser
-from hermes_cli.subcommands.status import build_status_parser
-from hermes_cli.subcommands.uninstall import build_uninstall_parser
-from hermes_cli.subcommands.update import build_update_parser
-from hermes_cli.subcommands.version import build_version_parser
-from hermes_cli.subcommands.webhook import build_webhook_parser
-from hermes_cli.subcommands.whatsapp import build_whatsapp_parser
+from newroz_cli.subcommands.auth import build_auth_parser
+from newroz_cli.subcommands.backup import build_backup_parser
+from newroz_cli.subcommands.config import build_config_parser
+from newroz_cli.subcommands.dashboard import build_dashboard_parser
+from newroz_cli.subcommands.debug import build_debug_parser
+from newroz_cli.subcommands.doctor import build_doctor_parser
+from newroz_cli.subcommands.dump import build_dump_parser
+from newroz_cli.subcommands.gui import build_gui_parser
+from newroz_cli.subcommands.hooks import build_hooks_parser
+from newroz_cli.subcommands.import_cmd import build_import_cmd_parser
+from newroz_cli.subcommands.login import build_login_parser
+from newroz_cli.subcommands.logout import build_logout_parser
+from newroz_cli.subcommands.logs import build_logs_parser
+from newroz_cli.subcommands.model import build_model_parser
+from newroz_cli.subcommands.postinstall import build_postinstall_parser
+from newroz_cli.subcommands.prompt_size import build_prompt_size_parser
+from newroz_cli.subcommands.security import build_security_parser
+from newroz_cli.subcommands.setup import build_setup_parser
+from newroz_cli.subcommands.slack import build_slack_parser
+from newroz_cli.subcommands.status import build_status_parser
+from newroz_cli.subcommands.uninstall import build_uninstall_parser
+from newroz_cli.subcommands.update import build_update_parser
+from newroz_cli.subcommands.version import build_version_parser
+from newroz_cli.subcommands.webhook import build_webhook_parser
+from newroz_cli.subcommands.whatsapp import build_whatsapp_parser
 
 
 def _h(name):
@@ -78,7 +78,7 @@ SINGLE_HANDLER_CASES = [
 
 @pytest.mark.parametrize("name,builder,kw,argv", SINGLE_HANDLER_CASES, ids=[c[0] for c in SINGLE_HANDLER_CASES])
 def test_single_handler_builders(name, builder, kw, argv):
-    parser = argparse.ArgumentParser(prog="hermes")
+    parser = argparse.ArgumentParser(prog="newroz")
     sub = parser.add_subparsers(dest="command")
     handler = _h(name)
     builder(sub, **{kw: handler})
@@ -87,7 +87,7 @@ def test_single_handler_builders(name, builder, kw, argv):
 
 
 def test_dashboard_builder_two_handlers():
-    parser = argparse.ArgumentParser(prog="hermes")
+    parser = argparse.ArgumentParser(prog="newroz")
     sub = parser.add_subparsers(dest="command")
     dash, reg = _h("dashboard"), _h("dashboard_register")
     build_dashboard_parser(sub, cmd_dashboard=dash, cmd_dashboard_register=reg)
@@ -97,11 +97,11 @@ def test_dashboard_builder_two_handlers():
     assert parser.parse_args(["dashboard", "register"]).func is reg
 
 
-# ── deprecated `hermes login` fails gracefully, not with argparse error ────
+# ── deprecated `newroz login` fails gracefully, not with argparse error ────
 #
-# `hermes login` is a removed command; its handler (`login_command` in
-# `hermes_cli/auth.py`) prints a deprecation notice pointing at `hermes auth` /
-# `hermes model` and exits 0.  Two behavior contracts guard the UX:
+# `newroz login` is a removed command; its handler (`login_command` in
+# `newroz_cli/auth.py`) prints a deprecation notice pointing at `newroz auth` /
+# `newroz model` and exits 0.  Two behavior contracts guard the UX:
 #   1. ANY `--provider <value>` (including ones the user actually wants, like
 #      `anthropic`) must parse and reach the handler — never crash in argparse
 #      with `invalid choice` before the friendly redirect is printed (#24756).
@@ -109,7 +109,7 @@ def test_dashboard_builder_two_handlers():
 
 
 def _login_parser():
-    parser = argparse.ArgumentParser(prog="hermes")
+    parser = argparse.ArgumentParser(prog="newroz")
     sub = parser.add_subparsers(dest="command")
     build_login_parser(sub, cmd_login=_h("login"))
     return parser
@@ -130,13 +130,13 @@ def test_login_accepts_any_provider_value(provider):
 
 
 def test_login_subparser_help_is_suppressed():
-    """The deprecated `login` row must not appear in `hermes --help`.
+    """The deprecated `login` row must not appear in `newroz --help`.
 
     Must hold without leaking argparse's literal `==SUPPRESS==` placeholder,
     which `help=argparse.SUPPRESS` emits for a top-level subparser on 3.12+.
     The fix omits the `help=` kwarg entirely instead.
     """
-    parser = argparse.ArgumentParser(prog="hermes")
+    parser = argparse.ArgumentParser(prog="newroz")
     sub = parser.add_subparsers(dest="command")
     build_login_parser(sub, cmd_login=_h("login"))
     help_text = parser.format_help()

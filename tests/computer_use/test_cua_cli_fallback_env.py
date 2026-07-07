@@ -4,7 +4,7 @@ subprocess environment like every other cua-driver spawn site.
 ``_CuaDriverSession._call_tool_via_cli()`` (the EAGAIN/silent-empty MCP
 fallback) invoked ``subprocess.run`` with no ``env=`` at all, so the
 third-party ``cua-driver`` binary inherited the full, unsanitized parent
-environment — including provider API keys and other Hermes-managed
+environment — including provider API keys and other Newroz-managed
 secrets that ``_lifecycle_coro``'s primary MCP spawn already strips via
 ``_sanitize_subprocess_env(cua_driver_child_env())``.
 """
@@ -55,7 +55,7 @@ def test_cli_fallback_strips_provider_secret_from_subprocess_env(monkeypatch):
 def test_cli_fallback_applies_telemetry_policy(monkeypatch):
     """The env should also go through cua_driver_child_env(), like every
     other cua-driver spawn site, not just _sanitize_subprocess_env alone."""
-    monkeypatch.delenv("HERMES_CUA_TELEMETRY", raising=False)
+    monkeypatch.delenv("NEWROZ_CUA_TELEMETRY", raising=False)
     captured = {}
 
     def fake_run(cmd, **kwargs):

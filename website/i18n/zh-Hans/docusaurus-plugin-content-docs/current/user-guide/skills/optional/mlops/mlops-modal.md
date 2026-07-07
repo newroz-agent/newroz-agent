@@ -14,7 +14,7 @@ description: "用于运行 ML 工作负载的无服务器 GPU 云平台"
 
 | | |
 |---|---|
-| 来源 | 可选 — 通过 `hermes skills install official/mlops/modal` 安装 |
+| 来源 | 可选 — 通过 `newroz skills install official/mlops/modal` 安装 |
 | 路径 | `optional-skills/mlops/modal` |
 | 版本 | `1.0.0` |
 | 作者 | Orchestra Research |
@@ -26,7 +26,7 @@ description: "用于运行 ML 工作负载的无服务器 GPU 云平台"
 ## 参考：完整 SKILL.md
 
 :::info
-以下是 Hermes 在触发此 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
+以下是 Newroz 在触发此 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
 :::
 
 # Modal Serverless GPU

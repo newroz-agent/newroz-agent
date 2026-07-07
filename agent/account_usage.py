@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any, Optional
 import httpx
 
 from agent.anthropic_adapter import _is_oauth_token, resolve_anthropic_token
-from hermes_cli.auth import _read_codex_tokens, resolve_codex_runtime_credentials
-from hermes_cli.runtime_provider import resolve_runtime_provider
+from newroz_cli.auth import _read_codex_tokens, resolve_codex_runtime_credentials
+from newroz_cli.runtime_provider import resolve_runtime_provider
 
 if TYPE_CHECKING:
     from typing import TypeGuard
@@ -145,7 +145,7 @@ def build_nous_credits_snapshot(account_info) -> Optional[AccountUsageSnapshot]:
     account info to show (fail-open: caller just shows nothing).
     """
     try:
-        from hermes_cli.nous_account import nous_portal_topup_url
+        from newroz_cli.nous_account import nous_portal_topup_url
 
         if account_info is None or not getattr(account_info, "logged_in", False):
             return None
@@ -239,7 +239,7 @@ def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list
     the same block regardless of session API-call count or resume state. Fail-open:
     any auth/portal hiccup or timeout returns [] (the caller shows nothing).
 
-    Dev override: when HERMES_DEV_CREDITS_FIXTURE selects a fixture state, /usage
+    Dev override: when NEWROZ_DEV_CREDITS_FIXTURE selects a fixture state, /usage
     renders from that fixture instead of the real portal (so the block + gauge are
     testable without a live account). Throwaway scaffolding.
     """
@@ -255,7 +255,7 @@ def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list
         return render_account_usage_lines(snapshot, markdown=markdown)
 
     try:
-        from hermes_cli.auth import get_provider_auth_state
+        from newroz_cli.auth import get_provider_auth_state
 
         tok = (get_provider_auth_state("nous") or {}).get("access_token")
         if not (isinstance(tok, str) and tok.strip()):
@@ -265,7 +265,7 @@ def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list
     try:
         import concurrent.futures
 
-        from hermes_cli.nous_account import get_nous_portal_account_info
+        from newroz_cli.nous_account import get_nous_portal_account_info
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
             account = pool.submit(
@@ -284,7 +284,7 @@ def _snapshot_from_credits_state(state) -> Optional[AccountUsageSnapshot]:
     """Map a header-shaped CreditsState (e.g. a dev fixture) to the /usage snapshot.
 
     Renders the same magnitudes + monthly-grant % window the portal path produces,
-    so HERMES_DEV_CREDITS_FIXTURE can exercise /usage without a live account. The
+    so NEWROZ_DEV_CREDITS_FIXTURE can exercise /usage without a live account. The
     *_usd strings are mock display values here (not server balance to compute on);
     the % comes from CreditsState.used_fraction (micros math). Fail-open → None.
     """
@@ -325,7 +325,7 @@ def _snapshot_from_credits_state(state) -> Optional[AccountUsageSnapshot]:
         if not windows and not details:
             return None
 
-        details.append("(dev fixture — HERMES_DEV_CREDITS_FIXTURE)")
+        details.append("(dev fixture — NEWROZ_DEV_CREDITS_FIXTURE)")
         return AccountUsageSnapshot(
             provider="nous",
             source="dev-fixture",
@@ -365,7 +365,7 @@ def build_credits_view(*, markdown: bool = False, timeout: float = 10.0) -> Cred
     """
     not_logged_in = CreditsView(logged_in=False)
     try:
-        from hermes_cli.auth import get_provider_auth_state
+        from newroz_cli.auth import get_provider_auth_state
 
         tok = (get_provider_auth_state("nous") or {}).get("access_token")
         if not (isinstance(tok, str) and tok.strip()):
@@ -376,7 +376,7 @@ def build_credits_view(*, markdown: bool = False, timeout: float = 10.0) -> Cred
     try:
         import concurrent.futures
 
-        from hermes_cli.nous_account import (
+        from newroz_cli.nous_account import (
             get_nous_portal_account_info,
             nous_portal_topup_url,
         )

@@ -95,7 +95,7 @@ test('path helpers reject blank non-string NUL and Windows device syntax', async
 })
 
 test('resolveRequestedPathForIpc resolves relative paths from the trimmed base directory', () => {
-  const baseDir = path.join(os.tmpdir(), 'hermes-desktop-base')
+  const baseDir = path.join(os.tmpdir(), 'newroz-desktop-base')
 
   assert.equal(
     resolveRequestedPathForIpc('notes.txt', {
@@ -120,7 +120,7 @@ test('resolveRequestedPathForIpc expands ~ to the home directory', () => {
 })
 
 test('resolveReadableFileForIpc validates existence type size and sensitivity', async t => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-hardening-'))
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-desktop-hardening-'))
   t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }))
 
   const textPath = path.join(tempDir, 'notes.txt')
@@ -191,7 +191,7 @@ test('resolveReadableFileForIpc validates existence type size and sensitivity', 
 })
 
 test('resolveReadableFileForIpc blocks common sensitive files', async t => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-sensitive-'))
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-desktop-sensitive-'))
   t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }))
 
   const sshDir = path.join(tempDir, '.ssh')
@@ -217,7 +217,7 @@ test('resolveReadableFileForIpc blocks common sensitive files', async t => {
 })
 
 test('resolveReadableFileForIpc blocks symlinks whose realpath is sensitive', async t => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-realpath-'))
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-desktop-realpath-'))
   t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }))
 
   const envPath = path.join(tempDir, '.env')
@@ -238,7 +238,7 @@ test('resolveReadableFileForIpc blocks symlinks whose realpath is sensitive', as
 })
 
 test('resolveDirectoryForIpc accepts directories and rejects invalid directory targets', async t => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-dir-'))
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-desktop-dir-'))
   t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }))
 
   const directory = path.join(tempDir, 'project')
@@ -256,7 +256,7 @@ test('resolveDirectoryForIpc accepts directories and rejects invalid directory t
 })
 
 test('resolveDirectoryForIpc accepts directory symlinks or junctions', async t => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-dir-link-'))
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'newroz-desktop-dir-link-'))
   t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }))
 
   const directory = path.join(tempDir, 'actual-project')

@@ -5,11 +5,11 @@ import { persistString, storedString } from '@/lib/storage'
 import { notifyError } from './notifications'
 import { setCurrentFastMode, setCurrentReasoningEffort } from './session'
 
-const STORAGE_KEY = 'hermes.desktop.model-presets'
+const STORAGE_KEY = 'newroz.desktop.model-presets'
 
 /** Per-model reasoning/fast preset, remembered globally across sessions and
  *  re-applied to the session whenever that model is selected. Unset dimensions
- *  fall back to the Hermes default (medium effort, no fast). */
+ *  fall back to the Newroz default (medium effort, no fast). */
 export interface ModelPreset {
   effort?: string
   fast?: boolean

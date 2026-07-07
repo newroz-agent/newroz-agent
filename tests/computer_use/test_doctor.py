@@ -3,7 +3,7 @@
 The doctor module drives cua-driver's stable ``health_report`` MCP tool over
 stdio JSON-RPC and renders the structured response. Most of the surface is
 about parsing what cua-driver hands back, plus the exit-code contract
-downstream consumers (CI / `hermes update`) rely on:
+downstream consumers (CI / `newroz update`) rely on:
 
 * Exit 0 when overall == "ok"
 * Exit 1 when overall in ("degraded", "failed") — at least one check
@@ -13,7 +13,7 @@ downstream consumers (CI / `hermes update`) rely on:
 We do NOT spin up a real cua-driver — that lives in the cua-driver
 integration test suite (libs/cua-driver/rust/tests/integration/
 test_health_report_mcp.py). Here we mock the subprocess and assert the
-Hermes-side adapter behaves correctly against the documented response
+Newroz-side adapter behaves correctly against the documented response
 shape.
 """
 
@@ -290,7 +290,7 @@ class TestJsonOutput:
         assert parsed == _ok_report()
 
 
-# ── HERMES_CUA_DRIVER_CMD resolution ───────────────────────────────────────
+# ── NEWROZ_CUA_DRIVER_CMD resolution ───────────────────────────────────────
 
 
 class TestDriverCmdResolution:
@@ -312,7 +312,7 @@ class TestDriverCmdResolution:
     def test_env_var_used_when_no_arg_given(self, monkeypatch):
         from tools.computer_use import doctor
 
-        monkeypatch.setenv("HERMES_CUA_DRIVER_CMD", "/env/path/cua-driver")
+        monkeypatch.setenv("NEWROZ_CUA_DRIVER_CMD", "/env/path/cua-driver")
         proc = _fake_proc_with_responses(
             {"jsonrpc": "2.0", "id": 1, "result": {}},
             {"jsonrpc": "2.0", "id": 2, "result": {"structuredContent": _ok_report()}},

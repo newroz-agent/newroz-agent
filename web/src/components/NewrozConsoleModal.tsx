@@ -50,7 +50,7 @@ type ConsoleFrame =
 
 type ConnectionState = "connecting" | "ready" | "running" | "closed" | "error";
 
-interface HermesConsoleModalProps {
+interface NewrozConsoleModalProps {
   open: boolean;
   onClose: () => void;
 }
@@ -98,14 +98,14 @@ function isPrintable(data: string): boolean {
   return data >= " " || data === "\t";
 }
 
-export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
+export function NewrozConsoleModal({ open, onClose }: NewrozConsoleModalProps) {
   const modalRef = useModalBehavior({ open, onClose });
   const hostRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<XtermTerminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const lineRef = useRef("");
-  const promptRef = useRef("hermes> ");
-  const inputPromptRef = useRef("hermes> ");
+  const promptRef = useRef("newroz> ");
+  const inputPromptRef = useRef("newroz> ");
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef<number | null>(null);
   const activeCommandRef = useRef(false);
@@ -274,7 +274,7 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
       if (!term) return;
 
       if (frame.type === "ready") {
-        const nextPrompt = frame.prompt || "hermes> ";
+        const nextPrompt = frame.prompt || "newroz> ";
         promptRef.current = nextPrompt;
         inputPromptRef.current = nextPrompt;
         hasReadyFrameRef.current = true;
@@ -398,7 +398,7 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
     setConsoleContext("pending");
     setConsoleProfile(profile || "current");
     hasReadyFrameRef.current = false;
-    writeLine(term, "\x1b[2mConnecting to Hermes Console...\x1b[0m");
+    writeLine(term, "\x1b[2mConnecting to Newroz Console...\x1b[0m");
 
     void (async () => {
       try {
@@ -490,7 +490,7 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
       onClick={(event) => event.target === event.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="hermes-console-title"
+      aria-labelledby="newroz-console-title"
     >
       <div
         className={cn(
@@ -504,10 +504,10 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
           </div>
           <div className="min-w-0 flex-1">
             <h2
-              id="hermes-console-title"
+              id="newroz-console-title"
               className="font-mondwest text-display text-base tracking-wider"
             >
-              Hermes Console
+              Newroz Console
             </h2>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Badge tone={statusTone}>{connectionState}</Badge>

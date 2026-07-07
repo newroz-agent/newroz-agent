@@ -1,6 +1,6 @@
 """SelfHostedOIDCProvider — generic self-hosted OpenID Connect dashboard auth.
 
-A standards-compliant OpenID Connect Relying Party for the ``hermes dashboard``
+A standards-compliant OpenID Connect Relying Party for the ``newroz dashboard``
 OAuth gate. Unlike the bundled ``nous`` provider (which encodes Nous Portal's
 bespoke contract — ``agent:{instance_id}`` client ids, a custom access-token
 JWT, the ``x-nous-refresh-token`` header, an ``oauth_contract_version`` claim),
@@ -10,10 +10,10 @@ self-hosted identity provider:
     Authentik · Keycloak · Zitadel · Authelia · Auth0 · Okta · Google · …
 
 It is a pure drop-in plugin: it implements the five
-:class:`~hermes_cli.dashboard_auth.DashboardAuthProvider` methods and touches
+:class:`~newroz_cli.dashboard_auth.DashboardAuthProvider` methods and touches
 nothing in core auth/runtime/login. The HTTP round trip, cookies, CSRF
 ``state`` check and ``redirect_uri`` reconstruction are all owned by
-``hermes_cli/dashboard_auth/routes.py``; this provider only:
+``newroz_cli/dashboard_auth/routes.py``; this provider only:
 
   1. discovers the IDP's endpoints from ``{issuer}/.well-known/openid-configuration``,
   2. builds the ``/authorize`` URL with PKCE (S256),
@@ -22,7 +22,7 @@ nothing in core auth/runtime/login. The HTTP round trip, cookies, CSRF
   4. verifies the **ID token** (RS256/ES256) against the discovered
      ``jwks_uri`` with ``iss`` / ``aud`` pinned to the configured issuer /
      client id, and maps standard OIDC claims (``sub``, ``email``, ``name``)
-     onto a :class:`~hermes_cli.dashboard_auth.Session`.
+     onto a :class:`~newroz_cli.dashboard_auth.Session`.
 
 Why the ID token (not the access token)? OIDC guarantees the ID token is a
 signed JWT carrying identity claims — that is its entire purpose. The access
@@ -53,17 +53,17 @@ same precedence convention as the ``nous`` plugin)::
       oauth:
         provider: self-hosted
         self_hosted:
-          issuer: https://auth.example.com/application/o/hermes/   # required
-          client_id: hermes-dashboard                              # required
+          issuer: https://auth.example.com/application/o/newroz/   # required
+          client_id: newroz-dashboard                              # required
           scopes: "openid profile email"                           # optional
           # client_secret: set ONLY for a confidential client. It is a
-          # credential — prefer the env var / ~/.hermes/.env over config.yaml.
+          # credential — prefer the env var / ~/.newroz/.env over config.yaml.
 
     # Environment overrides (Docker/Fly secret injection)
-    HERMES_DASHBOARD_OIDC_ISSUER
-    HERMES_DASHBOARD_OIDC_CLIENT_ID
-    HERMES_DASHBOARD_OIDC_SCOPES        # optional; defaults to "openid profile email"
-    HERMES_DASHBOARD_OIDC_CLIENT_SECRET # optional; set for a confidential client
+    NEWROZ_DASHBOARD_OIDC_ISSUER
+    NEWROZ_DASHBOARD_OIDC_CLIENT_ID
+    NEWROZ_DASHBOARD_OIDC_SCOPES        # optional; defaults to "openid profile email"
+    NEWROZ_DASHBOARD_OIDC_CLIENT_SECRET # optional; set for a confidential client
                                         # (the .env file is the canonical home —
                                         # it's a secret, not a behavioural setting)
 
@@ -87,7 +87,7 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-from hermes_cli.dashboard_auth import (
+from newroz_cli.dashboard_auth import (
     DashboardAuthProvider,
     InvalidCodeError,
     LoginStart,
@@ -238,7 +238,7 @@ class SelfHostedOIDCProvider(DashboardAuthProvider):
         # Same flat ``state=…;verifier=…`` cookie shape every provider uses;
         # the auth-route layer prepends ``provider=`` and parses it back out.
         cookie_payload = {
-            "hermes_session_pkce": f"state={state};verifier={code_verifier}",
+            "newroz_session_pkce": f"state={state};verifier={code_verifier}",
         }
         return LoginStart(redirect_url=redirect_url, cookie_payload=cookie_payload)
 
@@ -668,7 +668,7 @@ class SelfHostedOIDCProvider(DashboardAuthProvider):
 
         The verified ID token is stored in ``Session.access_token`` so the
         per-request ``verify_session`` re-verifies a real JWT. The opaque
-        OAuth access token is intentionally NOT stored — Hermes does not call
+        OAuth access token is intentionally NOT stored — Newroz does not call
         any resource API with it; the dashboard only needs identity.
         """
         user_id = str(claims.get("sub", ""))
@@ -750,7 +750,7 @@ def _load_config_oauth_section() -> dict:
     to ``{}`` so callers can rely on ``.get(...)``.
     """
     try:
-        from hermes_cli.config import cfg_get, load_config
+        from newroz_cli.config import cfg_get, load_config
 
         cfg = load_config()
     except Exception as exc:  # noqa: BLE001 — broad catch is intentional
@@ -788,7 +788,7 @@ def register(ctx) -> None:
     """Plugin entry — called by the plugin loader at startup.
 
     Registers :class:`SelfHostedOIDCProvider` only when both an issuer and a
-    client_id are configured (via ``HERMES_DASHBOARD_OIDC_*`` env vars or the
+    client_id are configured (via ``NEWROZ_DASHBOARD_OIDC_*`` env vars or the
     ``dashboard.oauth.self_hosted`` block in config.yaml). Operator-owned
     loopback / ``--insecure`` dashboards leave these unset, so the plugin is a
     no-op for them.
@@ -803,27 +803,27 @@ def register(ctx) -> None:
     oidc_cfg = _oidc_subsection(oauth_section)
 
     issuer = _resolve_setting(
-        "HERMES_DASHBOARD_OIDC_ISSUER", oidc_cfg.get("issuer")
+        "NEWROZ_DASHBOARD_OIDC_ISSUER", oidc_cfg.get("issuer")
     )
     client_id = _resolve_setting(
-        "HERMES_DASHBOARD_OIDC_CLIENT_ID", oidc_cfg.get("client_id")
+        "NEWROZ_DASHBOARD_OIDC_CLIENT_ID", oidc_cfg.get("client_id")
     )
     scopes = (
-        _resolve_setting("HERMES_DASHBOARD_OIDC_SCOPES", oidc_cfg.get("scopes"))
+        _resolve_setting("NEWROZ_DASHBOARD_OIDC_SCOPES", oidc_cfg.get("scopes"))
         or _DEFAULT_SCOPES
     )
     # Optional — set only for a confidential client. A credential, so the
-    # canonical home is the env var / ~/.hermes/.env; config.yaml is supported
+    # canonical home is the env var / ~/.newroz/.env; config.yaml is supported
     # for precedence symmetry. Empty ⇒ public client (unchanged behaviour).
     client_secret = _resolve_setting(
-        "HERMES_DASHBOARD_OIDC_CLIENT_SECRET", oidc_cfg.get("client_secret")
+        "NEWROZ_DASHBOARD_OIDC_CLIENT_SECRET", oidc_cfg.get("client_secret")
     )
 
     if not issuer or not client_id:
         LAST_SKIP_REASON = (
             "Self-hosted OIDC dashboard auth is not configured. Set both an "
             "issuer and a client_id — either as env vars "
-            "(HERMES_DASHBOARD_OIDC_ISSUER + HERMES_DASHBOARD_OIDC_CLIENT_ID) "
+            "(NEWROZ_DASHBOARD_OIDC_ISSUER + NEWROZ_DASHBOARD_OIDC_CLIENT_ID) "
             "or under dashboard.oauth.self_hosted.{issuer,client_id} in "
             "config.yaml — or pass --insecure to skip the OAuth gate "
             "entirely. (issuer set: %s; client_id set: %s)"

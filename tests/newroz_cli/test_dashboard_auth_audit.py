@@ -1,6 +1,6 @@
 """Audit log for dashboard-auth events.
 
-Profile-aware location: ``$HERMES_HOME/logs/dashboard-auth.log``.
+Profile-aware location: ``$NEWROZ_HOME/logs/dashboard-auth.log``.
 Format: one JSON object per line. Token-like kwargs are dropped before
 serialisation so we never leak refresh tokens or JWTs to disk.
 """
@@ -9,15 +9,15 @@ from __future__ import annotations
 import json
 import pytest
 
-from hermes_cli.dashboard_auth.audit import audit_log, AuditEvent
+from newroz_cli.dashboard_auth.audit import audit_log, AuditEvent
 
 
 @pytest.fixture
 def profile_home(tmp_path, monkeypatch):
-    """Redirect $HERMES_HOME and ~ to a tmp dir for the duration of the test."""
-    home = tmp_path / ".hermes"
+    """Redirect $NEWROZ_HOME and ~ to a tmp dir for the duration of the test."""
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     # Some code paths fall back to Path.home() — patch that too.
     monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
     return home
@@ -63,18 +63,18 @@ def test_audit_all_event_types_have_string_values():
 
 def test_audit_write_failure_does_not_raise(monkeypatch, tmp_path):
     """A broken audit log must not crash auth."""
-    # Point HERMES_HOME at a file (not a dir) so mkdir/open will fail.
+    # Point NEWROZ_HOME at a file (not a dir) so mkdir/open will fail.
     broken = tmp_path / "not-a-dir"
     broken.write_text("blocking file")
-    monkeypatch.setenv("HERMES_HOME", str(broken))
+    monkeypatch.setenv("NEWROZ_HOME", str(broken))
     # Should NOT raise.
     audit_log(AuditEvent.LOGIN_FAILURE, provider="nous", reason="x")
 
 
 def test_audit_creates_logs_dir_if_missing(tmp_path, monkeypatch):
-    home = tmp_path / ".hermes"
+    home = tmp_path / ".newroz"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     # logs/ deliberately does not exist
     audit_log(AuditEvent.LOGIN_START, provider="nous")
     assert (home / "logs").is_dir()

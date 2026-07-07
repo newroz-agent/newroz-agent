@@ -38,11 +38,11 @@ WORK_DURATION_S = 2.0  # longer than TTL => reclaimer wins
 WT = str(Path(__file__).resolve().parents[2])
 
 
-def worker_loop(worker_id: int, hermes_home: str, result_file: str) -> None:
-    os.environ["HERMES_HOME"] = hermes_home
-    os.environ["HOME"] = hermes_home
+def worker_loop(worker_id: int, newroz_home: str, result_file: str) -> None:
+    os.environ["NEWROZ_HOME"] = newroz_home
+    os.environ["HOME"] = newroz_home
     sys.path.insert(0, WT)
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     events = []
     start = time.monotonic()
@@ -95,11 +95,11 @@ def worker_loop(worker_id: int, hermes_home: str, result_file: str) -> None:
         json.dump(events, f)
 
 
-def reclaimer_loop(hermes_home: str, result_file: str) -> None:
-    os.environ["HERMES_HOME"] = hermes_home
-    os.environ["HOME"] = hermes_home
+def reclaimer_loop(newroz_home: str, result_file: str) -> None:
+    os.environ["NEWROZ_HOME"] = newroz_home
+    os.environ["HOME"] = newroz_home
     sys.path.insert(0, WT)
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     events = []
     start = time.monotonic()
@@ -121,11 +121,11 @@ def reclaimer_loop(hermes_home: str, result_file: str) -> None:
 
 
 def main():
-    home = tempfile.mkdtemp(prefix="hermes_reclaim_race_")
-    os.environ["HERMES_HOME"] = home
+    home = tempfile.mkdtemp(prefix="newroz_reclaim_race_")
+    os.environ["NEWROZ_HOME"] = home
     os.environ["HOME"] = home
     sys.path.insert(0, WT)
-    from hermes_cli import kanban_db as kb
+    from newroz_cli import kanban_db as kb
 
     kb.init_db()
     conn = kb.connect()

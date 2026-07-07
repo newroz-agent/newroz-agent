@@ -8,9 +8,9 @@ with "You're out of extra usage" the moment the gateway starts.
 
 The root cause was an inconsistency between two URL→api_mode helpers:
 
-* ``hermes_cli.providers.determine_api_mode`` correctly mapped
+* ``newroz_cli.providers.determine_api_mode`` correctly mapped
   ``api.anthropic.com`` to ``anthropic_messages``.
-* ``hermes_cli.runtime_provider._detect_api_mode_for_url`` did NOT, so
+* ``newroz_cli.runtime_provider._detect_api_mode_for_url`` did NOT, so
   every code path that fell back to URL-only detection (named custom
   providers, direct-alias resolution, the api-key fallback inside
   ``resolve_runtime_provider``) returned ``None`` for that host and
@@ -26,7 +26,7 @@ single branch cannot silently revert #32243.
 
 from __future__ import annotations
 
-from hermes_cli import runtime_provider as rp
+from newroz_cli import runtime_provider as rp
 
 
 class TestExplicitRuntimeForAnthropic:
@@ -34,7 +34,7 @@ class TestExplicitRuntimeForAnthropic:
     always return ``api_mode='anthropic_messages'`` regardless of
     base_url shape or stale persisted ``model.api_mode`` values.
 
-    Exercised whenever the user (or a Hermes subcommand) passes an
+    Exercised whenever the user (or a Newroz subcommand) passes an
     explicit ``--api-key`` / ``--base-url`` override to the runtime
     resolver.
     """
@@ -85,7 +85,7 @@ class TestExplicitRuntimeForAnthropic:
 
 class TestPoolEntryForAnthropic:
     """``_resolve_runtime_from_pool_entry`` is what runs when a user
-    has added an OAuth credential via ``hermes auth add anthropic
+    has added an OAuth credential via ``newroz auth add anthropic
     --type oauth`` (the exact flow from #32243).  Pin the contract
     alongside the URL-detector test so all three runtime branches
     stay aligned and a future refactor of one cannot diverge from
@@ -96,7 +96,7 @@ class TestPoolEntryForAnthropic:
         class _Entry:
             access_token = "sk-ant-oat01-pool"
             runtime_api_key = "sk-ant-oat01-pool"
-            source = "manual:hermes_pkce"
+            source = "manual:newroz_pkce"
             base_url = "https://api.anthropic.com"
 
         resolved = rp._resolve_runtime_from_pool_entry(
@@ -117,7 +117,7 @@ class TestPoolEntryForAnthropic:
         class _Entry:
             access_token = "sk-ant-oat01-pool"
             runtime_api_key = "sk-ant-oat01-pool"
-            source = "manual:hermes_pkce"
+            source = "manual:newroz_pkce"
             base_url = "https://api.anthropic.com"
 
         resolved = rp._resolve_runtime_from_pool_entry(

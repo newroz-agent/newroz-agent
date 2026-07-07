@@ -1,16 +1,16 @@
-"""Tests for `hermes memory setup [provider]` routing.
+"""Tests for `newroz memory setup [provider]` routing.
 
 The `memory setup` subcommand accepts an optional positional ``provider`` so a
 fresh install can configure a specific provider directly (e.g.
-``hermes memory setup honcho``) without the interactive picker — which matters
-because the per-provider ``hermes <provider>`` subcommand is only registered
+``newroz memory setup honcho``) without the interactive picker — which matters
+because the per-provider ``newroz <provider>`` subcommand is only registered
 once that provider is active.
 """
 
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from hermes_cli import memory_setup
+from newroz_cli import memory_setup
 
 
 class TestMemorySetupProviderRouting:
@@ -47,7 +47,7 @@ class TestMemorySetupProviderRouting:
         memory_setup.cmd_setup_provider("notaprovider")
         out = capsys.readouterr().out
         assert "not found" in out
-        assert "hermes memory setup" in out
+        assert "newroz memory setup" in out
 
 
 class TestInstallDependenciesRunner:

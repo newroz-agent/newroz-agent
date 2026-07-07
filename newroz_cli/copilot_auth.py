@@ -27,7 +27,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from hermes_cli._subprocess_compat import IS_WINDOWS, windows_hide_flags
+from newroz_cli._subprocess_compat import IS_WINDOWS, windows_hide_flags
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ def validate_copilot_token(token: str) -> tuple[bool, str]:
         return False, (
             "Classic Personal Access Tokens (ghp_*) are not supported by the "
             "Copilot API. Use one of:\n"
-            "  → `copilot login` or `hermes model` to authenticate via OAuth\n"
+            "  → `copilot login` or `newroz model` to authenticate via OAuth\n"
             "  → A fine-grained PAT (github_pat_*) with Copilot Requests permission\n"
             "  → `gh auth login` with the default device code flow (produces gho_* tokens)"
         )
@@ -193,7 +193,7 @@ def copilot_device_code_login(
         headers={
             "Accept": "application/json",
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "HermesAgent/1.0",
+            "User-Agent": "NewrozAgent/1.0",
         },
     )
 
@@ -239,7 +239,7 @@ def copilot_device_code_login(
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/x-www-form-urlencoded",
-                "User-Agent": "HermesAgent/1.0",
+                "User-Agent": "NewrozAgent/1.0",
             },
         )
 
@@ -447,7 +447,7 @@ def copilot_request_headers(
     """
     headers: dict[str, str] = {
         "Editor-Version": "vscode/1.104.1",
-        "User-Agent": "HermesAgent/1.0",
+        "User-Agent": "NewrozAgent/1.0",
         "Copilot-Integration-Id": "vscode-chat",
         "Openai-Intent": "conversation-edits",
         "x-initiator": "agent" if is_agent_turn else "user",

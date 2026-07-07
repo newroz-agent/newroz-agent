@@ -82,7 +82,7 @@ def load_picker_context() -> ConfigContext:
     Replaces the inline 17-LOC config-slice that ``web_server.py`` and
     ``tui_gateway/server.py`` (×2 sites) used to do.
     """
-    from hermes_cli.config import get_compatible_custom_providers, load_config
+    from newroz_cli.config import get_compatible_custom_providers, load_config
 
     cfg = load_config()
     model_cfg = cfg.get("model", {})
@@ -137,7 +137,7 @@ def build_models_payload(
     - ``pricing``: enrich each row with formatted per-model pricing and,
       for Nous, ``free_tier``/``unavailable_models`` so the GUI picker can
       show $/Mtok columns and gate paid models on free accounts —
-      mirroring the ``hermes model`` CLI picker. Adds network calls
+      mirroring the ``newroz model`` CLI picker. Adds network calls
       (pricing fetch + Nous tier check); only set for interactive pickers.
     - ``capabilities``: add a per-row ``capabilities`` map
       ``{model: {fast, reasoning}}`` so pickers can gate the model-options
@@ -161,7 +161,7 @@ def build_models_payload(
       GUI/TUI picker opens fast while making the active custom provider's model
       list match the classic CLI picker.
     """
-    from hermes_cli.model_switch import list_authenticated_providers
+    from newroz_cli.model_switch import list_authenticated_providers
 
     rows = list_authenticated_providers(
         current_provider=ctx.current_provider,
@@ -190,7 +190,7 @@ def build_models_payload(
     # aggregator rows honest: they only show models the user can't get
     # from a more-specific provider.  (#45954)
     try:
-        from hermes_cli.providers import is_routing_aggregator as _is_routing_aggregator
+        from newroz_cli.providers import is_routing_aggregator as _is_routing_aggregator
     except Exception:
         _is_routing_aggregator = None  # type: ignore[assignment]
 
@@ -252,7 +252,7 @@ def _apply_capabilities(rows: list[dict]) -> None:
     no-op on models that ignore it, whereas hiding it from a capable-but-
     uncatalogued model is the worse failure.
     """
-    from hermes_cli.models import model_supports_fast_mode
+    from newroz_cli.models import model_supports_fast_mode
 
     try:
         from agent.models_dev import get_model_capabilities
@@ -286,7 +286,7 @@ def _apply_capabilities(rows: list[dict]) -> None:
 
 def _append_unconfigured_rows(rows: list[dict], ctx: ConfigContext) -> list[dict]:
     """Build skeleton rows for canonical providers missing from ``rows``."""
-    from hermes_cli.models import CANONICAL_PROVIDERS, _PROVIDER_LABELS
+    from newroz_cli.models import CANONICAL_PROVIDERS, _PROVIDER_LABELS
 
     seen = {r["slug"].lower() for r in rows}
     cur = (ctx.current_provider or "").lower()
@@ -316,7 +316,7 @@ def _apply_picker_hints(rows: list[dict]) -> None:
     the unconfigured skeleton rows from ``_append_unconfigured_rows`` get
     the picker's setup-hint shape.
     """
-    from hermes_cli.auth import PROVIDER_REGISTRY
+    from newroz_cli.auth import PROVIDER_REGISTRY
 
     for row in rows:
         if "authenticated" in row:
@@ -342,7 +342,7 @@ def _apply_picker_hints(rows: list[dict]) -> None:
         row["warning"] = (
             f"paste {key_env} to activate"
             if auth_type == "api_key" and key_env
-            else f"run `hermes model` to configure ({auth_type})"
+            else f"run `newroz model` to configure ({auth_type})"
         )
 
 
@@ -356,7 +356,7 @@ def _reorder_canonical(rows: list[dict]) -> list[dict]:
     canonical. Keying on the flag would silently demote canonical
     providers configured via the new keyed schema.
     """
-    from hermes_cli.models import CANONICAL_PROVIDERS
+    from newroz_cli.models import CANONICAL_PROVIDERS
 
     order = {e.slug: i for i, e in enumerate(CANONICAL_PROVIDERS)}
     canon = sorted(
@@ -389,7 +389,7 @@ def _apply_pricing(
     renders strings — identical formatting to the CLI picker. All failures
     are swallowed (best-effort): a row simply gets no ``pricing`` key.
     """
-    from hermes_cli.models import (
+    from newroz_cli.models import (
         _format_price_per_mtok,
         check_nous_free_tier,
         get_pricing_for_provider,
@@ -459,12 +459,12 @@ def _moa_provider_row(current_provider: str = "") -> dict | None:
     """Build the virtual ``moa`` provider row for model pickers.
 
     Shared by the CLI inventory (:func:`build_models_payload`) and the gateway
-    picker path (:func:`hermes_cli.model_switch.list_picker_providers`) so the
+    picker path (:func:`newroz_cli.model_switch.list_picker_providers`) so the
     row shape stays in one place. Returns ``None`` when no MoA presets exist.
     """
     try:
-        from hermes_cli.config import load_config
-        from hermes_cli.moa_config import normalize_moa_config
+        from newroz_cli.config import load_config
+        from newroz_cli.moa_config import normalize_moa_config
 
         cfg = normalize_moa_config(load_config().get("moa") or {})
         models = list(cfg.get("presets", {}).keys())

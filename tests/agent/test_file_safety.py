@@ -79,13 +79,13 @@ class TestEnvFileReadBlocking:
             error = get_read_block_error(path)
             assert error is None, f"{path} should be allowed"
 
-    def test_allowed_hermes_env(self):
-        """Hermes' own .env inside HERMES_HOME is NOT blocked by this rule
+    def test_allowed_newroz_env(self):
+        """Newroz' own .env inside NEWROZ_HOME is NOT blocked by this rule
         (it's handled by other mechanisms). Only project-local .env is blocked."""
-        # Note: hermes internal .env is in ~/.hermes/.env which is NOT a project-local
+        # Note: newroz internal .env is in ~/.newroz/.env which is NOT a project-local
         # path, but the basename check applies to ANY .env. This is intentional —
-        # even ~/.hermes/.env should not be readable via read_file.
-        error = get_read_block_error(os.path.expanduser("~/.hermes/.env"))
+        # even ~/.newroz/.env should not be readable via read_file.
+        error = get_read_block_error(os.path.expanduser("~/.newroz/.env"))
         assert error is not None
 
     def test_blocked_set_is_lowercase(self):
@@ -100,28 +100,28 @@ class TestEnvFileReadBlocking:
 
 
 class TestCacheFileReadBlocking:
-    """Internal Hermes cache files must remain blocked."""
+    """Internal Newroz cache files must remain blocked."""
 
     def test_hub_index_cache_blocked(self, tmp_path):
         """Hub index-cache reads are blocked."""
-        hermes_home = tmp_path / ".hermes"
-        cache = hermes_home / "skills" / ".hub" / "index-cache" / "data.json"
+        newroz_home = tmp_path / ".newroz"
+        cache = newroz_home / "skills" / ".hub" / "index-cache" / "data.json"
         cache.parent.mkdir(parents=True)
         cache.write_text("{}")
 
-        with patch("agent.file_safety._hermes_home_path", return_value=hermes_home):
+        with patch("agent.file_safety._newroz_home_path", return_value=newroz_home):
             error = get_read_block_error(str(cache))
             assert error is not None
-            assert "internal Hermes cache" in error
+            assert "internal Newroz cache" in error
 
     def test_hub_directory_blocked(self, tmp_path):
         """Hub directory reads are blocked."""
-        hermes_home = tmp_path / ".hermes"
-        hub = hermes_home / "skills" / ".hub" / "metadata.json"
+        newroz_home = tmp_path / ".newroz"
+        hub = newroz_home / "skills" / ".hub" / "metadata.json"
         hub.parent.mkdir(parents=True)
         hub.write_text("{}")
 
-        with patch("agent.file_safety._hermes_home_path", return_value=hermes_home):
+        with patch("agent.file_safety._newroz_home_path", return_value=newroz_home):
             error = get_read_block_error(str(hub))
             assert error is not None
 
@@ -134,12 +134,12 @@ class TestCacheFileReadBlocking:
 class TestCombinedGuards:
     """Both guards should work independently without interference."""
 
-    def test_env_guard_works_regardless_of_hermes_home(self, tmp_path):
-        """The env basename guard does not depend on HERMES_HOME resolution."""
-        hermes_home = tmp_path / ".hermes"
-        hermes_home.mkdir()
+    def test_env_guard_works_regardless_of_newroz_home(self, tmp_path):
+        """The env basename guard does not depend on NEWROZ_HOME resolution."""
+        newroz_home = tmp_path / ".newroz"
+        newroz_home.mkdir()
 
-        with patch("agent.file_safety._hermes_home_path", return_value=hermes_home):
+        with patch("agent.file_safety._newroz_home_path", return_value=newroz_home):
             # Regular project .env should still be blocked
             error = get_read_block_error("/workspace/.env")
             assert error is not None
@@ -150,12 +150,12 @@ class TestCombinedGuards:
 
     def test_cache_guard_still_works_with_env_guard(self, tmp_path):
         """Cache file blocking still works when env guard is active."""
-        hermes_home = tmp_path / ".hermes"
-        cache = hermes_home / "skills" / ".hub" / "index-cache" / "x"
+        newroz_home = tmp_path / ".newroz"
+        cache = newroz_home / "skills" / ".hub" / "index-cache" / "x"
         cache.parent.mkdir(parents=True)
         cache.write_text("")
 
-        with patch("agent.file_safety._hermes_home_path", return_value=hermes_home):
+        with patch("agent.file_safety._newroz_home_path", return_value=newroz_home):
             error = get_read_block_error(str(cache))
             assert error is not None
-            assert "internal Hermes cache" in error
+            assert "internal Newroz cache" in error

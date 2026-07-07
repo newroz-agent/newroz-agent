@@ -3,7 +3,7 @@ import { type MutableRefObject, useCallback } from 'react'
 import { useI18n } from '@/i18n'
 import { notify, notifyError } from '@/store/notifications'
 import { $currentCwd, setCurrentBranch, setCurrentCwd } from '@/store/session'
-import type { SessionRuntimeInfo } from '@/types/hermes'
+import type { SessionRuntimeInfo } from '@/types/newroz'
 
 interface CwdActionsOptions {
   activeSessionId: string | null

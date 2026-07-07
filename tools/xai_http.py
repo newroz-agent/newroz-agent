@@ -17,7 +17,7 @@ def has_xai_credentials() -> bool:
     """Cheap probe — return True when xAI credentials are *likely* usable.
 
     Deliberately avoids :func:`resolve_xai_http_credentials` so callers in
-    hot-paint paths (``hermes tools`` repaint, tool-registration scans,
+    hot-paint paths (``newroz tools`` repaint, tool-registration scans,
     ``WebSearchProvider.is_available()``) don't incur disk locks or — in
     the OAuth path — a network token refresh. The ABC contract on
     :meth:`agent.web_search_provider.WebSearchProvider.is_available`
@@ -26,7 +26,7 @@ def has_xai_credentials() -> bool:
     Resolution order, fast-to-slow:
 
     1. ``XAI_API_KEY`` env var (cheapest; covers explicit-key users).
-    2. ``~/.hermes/auth.json`` has a non-empty ``providers.xai-oauth.tokens.access_token``
+    2. ``~/.newroz/auth.json`` has a non-empty ``providers.xai-oauth.tokens.access_token``
        (single file read, no expiry check, no refresh).
 
     Returns False on any exception so a corrupted auth store can't block
@@ -36,9 +36,9 @@ def has_xai_credentials() -> bool:
     if os.environ.get("XAI_API_KEY", "").strip():
         return True
     try:
-        from hermes_constants import get_hermes_home
+        from newroz_constants import get_newroz_home
 
-        auth_path = get_hermes_home() / "auth.json"
+        auth_path = get_newroz_home() / "auth.json"
         if not auth_path.exists():
             return False
         store = json.loads(auth_path.read_text())
@@ -52,16 +52,16 @@ def has_xai_credentials() -> bool:
 
 
 def get_env_value(name: str, default=None):
-    """Read ``name`` from ``~/.hermes/.env`` first, then ``os.environ``.
+    """Read ``name`` from ``~/.newroz/.env`` first, then ``os.environ``.
 
-    Wraps :func:`hermes_cli.config.get_env_value` so tests can patch
+    Wraps :func:`newroz_cli.config.get_env_value` so tests can patch
     ``tools.xai_http.get_env_value`` to inject dotenv-only secrets into the
     xAI credential resolver.
     """
     try:
-        from hermes_cli.config import get_env_value as _hermes_get_env_value
+        from newroz_cli.config import get_env_value as _newroz_get_env_value
 
-        value = _hermes_get_env_value(name)
+        value = _newroz_get_env_value(name)
         if value is not None:
             return value
     except Exception:
@@ -69,19 +69,19 @@ def get_env_value(name: str, default=None):
     return os.environ.get(name, default)
 
 
-def hermes_xai_user_agent() -> str:
-    """Return a stable Hermes-specific User-Agent for xAI HTTP calls."""
+def newroz_xai_user_agent() -> str:
+    """Return a stable Newroz-specific User-Agent for xAI HTTP calls."""
     try:
-        from hermes_cli import __version__
+        from newroz_cli import __version__
     except Exception:
         __version__ = "unknown"
-    return f"Hermes-Agent/{__version__}"
+    return f"Newroz-Agent/{__version__}"
 
 
 def _load_config_section(section_name: str) -> Dict[str, Any]:
-    """Return a top-level Hermes config section as a dict, or empty."""
+    """Return a top-level Newroz config section as a dict, or empty."""
     try:
-        from hermes_cli.config import load_config
+        from newroz_cli.config import load_config
 
         cfg = load_config()
         section = cfg.get(section_name) if isinstance(cfg, dict) else None
@@ -203,14 +203,14 @@ def xai_storage_notice_text(section_name: str) -> str:
 
 
 def maybe_mark_xai_storage_notice_seen(section_name: str) -> Optional[str]:
-    """Return the storage notice once per Hermes home, then mark it seen."""
+    """Return the storage notice once per Newroz home, then mark it seen."""
     notice = xai_storage_notice_text(section_name)
     if not notice:
         return None
     try:
-        from hermes_constants import get_hermes_home
+        from newroz_constants import get_newroz_home
 
-        marker_dir = get_hermes_home() / "state"
+        marker_dir = get_newroz_home() / "state"
         marker_dir.mkdir(parents=True, exist_ok=True)
         marker = marker_dir / f"{section_name}_xai_storage_notice_seen"
         if marker.exists():
@@ -224,9 +224,9 @@ def maybe_mark_xai_storage_notice_seen(section_name: str) -> Optional[str]:
 def resolve_xai_http_credentials(*, force_refresh: bool = False) -> Dict[str, str]:
     """Resolve bearer credentials for direct xAI HTTP endpoints.
 
-    Prefers Hermes-managed xAI OAuth credentials when available, then falls back
-    to ``XAI_API_KEY`` resolved via ``hermes_cli.config.get_env_value`` so keys
-    stored in ``~/.hermes/.env`` (the standard Hermes location) are honored —
+    Prefers Newroz-managed xAI OAuth credentials when available, then falls back
+    to ``XAI_API_KEY`` resolved via ``newroz_cli.config.get_env_value`` so keys
+    stored in ``~/.newroz/.env`` (the standard Newroz location) are honored —
     not just ones already exported into ``os.environ``. This keeps direct xAI
     endpoints (images, TTS, STT, etc.) aligned with the main runtime auth model
     and preserves the regression contract from PR #17140 / #17163.
@@ -238,7 +238,7 @@ def resolve_xai_http_credentials(*, force_refresh: bool = False) -> Dict[str, st
     the auth-store lock is held for the duration of the refresh.
     """
     try:
-        from hermes_cli.auth import resolve_xai_oauth_runtime_credentials
+        from newroz_cli.auth import resolve_xai_oauth_runtime_credentials
 
         creds = resolve_xai_oauth_runtime_credentials(force_refresh=force_refresh)
         access_token = str(creds.get("api_key") or "").strip()
@@ -254,7 +254,7 @@ def resolve_xai_http_credentials(*, force_refresh: bool = False) -> Dict[str, st
 
     if not force_refresh:
         try:
-            from hermes_cli.runtime_provider import resolve_runtime_provider
+            from newroz_cli.runtime_provider import resolve_runtime_provider
 
             runtime = resolve_runtime_provider(requested="xai-oauth")
             access_token = str(runtime.get("api_key") or "").strip()

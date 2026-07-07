@@ -8,7 +8,7 @@ import logging
 
 import pytest
 
-from hermes_cli.config import (
+from newroz_cli.config import (
     _PROVIDER_NORMALIZE_WARNED,
     _normalize_custom_provider_entry,
 )
@@ -103,7 +103,7 @@ class TestNormalizeCustomProviderEntry:
         assert any("unknown config keys" in r.message.lower() for r in caplog.records)
 
     def test_provider_key_not_flagged_unknown(self, caplog):
-        """A redundant ``provider`` key (written by Hermes' own config writer)
+        """A redundant ``provider`` key (written by Newroz' own config writer)
         must be accepted silently — not reported as an unknown key. Regression
         for the config warn-storm that deadlocked Windows logging."""
         entry = {

@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { SanitizedInput } from '@/components/ui/sanitized-input'
-import type { HermesGitBranch } from '@/global'
+import type { NewrozGitBranch } from '@/global'
 import { useI18n } from '@/i18n'
 import { gitRef } from '@/lib/sanitize'
 import { cn } from '@/lib/utils'
@@ -54,7 +54,7 @@ interface BranchActionCopy {
   branchSwitchHome: string
 }
 
-const branchActionLabel = (branch: HermesGitBranch, copy: BranchActionCopy) => {
+const branchActionLabel = (branch: NewrozGitBranch, copy: BranchActionCopy) => {
   if (branch.checkedOut) {
     return copy.branchOpenExisting
   }
@@ -141,7 +141,7 @@ export function WorkspaceMenu({ path, onRemove }: { path: null | string; onRemov
 
 // "New worktree": prompt for a branch name, then git spins up a fresh worktree
 // for that branch under the repo (the lightest way) and we open a new session
-// inside it. Naming is explicit — no auto-generated `hermes/work-<ts>` trees.
+// inside it. Naming is explicit — no auto-generated `newroz/work-<ts>` trees.
 export function StartWorkButton({ repoPath, onStarted }: { repoPath: string; onStarted: (path: string) => void }) {
   const { t } = useI18n()
   const s = t.sidebar
@@ -150,7 +150,7 @@ export function StartWorkButton({ repoPath, onStarted }: { repoPath: string; onS
   const [name, setName] = useState('')
   const [pending, setPending] = useState(false)
   const [convertMode, setConvertMode] = useState(false)
-  const [branches, setBranches] = useState<HermesGitBranch[]>([])
+  const [branches, setBranches] = useState<NewrozGitBranch[]>([])
   const [branchesLoading, setBranchesLoading] = useState(false)
 
   const loadBranches = useCallback(async () => {
@@ -195,7 +195,7 @@ export function StartWorkButton({ repoPath, onStarted }: { repoPath: string; onS
     }
   }
 
-  const convert = async (branch: HermesGitBranch) => {
+  const convert = async (branch: NewrozGitBranch) => {
     if (pending || !repoPath || !branch) {
       return
     }

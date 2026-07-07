@@ -3,7 +3,7 @@
 Context compression ends the current session and forks a new child session
 (linked by ``parent_session_id``). The SQLite flush cursor is reset, so
 only the latest descendant ends up with rows in the ``messages`` table —
-the parent row has ``message_count = 0``. ``hermes --resume <parent_id>``
+the parent row has ``message_count = 0``. ``newroz --resume <parent_id>``
 used to load zero rows and show a blank chat.
 
 ``SessionDB.resolve_resume_session_id()`` walks the parent → child chain
@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from hermes_state import SessionDB
+from newroz_state import SessionDB
 
 
 @pytest.fixture

@@ -48,7 +48,7 @@ export interface OAuthProviderStatus {
 export interface OAuthProvider {
   cli_command: string
   /** Shell command that clears an external provider's credentials, run in the
-   *  embedded terminal. Null when Hermes doesn't know how to remove it. */
+   *  embedded terminal. Null when Newroz doesn't know how to remove it. */
   disconnect_command?: null | string
   disconnect_hint?: null | string
   disconnectable?: boolean
@@ -110,8 +110,8 @@ export interface EnvVarInfo {
   is_password: boolean
   is_set: boolean
   // Backend-derived provider grouping hints (from the unified provider catalog
-  // in hermes_cli/provider_catalog.py). When present, the Keys tab groups by
-  // this provider identity — the SAME one `hermes model` uses — instead of
+  // in newroz_cli/provider_catalog.py). When present, the Keys tab groups by
+  // this provider identity — the SAME one `newroz model` uses — instead of
   // desktop-only env-var prefix guesses. Empty for non-provider env vars.
   provider?: string
   provider_label?: string
@@ -200,7 +200,7 @@ export interface GatewayReadyPayload {
   skin?: unknown
 }
 
-export interface HermesConfig {
+export interface NewrozConfig {
   agent?: {
     reasoning_effort?: string
     personalities?: Record<string, unknown>
@@ -222,7 +222,7 @@ export interface HermesConfig {
   }
 }
 
-export type HermesConfigRecord = Record<string, unknown>
+export type NewrozConfigRecord = Record<string, unknown>
 
 export interface ModelInfoResponse {
   auto_context_length?: number
@@ -257,7 +257,7 @@ export interface ModelOptionProvider {
   authenticated?: boolean
   /** Auth flow for an unconfigured provider: "api_key" can be activated inline
    *  by pasting `key_env`; anything else (oauth_*, external, aws_sdk, …) needs
-   *  the `hermes model` CLI / onboarding OAuth flow. */
+   *  the `newroz model` CLI / onboarding OAuth flow. */
   auth_type?: string
   /** Env var to paste an API key into, for unconfigured `api_key` providers. */
   key_env?: string
@@ -607,7 +607,7 @@ export interface ProfileSetupCommand {
 
 // ── Projects ───────────────────────────────────────────────────────────────
 // A first-class, per-profile, human-named workspace spanning one or more
-// folders. Mirrors hermes_cli/projects_db.Project.to_dict().
+// folders. Mirrors newroz_cli/projects_db.Project.to_dict().
 export interface ProjectFolder {
   path: string
   label: null | string
@@ -650,7 +650,7 @@ export interface SkillInfo {
   name: string
   /** Total observed activity (use + view + patch). Absent on older backends. */
   usage?: number
-  /** 'agent' = learned/local (editable), 'bundled' = ships with Hermes, 'hub' = installed. */
+  /** 'agent' = learned/local (editable), 'bundled' = ships with Newroz, 'hub' = installed. */
   provenance?: 'agent' | 'bundled' | 'hub'
 }
 
@@ -679,7 +679,7 @@ export interface ToolProvider {
   post_setup: string | null
   requires_nous_auth: boolean
   /** True when this is the provider currently written to config (mirrors the
-   *  CLI `hermes tools` active-provider detection). */
+   *  CLI `newroz tools` active-provider detection). */
   is_active: boolean
 }
 
@@ -716,7 +716,7 @@ export interface ToolsetModelsResponse {
  *  cua-driver runs on macOS, Windows, and Linux. `ready` is the single OS-aware
  *  readiness signal: on macOS both TCC grants (Accessibility + Screen
  *  Recording, which attach to cua-driver's own `com.trycua.driver` identity,
- *  not Hermes); elsewhere, driver health from `cua-driver doctor`. `null`
+ *  not Newroz); elsewhere, driver health from `cua-driver doctor`. `null`
  *  means unknown (binary missing / probe failed). */
 export interface ComputerUsePermissionSource {
   attribution?: string
@@ -797,7 +797,7 @@ export interface StatusResponse {
   gateway_running: boolean
   gateway_state: string | null
   gateway_updated_at: string | null
-  hermes_home: string
+  newroz_home: string
   latest_config_version: number
   release_date: string
   version: string
@@ -824,7 +824,7 @@ export interface BackendUpdateCommit {
   at: number
 }
 
-/** Shape of `GET /api/hermes/update/check` — the backend's own update state.
+/** Shape of `GET /api/newroz/update/check` — the backend's own update state.
  *  Used by the desktop's remote update overlay so the backend version (not the
  *  Electron client clone) drives "what's changed + Install" in remote mode. */
 export interface BackendUpdateCheckResponse {

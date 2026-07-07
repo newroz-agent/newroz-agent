@@ -6,7 +6,7 @@ isolating these here prevents real-Popen state from racing with the
 ``subprocess.run`` / ``_run_with_idle_timeout`` patches used by
 ``test_web_ui_build.py``.
 
-Added for issue #33788: ``hermes update`` got stuck at "webui-build" because
+Added for issue #33788: ``newroz update`` got stuck at "webui-build" because
 ``npm run build`` ran with ``capture_output=True`` and no timeout. The helper
 fixes both halves — streams output AND idle-kills the process.
 """
@@ -14,7 +14,7 @@ fixes both halves — streams output AND idle-kills the process.
 import sys as _sys
 import time
 
-from hermes_cli.main import _run_with_idle_timeout
+from newroz_cli.main import _run_with_idle_timeout
 
 
 def test_streams_output_and_returns_zero_on_success(tmp_path):

@@ -1,9 +1,9 @@
 """Tests for the container-context sandbox-mirror guard (#32049 follow-up).
 
 Brian's shape-based guard (#32213) catches paths that carry the full
-``…/sandboxes/<backend>/<task>/home/.hermes/…`` prefix. This covers the
+``…/sandboxes/<backend>/<task>/home/.newroz/…`` prefix. This covers the
 complementary inner-container case: when file tools execute inside Docker,
-the bind-mount strips that prefix and the guard sees plain ``/root/.hermes/…``.
+the bind-mount strips that prefix and the guard sees plain ``/root/.newroz/…``.
 The root:root ownership on the divergent SOUL.md in #32049 confirms this
 is the primary failure mode.
 """
@@ -14,21 +14,21 @@ import pytest
 
 class TestClassifyContainerMirrorTarget:
     def test_returns_none_without_context(self):
-        """No Docker context — /root/.hermes/… must not be flagged."""
+        """No Docker context — /root/.newroz/… must not be flagged."""
         from agent.file_safety import classify_container_mirror_target
 
-        assert classify_container_mirror_target("/root/.hermes/profiles/group1/SOUL.md") is None
+        assert classify_container_mirror_target("/root/.newroz/profiles/group1/SOUL.md") is None
 
     def test_catches_soul_md_with_context(self):
         """Primary failure mode from #32049: agent writes SOUL.md via container path."""
         from agent.file_safety import classify_container_mirror_target
 
         result = classify_container_mirror_target(
-            "/root/.hermes/profiles/group1/SOUL.md",
-            mirror_prefix="/root/.hermes",
+            "/root/.newroz/profiles/group1/SOUL.md",
+            mirror_prefix="/root/.newroz",
         )
         assert result is not None
-        assert result["mirror_root"].replace("\\", "/").endswith("root/.hermes")
+        assert result["mirror_root"].replace("\\", "/").endswith("root/.newroz")
         assert result["inner_path"] == "profiles/group1/SOUL.md"
 
     @pytest.mark.parametrize("inner", [
@@ -39,20 +39,20 @@ class TestClassifyContainerMirrorTarget:
         from agent.file_safety import classify_container_mirror_target
 
         result = classify_container_mirror_target(
-            f"/root/.hermes/{inner}",
-            mirror_prefix="/root/.hermes",
+            f"/root/.newroz/{inner}",
+            mirror_prefix="/root/.newroz",
         )
         assert result is not None
         assert result["inner_path"] == inner
 
-    def test_non_hermes_path_not_flagged(self):
-        """/root/workspace/… is not .hermes state and must not be blocked."""
+    def test_non_newroz_path_not_flagged(self):
+        """/root/workspace/… is not .newroz state and must not be blocked."""
         from agent.file_safety import classify_container_mirror_target
 
         assert (
             classify_container_mirror_target(
                 "/root/workspace/main.py",
-                mirror_prefix="/root/.hermes",
+                mirror_prefix="/root/.newroz",
             )
             is None
         )
@@ -63,8 +63,8 @@ class TestGetContainerMirrorWarning:
         from agent.file_safety import get_container_mirror_warning
 
         warn = get_container_mirror_warning(
-            "/root/.hermes/profiles/group1/SOUL.md",
-            mirror_prefix="/root/.hermes",
+            "/root/.newroz/profiles/group1/SOUL.md",
+            mirror_prefix="/root/.newroz",
         )
         assert warn is not None
         assert "profiles/group1/SOUL.md" in warn
@@ -78,10 +78,10 @@ class TestOrthogonality:
         """No sandboxes/ segment — shape guard passes, context guard blocks."""
         from agent.file_safety import classify_container_mirror_target
 
-        path = "/root/.hermes/profiles/group1/SOUL.md"
+        path = "/root/.newroz/profiles/group1/SOUL.md"
 
         assert classify_container_mirror_target(path) is None  # no context
-        assert classify_container_mirror_target(path, mirror_prefix="/root/.hermes") is not None
+        assert classify_container_mirror_target(path, mirror_prefix="/root/.newroz") is not None
 
 
 class TestFileToolIntegration:
@@ -93,11 +93,11 @@ class TestFileToolIntegration:
         monkeypatch.setattr(
             file_tools,
             "_get_container_mirror_prefix_for_task",
-            lambda task_id: "/root/.hermes",
+            lambda task_id: "/root/.newroz",
         )
 
         warning = file_tools._check_cross_profile_path(
-            "/root/.hermes/profiles/group1/SOUL.md",
+            "/root/.newroz/profiles/group1/SOUL.md",
             task_id="new-task",
         )
 

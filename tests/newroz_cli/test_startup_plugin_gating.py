@@ -1,9 +1,9 @@
 """Guards for CLI startup performance regression.
 
-``hermes_cli.main`` skips eager plugin discovery at argparse-setup time
+``newroz_cli.main`` skips eager plugin discovery at argparse-setup time
 when the invocation is clearly targeting a known built-in subcommand.
-This saves 500-650ms on ``hermes --help``, ``hermes version``,
-``hermes logs``, etc., by not importing ``google.cloud.pubsub_v1``,
+This saves 500-650ms on ``newroz --help``, ``newroz version``,
+``newroz logs``, etc., by not importing ``google.cloud.pubsub_v1``,
 ``aiohttp``, ``grpc``, and friends.
 
 Two invariants:
@@ -28,7 +28,7 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli.main import (
+from newroz_cli.main import (
     _BUILTIN_SUBCOMMANDS,
     _first_positional_argv,
     _plugin_cli_discovery_needed,
@@ -39,16 +39,16 @@ from hermes_cli.main import (
 
 
 def _live_subcommand_names() -> set[str]:
-    """Run ``hermes --help`` in-process and parse the subcommand block.
+    """Run ``newroz --help`` in-process and parse the subcommand block.
 
     We patch ``_plugin_cli_discovery_needed`` to always return False so
     plugin-registered commands aren't included — we're validating the
     built-in-only set.
     """
-    from hermes_cli import main as _main
+    from newroz_cli import main as _main
 
     argv_backup = sys.argv[:]
-    sys.argv = ["hermes", "--help"]
+    sys.argv = ["newroz", "--help"]
     buf = io.StringIO()
     try:
         with patch.object(_main, "_plugin_cli_discovery_needed", return_value=False):
@@ -71,32 +71,32 @@ def _live_subcommand_names() -> set[str]:
 @pytest.mark.parametrize(
     "argv,expected",
     [
-        (["hermes"], None),
-        (["hermes", "--help"], None),
-        (["hermes", "-h"], None),
-        (["hermes", "--version"], None),
-        (["hermes", "-w"], None),
+        (["newroz"], None),
+        (["newroz", "--help"], None),
+        (["newroz", "-h"], None),
+        (["newroz", "--version"], None),
+        (["newroz", "-w"], None),
         # -p / --profile is stripped from sys.argv by
         # _apply_profile_override() at import time, so it never reaches
         # _first_positional_argv. We test with just -w / --tui here.
-        (["hermes", "-w", "--tui"], None),
-        (["hermes", "version"], "version"),
-        (["hermes", "--tui", "chat"], "chat"),
-        (["hermes", "-w", "logs"], "logs"),
-        (["hermes", "chat", "hello world"], "chat"),
-        (["hermes", "gateway", "run"], "gateway"),
+        (["newroz", "-w", "--tui"], None),
+        (["newroz", "version"], "version"),
+        (["newroz", "--tui", "chat"], "chat"),
+        (["newroz", "-w", "logs"], "logs"),
+        (["newroz", "chat", "hello world"], "chat"),
+        (["newroz", "gateway", "run"], "gateway"),
         # Top-level value-taking flags: the value should be skipped.
-        (["hermes", "-m", "gpt5", "chat"], "chat"),
-        (["hermes", "--model", "gpt5", "chat", "hi"], "chat"),
-        (["hermes", "-m", "gpt5", "--provider", "openai", "chat"], "chat"),
-        (["hermes", "-z", "hello world"], None),
-        (["hermes", "-z", "hello", "chat"], "chat"),
-        (["hermes", "--model=gpt5", "chat"], "chat"),     # inline form
-        (["hermes", "--", "chat"], "chat"),               # -- terminator
-        (["hermes", "-w", "--"], None),
+        (["newroz", "-m", "gpt5", "chat"], "chat"),
+        (["newroz", "--model", "gpt5", "chat", "hi"], "chat"),
+        (["newroz", "-m", "gpt5", "--provider", "openai", "chat"], "chat"),
+        (["newroz", "-z", "hello world"], None),
+        (["newroz", "-z", "hello", "chat"], "chat"),
+        (["newroz", "--model=gpt5", "chat"], "chat"),     # inline form
+        (["newroz", "--", "chat"], "chat"),               # -- terminator
+        (["newroz", "-w", "--"], None),
         # Unknown positional after skipped flags → plugin-cmd candidate.
-        (["hermes", "some-plugin-cmd"], "some-plugin-cmd"),
-        (["hermes", "-m", "gpt5", "some-plugin-cmd"], "some-plugin-cmd"),
+        (["newroz", "some-plugin-cmd"], "some-plugin-cmd"),
+        (["newroz", "-m", "gpt5", "some-plugin-cmd"], "some-plugin-cmd"),
     ],
 )
 def test_first_positional_argv(argv, expected):
@@ -110,17 +110,17 @@ def test_first_positional_argv(argv, expected):
 @pytest.mark.parametrize(
     "argv",
     [
-        ["hermes"],                          # bare → chat
-        ["hermes", "--help"],                # top-level help
-        ["hermes", "-h"],
-        ["hermes", "version"],               # known built-in
-        ["hermes", "logs"],
-        ["hermes", "gateway", "run"],
-        ["hermes", "--tui"],
-        ["hermes", "-w", "--tui"],
-        ["hermes", "chat", "hi"],
-        ["hermes", "help"],                  # accepted built-in-ish
-        ["hermes", "-m", "gpt5", "chat"],    # flag-value-skipping
+        ["newroz"],                          # bare → chat
+        ["newroz", "--help"],                # top-level help
+        ["newroz", "-h"],
+        ["newroz", "version"],               # known built-in
+        ["newroz", "logs"],
+        ["newroz", "gateway", "run"],
+        ["newroz", "--tui"],
+        ["newroz", "-w", "--tui"],
+        ["newroz", "chat", "hi"],
+        ["newroz", "help"],                  # accepted built-in-ish
+        ["newroz", "-m", "gpt5", "chat"],    # flag-value-skipping
     ],
 )
 def test_discovery_skipped_for_builtins(argv):
@@ -131,9 +131,9 @@ def test_discovery_skipped_for_builtins(argv):
 @pytest.mark.parametrize(
     "argv",
     [
-        ["hermes", "meet", "join"],          # potential google_meet plugin
-        ["hermes", "honcho", "status"],      # potential memory plugin
-        ["hermes", "unknown-subcmd"],
+        ["newroz", "meet", "join"],          # potential google_meet plugin
+        ["newroz", "honcho", "status"],      # potential memory plugin
+        ["newroz", "unknown-subcmd"],
     ],
 )
 def test_discovery_runs_for_unknown_positional(argv):
@@ -152,14 +152,14 @@ def test_builtin_set_covers_every_registered_subcommand():
     """
     live = _live_subcommand_names()
     # "help" is synthetic — an argparse-implicit convenience we include
-    # in the set so ``hermes help <cmd>`` skips discovery; it won't show
+    # in the set so ``newroz help <cmd>`` skips discovery; it won't show
     # up as a subparser in the --help output.
     declared = _BUILTIN_SUBCOMMANDS - {"help"}
     missing_from_declaration = live - declared
     assert not missing_from_declaration, (
         f"_BUILTIN_SUBCOMMANDS is missing these live subcommands: "
         f"{sorted(missing_from_declaration)}. Add them to "
-        f"hermes_cli/main.py::_BUILTIN_SUBCOMMANDS so plugin discovery "
+        f"newroz_cli/main.py::_BUILTIN_SUBCOMMANDS so plugin discovery "
         f"can be skipped when the user targets them."
     )
 

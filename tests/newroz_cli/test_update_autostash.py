@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from hermes_cli import config as hermes_config
-from hermes_cli import main as hermes_main
+from newroz_cli import config as newroz_config
+from newroz_cli import main as newroz_main
 
 
 # ---------------------------------------------------------------------------
@@ -34,9 +34,9 @@ def _patch_managed_uv(request):
     def _fake_update_managed_uv():
         return None  # never actually self-update in tests
 
-    with patch("hermes_cli.managed_uv.resolve_uv", side_effect=_fake_resolve_uv), \
-         patch("hermes_cli.managed_uv.ensure_uv", side_effect=_fake_ensure_uv), \
-         patch("hermes_cli.managed_uv.update_managed_uv", side_effect=_fake_update_managed_uv):
+    with patch("newroz_cli.managed_uv.resolve_uv", side_effect=_fake_resolve_uv), \
+         patch("newroz_cli.managed_uv.ensure_uv", side_effect=_fake_ensure_uv), \
+         patch("newroz_cli.managed_uv.update_managed_uv", side_effect=_fake_update_managed_uv):
         yield
 
 def test_stash_local_changes_if_needed_returns_none_when_tree_clean(monkeypatch, tmp_path):
@@ -48,9 +48,9 @@ def test_stash_local_changes_if_needed_returns_none_when_tree_clean(monkeypatch,
             return SimpleNamespace(stdout="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    stash_ref = hermes_main._stash_local_changes_if_needed(["git"], tmp_path)
+    stash_ref = newroz_main._stash_local_changes_if_needed(["git"], tmp_path)
 
     assert stash_ref is None
     assert [cmd[-2:] for cmd, _ in calls] == [["status", "--porcelain"]]
@@ -62,7 +62,7 @@ def test_stash_local_changes_if_needed_returns_specific_stash_commit(monkeypatch
     def fake_run(cmd, **kwargs):
         calls.append((cmd, kwargs))
         if cmd[-2:] == ["status", "--porcelain"]:
-            return SimpleNamespace(stdout=" M hermes_cli/main.py\n?? notes.txt\n", returncode=0)
+            return SimpleNamespace(stdout=" M newroz_cli/main.py\n?? notes.txt\n", returncode=0)
         if cmd[-2:] == ["ls-files", "--unmerged"]:
             return SimpleNamespace(stdout="", returncode=0)
         if cmd[1:4] == ["stash", "push", "--include-untracked"]:
@@ -71,9 +71,9 @@ def test_stash_local_changes_if_needed_returns_specific_stash_commit(monkeypatch
             return SimpleNamespace(stdout="abc123\n", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    stash_ref = hermes_main._stash_local_changes_if_needed(["git"], tmp_path)
+    stash_ref = newroz_main._stash_local_changes_if_needed(["git"], tmp_path)
 
     assert stash_ref == "abc123"
     assert calls[1][0][-2:] == ["ls-files", "--unmerged"]
@@ -89,9 +89,9 @@ def test_resolve_stash_selector_returns_matching_entry(monkeypatch, tmp_path):
             returncode=0,
         )
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    assert hermes_main._resolve_stash_selector(["git"], tmp_path, "abc123") == "stash@{1}"
+    assert newroz_main._resolve_stash_selector(["git"], tmp_path, "abc123") == "stash@{1}"
 
 
 
@@ -110,10 +110,10 @@ def test_restore_stashed_changes_prompts_before_applying(monkeypatch, tmp_path, 
             return SimpleNamespace(stdout="dropped\n", stderr="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
     monkeypatch.setattr("builtins.input", lambda: "")
 
-    restored = hermes_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=True)
+    restored = newroz_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=True)
 
     assert restored is True
     assert calls[0][0] == ["git", "stash", "apply", "abc123"]
@@ -134,10 +134,10 @@ def test_restore_stashed_changes_can_skip_restore_and_keep_stash(monkeypatch, tm
         calls.append((cmd, kwargs))
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
     monkeypatch.setattr("builtins.input", lambda: "n")
 
-    restored = hermes_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=True)
+    restored = newroz_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=True)
 
     assert restored is False
     assert calls == []
@@ -162,9 +162,9 @@ def test_restore_stashed_changes_applies_without_prompt_when_disabled(monkeypatc
             return SimpleNamespace(stdout="dropped\n", stderr="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    restored = hermes_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
+    restored = newroz_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
 
     assert restored is True
     assert calls[0][0] == ["git", "stash", "apply", "abc123"]
@@ -176,7 +176,7 @@ def test_restore_stashed_changes_applies_without_prompt_when_disabled(monkeypatc
 
 
 def test_print_stash_cleanup_guidance_with_selector(capsys):
-    hermes_main._print_stash_cleanup_guidance("abc123", "stash@{2}")
+    newroz_main._print_stash_cleanup_guidance("abc123", "stash@{2}")
 
     out = capsys.readouterr().out
     assert "Check `git status` first" in out
@@ -198,9 +198,9 @@ def test_restore_stashed_changes_keeps_going_when_stash_entry_cannot_be_resolved
             return SimpleNamespace(stdout="stash@{0} def456\n", stderr="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    restored = hermes_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
+    restored = newroz_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
 
     assert restored is True
     assert calls[0] == (["git", "stash", "apply", "abc123"], {"cwd": tmp_path, "capture_output": True, "text": True})
@@ -230,9 +230,9 @@ def test_restore_stashed_changes_keeps_going_when_drop_fails(monkeypatch, tmp_pa
             return SimpleNamespace(stdout="", stderr="drop failed\n", returncode=1)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    restored = hermes_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
+    restored = newroz_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
 
     assert restored is True
     assert calls[3][0] == ["git", "stash", "drop", "stash@{0}"]
@@ -247,7 +247,7 @@ def test_restore_stashed_changes_keeps_going_when_drop_fails(monkeypatch, tmp_pa
 def test_restore_stashed_changes_always_resets_on_conflict(monkeypatch, tmp_path, capsys):
     """Conflicts always auto-reset (no prompt) and return False, even interactively.
 
-    Leaving conflict markers in source files makes hermes unrunnable (SyntaxError).
+    Leaving conflict markers in source files makes newroz unrunnable (SyntaxError).
     The stash is preserved for manual recovery; cmd_update continues normally.
     """
     calls = []
@@ -257,20 +257,20 @@ def test_restore_stashed_changes_always_resets_on_conflict(monkeypatch, tmp_path
         if cmd[1:3] == ["stash", "apply"]:
             return SimpleNamespace(stdout="conflict output\n", stderr="conflict stderr\n", returncode=1)
         if cmd[1:3] == ["diff", "--name-only"]:
-            return SimpleNamespace(stdout="hermes_cli/main.py\n", stderr="", returncode=0)
+            return SimpleNamespace(stdout="newroz_cli/main.py\n", stderr="", returncode=0)
         if cmd[1:3] == ["reset", "--hard"]:
             return SimpleNamespace(stdout="", stderr="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
     monkeypatch.setattr("builtins.input", lambda: "y")
 
-    result = hermes_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=True)
+    result = newroz_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=True)
 
     assert result is False
     out = capsys.readouterr().out
     assert "Conflicted files:" in out
-    assert "hermes_cli/main.py" in out
+    assert "newroz_cli/main.py" in out
     assert "stashed changes are preserved" in out
     assert "Working tree reset to clean state" in out
     assert "git stash apply abc123" in out
@@ -293,9 +293,9 @@ def test_restore_stashed_changes_auto_resets_non_interactive(monkeypatch, tmp_pa
             return SimpleNamespace(stdout="", stderr="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    result = hermes_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
+    result = newroz_main._restore_stashed_changes(["git"], tmp_path, "abc123", prompt_user=False)
 
     assert result is False
     out = capsys.readouterr().out
@@ -307,7 +307,7 @@ def test_restore_stashed_changes_auto_resets_non_interactive(monkeypatch, tmp_pa
 def test_stash_local_changes_if_needed_raises_when_stash_ref_missing(monkeypatch, tmp_path):
     def fake_run(cmd, **kwargs):
         if cmd[-2:] == ["status", "--porcelain"]:
-            return SimpleNamespace(stdout=" M hermes_cli/main.py\n", returncode=0)
+            return SimpleNamespace(stdout=" M newroz_cli/main.py\n", returncode=0)
         if cmd[-2:] == ["ls-files", "--unmerged"]:
             return SimpleNamespace(stdout="", returncode=0)
         if cmd[1:4] == ["stash", "push", "--include-untracked"]:
@@ -316,10 +316,10 @@ def test_stash_local_changes_if_needed_raises_when_stash_ref_missing(monkeypatch
             raise CalledProcessError(returncode=128, cmd=cmd)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
     with pytest.raises(CalledProcessError):
-        hermes_main._stash_local_changes_if_needed(["git"], Path(tmp_path))
+        newroz_main._stash_local_changes_if_needed(["git"], Path(tmp_path))
 
 
 def test_discard_lockfile_churn_skips_lock_when_package_json_dirty(tmp_path):
@@ -346,7 +346,7 @@ def test_discard_lockfile_churn_skips_lock_when_package_json_dirty(tmp_path):
     (tmp_path / "package.json").write_text('{"dependencies":{"a":"2"}}\n')
     (tmp_path / "package-lock.json").write_text('{"lock":"new"}\n')
 
-    hermes_main._discard_lockfile_churn(["git"], tmp_path)
+    newroz_main._discard_lockfile_churn(["git"], tmp_path)
 
     assert (tmp_path / "package-lock.json").read_text() == '{"lock":"new"}\n'
 
@@ -374,7 +374,7 @@ def test_discard_lockfile_churn_restores_lock_when_package_json_clean(tmp_path):
 
     (tmp_path / "package-lock.json").write_text('{"lock":"runtime-churn"}\n')
 
-    hermes_main._discard_lockfile_churn(["git"], tmp_path)
+    newroz_main._discard_lockfile_churn(["git"], tmp_path)
 
     assert (tmp_path / "package-lock.json").read_text() == '{"lock":"old"}\n'
 
@@ -386,22 +386,22 @@ def test_discard_lockfile_churn_restores_lock_when_package_json_clean(tmp_path):
 def _setup_update_mocks(monkeypatch, tmp_path):
     """Common setup for cmd_update tests."""
     (tmp_path / ".git").mkdir()
-    monkeypatch.setattr(hermes_main, "PROJECT_ROOT", tmp_path)
-    monkeypatch.setattr(hermes_main, "_stash_local_changes_if_needed", lambda *a, **kw: None)
-    monkeypatch.setattr(hermes_main, "_restore_stashed_changes", lambda *a, **kw: True)
-    monkeypatch.setattr(hermes_config, "get_missing_env_vars", lambda required_only=True: [])
-    monkeypatch.setattr(hermes_config, "get_missing_config_fields", lambda: [])
-    monkeypatch.setattr(hermes_config, "check_config_version", lambda: (5, 5))
-    monkeypatch.setattr(hermes_config, "migrate_config", lambda **kw: {"env_added": [], "config_added": []})
-    monkeypatch.setattr(hermes_main, "_refresh_active_lazy_features", lambda: None)
+    monkeypatch.setattr(newroz_main, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(newroz_main, "_stash_local_changes_if_needed", lambda *a, **kw: None)
+    monkeypatch.setattr(newroz_main, "_restore_stashed_changes", lambda *a, **kw: True)
+    monkeypatch.setattr(newroz_config, "get_missing_env_vars", lambda required_only=True: [])
+    monkeypatch.setattr(newroz_config, "get_missing_config_fields", lambda: [])
+    monkeypatch.setattr(newroz_config, "check_config_version", lambda: (5, 5))
+    monkeypatch.setattr(newroz_config, "migrate_config", lambda **kw: {"env_added": [], "config_added": []})
+    monkeypatch.setattr(newroz_main, "_refresh_active_lazy_features", lambda: None)
 
 
 def test_cmd_update_retries_optional_extras_individually_when_all_fails(monkeypatch, tmp_path, capsys):
     """When .[all] fails, update should keep base deps and retry extras individually."""
     _setup_update_mocks(monkeypatch, tmp_path)
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
-    monkeypatch.setattr(hermes_main, "_is_termux_env", lambda env=None: False)
-    monkeypatch.setattr(hermes_main, "_load_installable_optional_extras", lambda group="all": ["matrix", "mcp"])
+    monkeypatch.setattr(newroz_main, "_is_termux_env", lambda env=None: False)
+    monkeypatch.setattr(newroz_main, "_load_installable_optional_extras", lambda group="all": ["matrix", "mcp"])
 
     recorded = []
 
@@ -428,9 +428,9 @@ def test_cmd_update_retries_optional_extras_individually_when_all_fails(monkeypa
         # updater) don't crash on AttributeError.
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     install_cmds = [c for c in recorded if "pip" in c and "install" in c]
     assert install_cmds == [
@@ -450,7 +450,7 @@ def test_cmd_update_succeeds_with_extras(monkeypatch, tmp_path):
     """When .[all] succeeds, no fallback should be attempted."""
     _setup_update_mocks(monkeypatch, tmp_path)
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
-    monkeypatch.setattr(hermes_main, "_is_termux_env", lambda env=None: False)
+    monkeypatch.setattr(newroz_main, "_is_termux_env", lambda env=None: False)
 
     recorded = []
 
@@ -466,9 +466,9 @@ def test_cmd_update_succeeds_with_extras(monkeypatch, tmp_path):
             return SimpleNamespace(stdout="Updating\n", stderr="", returncode=0)
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     install_cmds = [c for c in recorded if "pip" in c and "install" in c]
     assert len(install_cmds) == 1
@@ -479,7 +479,7 @@ def test_install_with_optional_fallback_honors_custom_group(monkeypatch):
     """Termux update path should target .[termux-all] when requested."""
     calls = []
     monkeypatch.setattr(
-        hermes_main,
+        newroz_main,
         "_load_installable_optional_extras",
         lambda group="all": ["termux", "mcp"] if group == "termux-all" else [],
     )
@@ -490,9 +490,9 @@ def test_install_with_optional_fallback_honors_custom_group(monkeypatch):
             raise CalledProcessError(returncode=1, cmd=cmd)
         return None
 
-    monkeypatch.setattr(hermes_main, "_run_install_with_heartbeat", fake_run_with_heartbeat)
+    monkeypatch.setattr(newroz_main, "_run_install_with_heartbeat", fake_run_with_heartbeat)
 
-    hermes_main._install_python_dependencies_with_optional_fallback(
+    newroz_main._install_python_dependencies_with_optional_fallback(
         ["/usr/bin/uv", "pip"],
         group="termux-all",
     )
@@ -509,12 +509,12 @@ def test_install_heartbeat_prints_when_dependency_install_is_silent(monkeypatch,
     """Long quiet installs should emit periodic heartbeat lines."""
 
     def fake_run(cmd, **kwargs):
-        hermes_main._time.sleep(1.2)
+        newroz_main._time.sleep(1.2)
         return SimpleNamespace(returncode=0)
 
-    monkeypatch.setattr(hermes_main.subprocess, "run", fake_run)
+    monkeypatch.setattr(newroz_main.subprocess, "run", fake_run)
 
-    hermes_main._run_install_with_heartbeat(
+    newroz_main._run_install_with_heartbeat(
         ["uv", "pip", "install", "-e", "."],
         heartbeat_interval_seconds=1,
     )
@@ -574,9 +574,9 @@ def test_cmd_update_falls_back_to_reset_when_ff_only_fails(monkeypatch, tmp_path
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
 
     side_effect, recorded = _make_update_side_effect(ff_only_fails=True)
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     reset_calls = [c for c in recorded if "reset" in c and "--hard" in c]
     assert len(reset_calls) == 1
@@ -592,9 +592,9 @@ def test_cmd_update_no_reset_when_ff_only_succeeds(monkeypatch, tmp_path):
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
 
     side_effect, recorded = _make_update_side_effect()
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     reset_calls = [c for c in recorded if "reset" in c and "--hard" in c]
     assert len(reset_calls) == 0
@@ -610,9 +610,9 @@ def test_cmd_update_switches_to_main_from_feature_branch(monkeypatch, tmp_path, 
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
 
     side_effect, recorded = _make_update_side_effect(current_branch="fix/something")
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     checkout_calls = [c for c in recorded if "checkout" in c and "main" in c]
     assert len(checkout_calls) == 1
@@ -628,9 +628,9 @@ def test_cmd_update_switches_to_main_from_detached_head(monkeypatch, tmp_path, c
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
 
     side_effect, recorded = _make_update_side_effect(current_branch="HEAD")
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     checkout_calls = [c for c in recorded if "checkout" in c and "main" in c]
     assert len(checkout_calls) == 1
@@ -646,21 +646,21 @@ def test_cmd_update_restores_stash_and_branch_when_already_up_to_date(monkeypatc
 
     # Enable stash so it returns a ref
     monkeypatch.setattr(
-        hermes_main, "_stash_local_changes_if_needed",
+        newroz_main, "_stash_local_changes_if_needed",
         lambda *a, **kw: "abc123deadbeef",
     )
     restore_calls = []
     monkeypatch.setattr(
-        hermes_main, "_restore_stashed_changes",
+        newroz_main, "_restore_stashed_changes",
         lambda *a, **kw: restore_calls.append(1) or True,
     )
 
     side_effect, recorded = _make_update_side_effect(
         current_branch="fix/something", commit_count="0",
     )
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     # Stash should have been restored
     assert len(restore_calls) == 1
@@ -679,9 +679,9 @@ def test_cmd_update_no_checkout_when_already_on_main(monkeypatch, tmp_path):
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
 
     side_effect, recorded = _make_update_side_effect()
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     checkout_calls = [c for c in recorded if "checkout" in c]
     assert len(checkout_calls) == 0
@@ -695,9 +695,9 @@ def test_cmd_update_fetch_is_scoped_to_target_branch(monkeypatch, tmp_path):
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
 
     side_effect, recorded = _make_update_side_effect()
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
-    hermes_main.cmd_update(SimpleNamespace())
+    newroz_main.cmd_update(SimpleNamespace())
 
     fetch_calls = [c for c in recorded if "fetch" in c]
     assert fetch_calls == [["git", "fetch", "origin", "main"]]
@@ -716,10 +716,10 @@ def test_cmd_update_network_error_shows_friendly_message(monkeypatch, tmp_path, 
         fetch_fails=True,
         fetch_stderr="fatal: unable to access 'https://...': Could not resolve host: github.com",
     )
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
     with pytest.raises(SystemExit, match="1"):
-        hermes_main.cmd_update(SimpleNamespace())
+        newroz_main.cmd_update(SimpleNamespace())
 
     out = capsys.readouterr().out
     assert "Network error" in out
@@ -733,10 +733,10 @@ def test_cmd_update_auth_error_shows_friendly_message(monkeypatch, tmp_path, cap
         fetch_fails=True,
         fetch_stderr="fatal: Authentication failed for 'https://...'",
     )
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
     with pytest.raises(SystemExit, match="1"):
-        hermes_main.cmd_update(SimpleNamespace())
+        newroz_main.cmd_update(SimpleNamespace())
 
     out = capsys.readouterr().out
     assert "Authentication failed" in out
@@ -751,20 +751,20 @@ def test_cmd_update_skips_stash_restore_when_reset_fails(monkeypatch, tmp_path, 
     _setup_update_mocks(monkeypatch, tmp_path)
     # Re-enable stash so it actually returns a ref
     monkeypatch.setattr(
-        hermes_main, "_stash_local_changes_if_needed",
+        newroz_main, "_stash_local_changes_if_needed",
         lambda *a, **kw: "abc123deadbeef",
     )
     restore_calls = []
     monkeypatch.setattr(
-        hermes_main, "_restore_stashed_changes",
+        newroz_main, "_restore_stashed_changes",
         lambda *a, **kw: restore_calls.append(1) or True,
     )
 
     side_effect, _ = _make_update_side_effect(ff_only_fails=True, reset_fails=True)
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
 
     with pytest.raises(SystemExit, match="1"):
-        hermes_main.cmd_update(SimpleNamespace())
+        newroz_main.cmd_update(SimpleNamespace())
 
     # Stash restore should NOT have been called
     assert len(restore_calls) == 0
@@ -787,25 +787,25 @@ def _setup_setting_test(monkeypatch, tmp_path, mode):
     _setup_update_mocks(monkeypatch, tmp_path)
     monkeypatch.setattr("shutil.which", lambda name: "/usr/bin/uv" if name == "uv" else None)
     monkeypatch.setattr(
-        hermes_main, "_stash_local_changes_if_needed",
+        newroz_main, "_stash_local_changes_if_needed",
         lambda *a, **kw: "abc123deadbeef",
     )
     restore_calls = []
     discard_calls = []
     monkeypatch.setattr(
-        hermes_main, "_restore_stashed_changes",
+        newroz_main, "_restore_stashed_changes",
         lambda *a, **kw: restore_calls.append(1) or True,
     )
     monkeypatch.setattr(
-        hermes_main, "_discard_stashed_changes",
+        newroz_main, "_discard_stashed_changes",
         lambda *a, **kw: discard_calls.append(1) or True,
     )
     monkeypatch.setattr(
-        hermes_config, "load_config",
+        newroz_config, "load_config",
         lambda *a, **kw: {"updates": {"non_interactive_local_changes": mode}},
     )
     side_effect, recorded = _make_update_side_effect()
-    monkeypatch.setattr(hermes_main.subprocess, "run", side_effect)
+    monkeypatch.setattr(newroz_main.subprocess, "run", side_effect)
     return restore_calls, discard_calls, recorded
 
 
@@ -813,7 +813,7 @@ def test_non_interactive_discard_throws_changes_away(monkeypatch, tmp_path):
     """Gateway/chat-app update with discard mode drops the stash, never restores."""
     restore_calls, discard_calls, _ = _setup_setting_test(monkeypatch, tmp_path, "discard")
 
-    hermes_main.cmd_update(SimpleNamespace(gateway=True))
+    newroz_main.cmd_update(SimpleNamespace(gateway=True))
 
     assert len(discard_calls) == 1
     assert len(restore_calls) == 0
@@ -823,7 +823,7 @@ def test_non_interactive_stash_restores_changes(monkeypatch, tmp_path):
     """Gateway/chat-app update with the default stash mode restores, never discards."""
     restore_calls, discard_calls, _ = _setup_setting_test(monkeypatch, tmp_path, "stash")
 
-    hermes_main.cmd_update(SimpleNamespace(gateway=True))
+    newroz_main.cmd_update(SimpleNamespace(gateway=True))
 
     assert len(restore_calls) == 1
     assert len(discard_calls) == 0
@@ -835,10 +835,10 @@ def test_interactive_update_ignores_discard_setting(monkeypatch, tmp_path):
     restore_calls, discard_calls, _ = _setup_setting_test(monkeypatch, tmp_path, "discard")
     # Force an interactive TTY so _non_interactive_update is False even though
     # the config says discard.
-    monkeypatch.setattr(hermes_main.sys.stdin, "isatty", lambda: True)
-    monkeypatch.setattr(hermes_main.sys.stdout, "isatty", lambda: True)
+    monkeypatch.setattr(newroz_main.sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(newroz_main.sys.stdout, "isatty", lambda: True)
 
-    hermes_main.cmd_update(SimpleNamespace())  # no gateway, no --yes
+    newroz_main.cmd_update(SimpleNamespace())  # no gateway, no --yes
 
     assert len(restore_calls) == 1
     assert len(discard_calls) == 0
@@ -848,9 +848,9 @@ def test_non_interactive_defaults_to_stash_when_setting_absent(monkeypatch, tmp_
     """A config with no update section falls back to stash (safe default)."""
     restore_calls, discard_calls, _ = _setup_setting_test(monkeypatch, tmp_path, "stash")
     # Override load_config to return a config with NO update section at all.
-    monkeypatch.setattr(hermes_config, "load_config", lambda *a, **kw: {"model": {}})
+    monkeypatch.setattr(newroz_config, "load_config", lambda *a, **kw: {"model": {}})
 
-    hermes_main.cmd_update(SimpleNamespace(gateway=True))
+    newroz_main.cmd_update(SimpleNamespace(gateway=True))
 
     assert len(restore_calls) == 1
     assert len(discard_calls) == 0
@@ -858,7 +858,7 @@ def test_non_interactive_defaults_to_stash_when_setting_absent(monkeypatch, tmp_
 
 def test_bootstrap_marker_not_autostashed_by_update(tmp_path):
     """#38529: the Desktop bootstrap marker must be git-ignored so that
-    ``hermes update``'s ``git stash push --include-untracked`` does not sweep it
+    ``newroz update``'s ``git stash push --include-untracked`` does not sweep it
     into an autostash on every run.
 
     Behavioral + hermetic: build a throwaway repo that adopts the project's real
@@ -871,7 +871,7 @@ def test_bootstrap_marker_not_autostashed_by_update(tmp_path):
     if shutil.which("git") is None:
         pytest.skip("git not available")
 
-    repo_gitignore = Path(hermes_main.__file__).resolve().parents[1] / ".gitignore"
+    repo_gitignore = Path(newroz_main.__file__).resolve().parents[1] / ".gitignore"
 
     def git(*args):
         return subprocess.run(
@@ -886,18 +886,18 @@ def test_bootstrap_marker_not_autostashed_by_update(tmp_path):
     git("add", "-A")
     git("commit", "-qm", "init")
 
-    marker = tmp_path / ".hermes-bootstrap-complete"
+    marker = tmp_path / ".newroz-bootstrap-complete"
     marker.write_text("")
 
-    # Exact flags used by hermes update (hermes_cli/main.py).
-    git("stash", "push", "--include-untracked", "-m", "hermes-update-autostash")
+    # Exact flags used by newroz update (newroz_cli/main.py).
+    git("stash", "push", "--include-untracked", "-m", "newroz-update-autostash")
 
     assert marker.exists(), (
-        ".hermes-bootstrap-complete was swept into the update autostash — it must "
+        ".newroz-bootstrap-complete was swept into the update autostash — it must "
         "be listed in .gitignore so `git stash -u` skips it (#38529)."
     )
     # It must not even register as a dirty/untracked change.
     status = subprocess.run(
         ["git", "status", "--porcelain"], cwd=tmp_path, capture_output=True, text=True
     ).stdout
-    assert ".hermes-bootstrap-complete" not in status
+    assert ".newroz-bootstrap-complete" not in status

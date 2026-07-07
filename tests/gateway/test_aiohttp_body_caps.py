@@ -4,7 +4,7 @@ Without it, aiohttp falls back to its implicit 1 MiB default and — worse —
 handlers that only check ``Content-Length`` can be bypassed entirely by
 chunked transfer-encoding requests (#58536 webhook, #58902 raft lineage).
 These tests pin the wiring for the three servers fixed in this follow-up:
-bluebubbles, teams, and the ``hermes proxy`` server.
+bluebubbles, teams, and the ``newroz proxy`` server.
 """
 
 import inspect
@@ -27,7 +27,7 @@ def test_teams_app_sets_client_max_size():
 
 
 def test_proxy_app_sets_client_max_size():
-    import hermes_cli.proxy.server as proxy_server
+    import newroz_cli.proxy.server as proxy_server
 
     # Mirrors api_server's MAX_REQUEST_BYTES: chat payloads can be large,
     # but the cap must exist so chunked bodies stay bounded.

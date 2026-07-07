@@ -8,7 +8,7 @@ from aiohttp.test_utils import TestClient, TestServer
 
 from gateway.config import PlatformConfig
 from gateway.platforms.api_server import APIServerAdapter
-from hermes_state import SessionDB
+from newroz_state import SessionDB
 
 
 @pytest.fixture
@@ -78,7 +78,7 @@ async def test_capabilities_advertises_session_control_surface(adapter):
 @pytest.mark.asyncio
 async def test_run_agent_binds_api_session_context_for_tool_env(adapter, monkeypatch):
     """API-server request sessions should reach tools and terminal subprocess env."""
-    monkeypatch.setenv("HERMES_SESSION_ID", "stale-session")
+    monkeypatch.setenv("NEWROZ_SESSION_ID", "stale-session")
     observed = {}
 
     class FakeAgent:
@@ -94,10 +94,10 @@ async def test_run_agent_binds_api_session_context_for_tool_env(adapter, monkeyp
             from tools.environments.local import _make_run_env
 
             observed["task_id"] = task_id
-            observed["context_session_id"] = get_session_env("HERMES_SESSION_ID")
-            observed["context_platform"] = get_session_env("HERMES_SESSION_PLATFORM")
-            observed["context_session_key"] = get_session_env("HERMES_SESSION_KEY")
-            observed["child_session_id"] = _make_run_env({}).get("HERMES_SESSION_ID")
+            observed["context_session_id"] = get_session_env("NEWROZ_SESSION_ID")
+            observed["context_platform"] = get_session_env("NEWROZ_SESSION_PLATFORM")
+            observed["context_session_key"] = get_session_env("NEWROZ_SESSION_KEY")
+            observed["child_session_id"] = _make_run_env({}).get("NEWROZ_SESSION_ID")
             return {"final_response": "ok"}
 
     def fake_create_agent(**kwargs):
@@ -131,11 +131,11 @@ async def test_session_crud_and_message_history(adapter, session_db):
         assert create_resp.status == 201
         created = await create_resp.json()
         session_id = created["session"]["id"]
-        assert created["object"] == "hermes.session"
+        assert created["object"] == "newroz.session"
         assert created["session"]["title"] == "Mobile chat"
 
         session_db.append_message(session_id, "user", "hello from phone")
-        session_db.append_message(session_id, "assistant", "hello from hermes")
+        session_db.append_message(session_id, "assistant", "hello from newroz")
 
         list_resp = await cli.get("/api/sessions?limit=10&offset=0")
         assert list_resp.status == 200
@@ -165,7 +165,7 @@ async def test_session_crud_and_message_history(adapter, session_db):
         delete_resp = await cli.delete(f"/api/sessions/{session_id}")
         assert delete_resp.status == 200
         deleted = await delete_resp.json()
-        assert deleted == {"object": "hermes.session.deleted", "id": session_id, "deleted": True}
+        assert deleted == {"object": "newroz.session.deleted", "id": session_id, "deleted": True}
         assert session_db.get_session(session_id) is None
 
 
@@ -203,7 +203,7 @@ async def test_session_fork_uses_current_sessiondb_branch_primitives(adapter, se
         payload = await resp.json()
 
     fork = payload["session"]
-    assert payload["object"] == "hermes.session"
+    assert payload["object"] == "newroz.session"
     assert fork["id"] != source_id
     assert fork["parent_session_id"] == source_id
     assert fork["title"] == "Alternative"
@@ -225,14 +225,14 @@ async def test_session_chat_loads_history_and_preserves_session_headers(auth_ada
             resp = await cli.post(
                 f"/api/sessions/{session_id}/chat",
                 json={"message": "next", "system_message": "stay focused"},
-                headers={"Authorization": "Bearer sk-test", "X-Hermes-Session-Key": "client-42"},
+                headers={"Authorization": "Bearer sk-test", "X-Newroz-Session-Key": "client-42"},
             )
             assert resp.status == 200
             payload = await resp.json()
 
-    assert resp.headers["X-Hermes-Session-Id"] == session_id
-    assert resp.headers["X-Hermes-Session-Key"] == "client-42"
-    assert payload["object"] == "hermes.session.chat.completion"
+    assert resp.headers["X-Newroz-Session-Id"] == session_id
+    assert resp.headers["X-Newroz-Session-Key"] == "client-42"
+    assert payload["object"] == "newroz.session.chat.completion"
     assert payload["session_id"] == session_id
     assert payload["message"]["role"] == "assistant"
     assert payload["message"]["content"] == "fresh answer"
@@ -433,8 +433,8 @@ async def test_session_header_rejected_without_api_key(adapter, session_db):
         resp = await cli.post(
             f"/api/sessions/{session_id}/chat",
             json={"message": "hello"},
-            headers={"X-Hermes-Session-Key": "client-42"},
+            headers={"X-Newroz-Session-Key": "client-42"},
         )
         assert resp.status == 403
         data = await resp.json()
-        assert "X-Hermes-Session-Key requires API key" in data["error"]["message"]
+        assert "X-Newroz-Session-Key requires API key" in data["error"]["message"]

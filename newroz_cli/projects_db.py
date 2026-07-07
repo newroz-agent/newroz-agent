@@ -11,8 +11,8 @@ persisted entity the user creates and names. It anchors:
   under the project's primary repo with a deterministic branch name, instead
   of the random ``wt/<task-id>`` fallback.
 
-Scope: **per-profile**, stored at ``$HERMES_HOME/projects.db`` (resolved via
-``get_hermes_home()``), mirroring sessions / config / cron. This deliberately
+Scope: **per-profile**, stored at ``$NEWROZ_HOME/projects.db`` (resolved via
+``get_newroz_home()``), mirroring sessions / config / cron. This deliberately
 differs from kanban, whose board DB is root-anchored and shared across
 profiles. A Project may *bind* a kanban board (``board_slug``) so the two
 systems agree on the repo + branch convention without merging their stores.
@@ -33,8 +33,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, List, Optional
 
-from hermes_cli.sqlite_util import add_column_if_missing as _add_column_if_missing, write_txn
-from hermes_constants import get_hermes_home
+from newroz_cli.sqlite_util import add_column_if_missing as _add_column_if_missing, write_txn
+from newroz_constants import get_newroz_home
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -42,12 +42,12 @@ from hermes_constants import get_hermes_home
 
 
 def projects_db_path() -> Path:
-    """The per-profile projects DB path (``$HERMES_HOME/projects.db``).
+    """The per-profile projects DB path (``$NEWROZ_HOME/projects.db``).
 
-    Profile-aware: ``get_hermes_home()`` already points at the active profile's
+    Profile-aware: ``get_newroz_home()`` already points at the active profile's
     home. Tests pass an explicit ``db_path`` to :func:`connect`.
     """
-    return get_hermes_home() / "projects.db"
+    return get_newroz_home() / "projects.db"
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS discovered_repos (
 
 # Lowercase alphanumerics, hyphens, underscores; 1-64 chars; no leading
 # separator. Strict enough to stop traversal and path separators, loose enough
-# for kebab-case names like ``hermes-agent``. Display formatting (spaces,
+# for kebab-case names like ``newroz-agent``. Display formatting (spaces,
 # emoji, capitalisation) lives in ``name``; the slug is just a stable handle.
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9\-_]{0,63}$")
 
@@ -156,7 +156,7 @@ def connect(db_path: Optional[Path] = None) -> sqlite3.Connection:
     """Open (and initialize if needed) the per-profile projects DB.
 
     WAL with DELETE fallback for network filesystems (shared helper from
-    ``hermes_state``). Schema init is idempotent (``CREATE TABLE IF NOT
+    ``newroz_state``). Schema init is idempotent (``CREATE TABLE IF NOT
     EXISTS`` + additive migrations) and cached per-path per-process.
     """
     path = db_path if db_path is not None else projects_db_path()
@@ -165,7 +165,7 @@ def connect(db_path: Optional[Path] = None) -> sqlite3.Connection:
     conn = sqlite3.connect(str(path))
     try:
         conn.row_factory = sqlite3.Row
-        from hermes_state import apply_wal_with_fallback
+        from newroz_state import apply_wal_with_fallback
 
         apply_wal_with_fallback(conn, db_label="projects.db")
         conn.execute("PRAGMA foreign_keys=ON")

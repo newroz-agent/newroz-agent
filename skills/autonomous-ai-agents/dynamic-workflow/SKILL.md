@@ -2,10 +2,10 @@
 name: dynamic-workflow
 description: Orchestrate large fan-out work as a plan-in-code "workflow" so the agent's context holds only the final verified answer, not the exhaust of hundreds of intermediate steps. Use for codebase-wide sweeps, large migrations, multi-angle research, and any task too big for one context window where the split strategy is known enough to script. Includes the adversarial-convergence verification recipe (independent attempts + refuters, keep only surviving claims).
 version: 1.0.0
-author: Hermes Agent + Teknium
+author: Newroz Agent + Teknium
 license: MIT
 metadata:
-  hermes:
+  newroz:
     tags: [orchestration, fan-out, subagents, delegation, verification, migration, audit, research]
     category: autonomous-ai-agents
     related_skills: []
@@ -22,7 +22,7 @@ when_not_to_use:
 
 # Dynamic Workflow — plan-in-code fan-out with verification
 
-This is Hermes's answer to Claude Code's "dynamic workflows" (run hundreds of
+This is Newroz's answer to Claude Code's "dynamic workflows" (run hundreds of
 parallel subagents in one session). The mechanic worth copying is NOT "more
 subagents" — it is **moving the plan, the loop, and the intermediate results
 OUT of the context window and INTO a script.** Normally the agent IS the
@@ -40,7 +40,7 @@ answer* in context; the script holds everything else.
 
 ## The two orchestration-script layers (pick the right one — they are NOT interchangeable)
 
-Hermes has no JS runtime. The "orchestration script" is one of two layers, and
+Newroz has no JS runtime. The "orchestration script" is one of two layers, and
 the split is enforced by a real capability boundary, not a style preference:
 
 | | Layer A: `execute_code` (Python script) | Layer B: `delegate_task` batch |
@@ -65,14 +65,14 @@ a new message, hits /stop, or /new, every in-flight child is **cancelled and its
 work discarded** (status `interrupted`). It does NOT run in the background, and
 it does NOT survive the turn. There is no cache-resume of a half-finished fan-out.
 
-So a "workflow" in Hermes is one of:
+So a "workflow" in Newroz is one of:
 
 1. **Foreground workflow (default):** Layer A and/or one Layer-B batch, completed
    within a single turn. Good for minutes-long fan-out (dozens of units). The
    user waits. This is what you build 90% of the time.
 2. **Durable workflow (hours/days, survives interruption):** use the **kanban
-   swarm** (the SQLite-backed multi-agent kernel that ships with Hermes —
-   `hermes_cli/kanban_swarm.py` + the kanban plugin; if your install has a
+   swarm** (the SQLite-backed multi-agent kernel that ships with Newroz —
+   `newroz_cli/kanban_swarm.py` + the kanban plugin; if your install has a
    `kanban-multiagent` skill, load it for the workflow). It
    writes a task graph (root → parallel workers → verifier → synthesizer) into
    the SQLite kanban kernel with a JSON blackboard. State persists across turns
@@ -119,7 +119,7 @@ turn without standing up a full task graph.
 
 ## The novel mechanic worth building: adversarial convergence
 
-This is the part Hermes did NOT already have and the real reason to bother.
+This is the part Newroz did NOT already have and the real reason to bother.
 Claude Code's quality claim ("independent agents try to refute each other's
 findings; only surviving claims surface; iterate until they converge") maps
 cleanly onto `delegate_task` batch mode:
@@ -167,13 +167,13 @@ inherent, not a bug. Two real multipliers:
 
 - **Each Layer-B child is a full agent tree.** 20 children ≈ 20× the model calls.
   `delegation.max_concurrent_children` only bounds *concurrency*, not *total*.
-- **Hermes aux/subagent model defaults to main-model-first.** Children inherit
+- **Newroz aux/subagent model defaults to main-model-first.** Children inherit
   the parent's (often expensive reasoning) model. `delegate_task` does NOT expose
   a per-task `model` or `profile` field — its per-task keys are
   `{goal, context, toolsets, role}`. To run the fan-out cheaper you either route
   delegation globally via `delegation` config (model/provider applied to all
   children), or — for genuinely model/profile-scoped work — use cron, the kanban
-  swarm, or a separate Hermes process. The cleanest lever for mechanical fan-out
+  swarm, or a separate Newroz process. The cleanest lever for mechanical fan-out
   is still Layer A: do the deterministic part in a script with no per-item LLM at
   all.
 

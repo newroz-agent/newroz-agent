@@ -27,7 +27,7 @@ description: "为 NeurIPS/ICML/ICLR 撰写 ML 论文：设计→投稿"
 ## 参考：完整 SKILL.md
 
 :::info
-以下是 Hermes 在触发该 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
+以下是 Newroz 在触发该 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
 :::
 
 # 研究论文写作流水线
@@ -2132,26 +2132,26 @@ ACL 系列会议有不同的投稿类型：
 
 ---
 
-## Hermes Agent 集成
+## Newroz Agent 集成
 
-本 skill 专为 Hermes agent 设计。它使用 Hermes 工具、委派、调度和记忆来支撑完整的研究生命周期。
+本 skill 专为 Newroz agent 设计。它使用 Newroz 工具、委派、调度和记忆来支撑完整的研究生命周期。
 
 ### 相关 Skill
 
-将本 skill 与其他 Hermes skill 组合用于特定阶段：
+将本 skill 与其他 Newroz skill 组合用于特定阶段：
 
 | Skill | 使用时机 | 加载方式 |
 |-------|----------|----------|
 | **arxiv** | 阶段 1（文献综述）：搜索 arXiv、生成 BibTeX、通过 Semantic Scholar 查找相关论文 | `skill_view("arxiv")` |
 | **subagent-driven-development** | 阶段 5（起草）：并行章节写作，含两阶段审阅（规范合规性，然后质量） | `skill_view("subagent-driven-development")` |
-| **plan** | 阶段 0（设置）：执行前创建结构化计划。写入 `.hermes/plans/` | `skill_view("plan")` |
+| **plan** | 阶段 0（设置）：执行前创建结构化计划。写入 `.newroz/plans/` | `skill_view("plan")` |
 | **qmd** | 阶段 1（文献）：通过混合 BM25+向量搜索查询本地知识库（笔记、转录、文档） | 安装：`skill_manage("install", "qmd")` |
 | **diagramming** | 阶段 4-5：创建基于 Excalidraw 的图形和架构示意图 | `skill_view("diagramming")` |
 | **data-science** | 阶段 4（分析）：用于交互式分析和可视化的 Jupyter 实时内核 | `skill_view("data-science")` |
 
 **本 skill 取代 `ml-paper-writing`**——它包含 ml-paper-writing 的所有内容，加上完整的实验/分析流水线和 autoreason 方法论。
 
-### Hermes 工具参考
+### Newroz 工具参考
 
 | 工具 | 在本流水线中的用途 |
 |------|------------------|

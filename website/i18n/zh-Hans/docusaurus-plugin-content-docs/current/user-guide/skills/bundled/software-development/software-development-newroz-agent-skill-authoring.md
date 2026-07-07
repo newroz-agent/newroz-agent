@@ -1,12 +1,12 @@
 ---
-title: "Hermes Agent Skill 编写——在仓库中编写 SKILL"
-sidebar_label: "Hermes Agent Skill 编写"
+title: "Newroz Agent Skill 编写——在仓库中编写 SKILL"
+sidebar_label: "Newroz Agent Skill 编写"
 description: "在仓库中编写 SKILL.md"
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}
 
-# Hermes Agent Skill 编写
+# Newroz Agent Skill 编写
 
 编写仓库内 SKILL.md：frontmatter（前置元数据）、验证器、结构。
 
@@ -15,34 +15,34 @@ description: "在仓库中编写 SKILL.md"
 | | |
 |---|---|
 | 来源 | 内置（默认安装） |
-| 路径 | `skills/software-development/hermes-agent-skill-authoring` |
+| 路径 | `skills/software-development/newroz-agent-skill-authoring` |
 | 版本 | `1.0.0` |
-| 作者 | Hermes Agent |
+| 作者 | Newroz Agent |
 | 许可证 | MIT |
 | 平台 | linux, macos, windows |
-| 标签 | `skills`, `authoring`, `hermes-agent`, `conventions`, `skill-md` |
+| 标签 | `skills`, `authoring`, `newroz-agent`, `conventions`, `skill-md` |
 | 相关 skill | [`writing-plans`](/user-guide/skills/bundled/software-development/software-development-writing-plans), [`requesting-code-review`](/user-guide/skills/bundled/software-development/software-development-requesting-code-review) |
 
 ## 参考：完整 SKILL.md
 
 :::info
-以下是 Hermes 在触发此 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
+以下是 Newroz 在触发此 skill 时加载的完整 skill 定义。这是 agent 在 skill 激活时所看到的指令内容。
 :::
 
-# 编写 Hermes-Agent Skills（仓库内）
+# 编写 Newroz-Agent Skills（仓库内）
 
 ## 概述
 
 SKILL.md 可以存放在两个位置：
 
-1. **用户本地：** `~/.hermes/skills/<maybe-category>/<name>/SKILL.md` — 个人使用，不共享。通过 `skill_manage(action='create')` 创建。
-2. **仓库内（本 skill 讨论此情况）：** `/home/bb/hermes-agent/skills/<category>/<name>/SKILL.md` — 已提交，随包一起发布。使用 `write_file` + `git add`。`skill_manage(action='create')` **不**针对此目录树。
+1. **用户本地：** `~/.newroz/skills/<maybe-category>/<name>/SKILL.md` — 个人使用，不共享。通过 `skill_manage(action='create')` 创建。
+2. **仓库内（本 skill 讨论此情况）：** `/home/bb/newroz-agent/skills/<category>/<name>/SKILL.md` — 已提交，随包一起发布。使用 `write_file` + `git add`。`skill_manage(action='create')` **不**针对此目录树。
 
 ## 使用时机
 
 - 用户要求你"在此分支 / 仓库 / 提交中"添加一个 skill
-- 你正在提交一个应随 hermes-agent 一起发布的可复用工作流
-- 你正在编辑 `/home/bb/hermes-agent/skills/` 下的现有 skill（小改动用 `patch`，重写用 `write_file`；`skill_manage` 对仓库内 skill 的 `patch` 仍有效，但 `create` 无效）
+- 你正在提交一个应随 newroz-agent 一起发布的可复用工作流
+- 你正在编辑 `/home/bb/newroz-agent/skills/` 下的现有 skill（小改动用 `patch`，重写用 `write_file`；`skill_manage` 对仓库内 skill 的 `patch` 仍有效，但 `create` 无效）
 
 ## 必需的 Frontmatter
 
@@ -62,10 +62,10 @@ SKILL.md 可以存放在两个位置：
 name: my-skill-name               # 小写，连字符，≤64 个字符（MAX_NAME_LENGTH）
 description: Use when <trigger>. <one-line behavior>.
 version: 1.0.0
-author: Hermes Agent
+author: Newroz Agent
 license: MIT
 metadata:
-  hermes:
+  newroz:
     tags: [short, descriptive, tags]
     related_skills: [other-skill, another-skill]
 ---
@@ -96,7 +96,7 @@ One or two paragraphs: what and why.
 ## <Topic sections specific to the skill>
 - Quick-reference tables are common
 - Code blocks with exact commands
-- Hermes-specific recipes (tests via scripts/run_tests.sh, ui-tui paths, etc.)
+- Newroz-specific recipes (tests via scripts/run_tests.sh, ui-tui paths, etc.)
 
 ## Common Pitfalls
 Numbered list of mistakes and their fixes.
@@ -145,7 +145,7 @@ skills/<category>/<skill-name>/SKILL.md
 
 ## 交叉引用其他 Skill
 
-`metadata.hermes.related_skills` 在加载时会合并两个目录树（仓库内 `skills/` 和 `~/.hermes/skills/`）。你**可以**从仓库内 skill 引用用户本地 skill，但对于全新克隆仓库的其他用户，该引用无法解析。仓库内 skill 优先只引用仓库内 skill。如果某个频繁被引用的 skill 仅存在于 `~/.hermes/skills/`，请考虑将其提升到仓库中。
+`metadata.newroz.related_skills` 在加载时会合并两个目录树（仓库内 `skills/` 和 `~/.newroz/skills/`）。你**可以**从仓库内 skill 引用用户本地 skill，但对于全新克隆仓库的其他用户，该引用无法解析。仓库内 skill 优先只引用仓库内 skill。如果某个频繁被引用的 skill 仅存在于 `~/.newroz/skills/`，请考虑将其提升到仓库中。
 
 ## 编辑现有仓库内 Skill
 
@@ -156,7 +156,7 @@ skills/<category>/<skill-name>/SKILL.md
 
 ## 常见问题
 
-1. **对仓库内 skill 使用 `skill_manage(action='create')`。** 它会写入 `~/.hermes/skills/`，而非仓库目录树。仓库内创建请使用 `write_file`。
+1. **对仓库内 skill 使用 `skill_manage(action='create')`。** 它会写入 `~/.newroz/skills/`，而非仓库目录树。仓库内创建请使用 `write_file`。
 
 2. **`---` 前有前导空白。** 验证器检查 `content.startswith("---")`；任何前导空行或 BOM 都会导致验证失败。
 
@@ -172,9 +172,9 @@ skills/<category>/<skill-name>/SKILL.md
 
 ## 验证清单
 
-- [ ] 文件位于 `skills/<category>/<name>/SKILL.md`（不在 `~/.hermes/skills/` 中）
+- [ ] 文件位于 `skills/<category>/<name>/SKILL.md`（不在 `~/.newroz/skills/` 中）
 - [ ] Frontmatter 从字节 0 以 `---` 开头，以 `\n---\n` 结束
-- [ ] `name`、`description`、`version`、`author`、`license`、`metadata.hermes.{tags, related_skills}` 均已填写
+- [ ] `name`、`description`、`version`、`author`、`license`、`metadata.newroz.{tags, related_skills}` 均已填写
 - [ ] Name ≤ 64 个字符，小写加连字符
 - [ ] Description ≤ 1024 个字符，且以"Use when ..."开头
 - [ ] 文件总大小 ≤ 100,000 个字符（目标 8-15k）

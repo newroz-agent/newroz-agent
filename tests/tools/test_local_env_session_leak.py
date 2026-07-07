@@ -1,8 +1,8 @@
-"""Cross-session HERMES_SESSION_* leak guard for the local terminal backend.
+"""Cross-session NEWROZ_SESSION_* leak guard for the local terminal backend.
 
 Regression coverage for the bug where a terminal subprocess could observe a
-*different concurrent session's* ``HERMES_SESSION_KEY`` (and the other
-``HERMES_SESSION_*`` vars).
+*different concurrent session's* ``NEWROZ_SESSION_KEY`` (and the other
+``NEWROZ_SESSION_*`` vars).
 
 Root cause: the session vars have a process-global ``os.environ`` mirror (written
 last-writer-wins as a CLI/cron fallback, never cleared), while the
@@ -16,7 +16,7 @@ child — so e.g. ``bug_thread.py whoami`` read another session's thread id.
 The fix: once the session-context machinery is engaged in this process (any
 concurrent host — gateway, ACP, API server, TUI, cron — has called
 ``set_session_vars``), the session vars are ContextVar-authoritative. The
-subprocess-env bridge resolves each ``HERMES_SESSION_*`` from the ContextVar and,
+subprocess-env bridge resolves each ``NEWROZ_SESSION_*`` from the ContextVar and,
 when it is ``_UNSET``, STRIPS the var from the child env rather than inheriting
 the process-global value that may belong to another session. A pure
 single-process CLI/one-shot that never engaged the session-context system keeps
@@ -29,7 +29,7 @@ import pytest
 
 import gateway.session_context as sc
 from gateway.session_context import _VAR_MAP, clear_session_vars, set_session_vars
-from tools.environments.local import _make_run_env, _sanitize_subprocess_env, hermes_subprocess_env
+from tools.environments.local import _make_run_env, _sanitize_subprocess_env, newroz_subprocess_env
 
 # The full set of session vars the bridge owns.
 SESSION_VARS = list(_VAR_MAP.keys())
@@ -70,20 +70,20 @@ def test_engaged_unset_contextvar_strips_foreign_session_key(monkeypatch):
     """Engaged host + UNSET ContextVar must NOT inherit a foreign global.
 
     This is the production hijack: a concurrent session wrote
-    os.environ["HERMES_SESSION_KEY"], this task's ContextVar is unset, and the
+    os.environ["NEWROZ_SESSION_KEY"], this task's ContextVar is unset, and the
     subprocess must see NO key rather than the foreign one.
     """
     _engage()
     monkeypatch.setenv(
-        "HERMES_SESSION_KEY",
+        "NEWROZ_SESSION_KEY",
         "agent:main:discord:thread:FOREIGN_CONCURRENT:FOREIGN_CONCURRENT",
     )
 
     env = _make_run_env({})
 
-    assert "HERMES_SESSION_KEY" not in env, (
+    assert "NEWROZ_SESSION_KEY" not in env, (
         "Foreign concurrent session key leaked into subprocess env: "
-        f"{env.get('HERMES_SESSION_KEY')!r}"
+        f"{env.get('NEWROZ_SESSION_KEY')!r}"
     )
 
 
@@ -94,7 +94,7 @@ def test_set_session_vars_engages_and_overrides_foreign_global(monkeypatch):
     and binds the ContextVar, so the bound value overrides the foreign global.
     """
     monkeypatch.setenv(
-        "HERMES_SESSION_KEY",
+        "NEWROZ_SESSION_KEY",
         "agent:main:discord:thread:FOREIGN:FOREIGN",
     )
 
@@ -109,24 +109,24 @@ def test_set_session_vars_engages_and_overrides_foreign_global(monkeypatch):
     finally:
         clear_session_vars(tokens)
 
-    assert env.get("HERMES_SESSION_KEY") == "agent:main:discord:group:MY_BUGS_ROOT:111"
+    assert env.get("NEWROZ_SESSION_KEY") == "agent:main:discord:group:MY_BUGS_ROOT:111"
 
 
 def test_engaged_strips_all_session_vars_when_unset(monkeypatch):
-    """The strip covers every HERMES_SESSION_* mirror, not just the key."""
+    """The strip covers every NEWROZ_SESSION_* mirror, not just the key."""
     _engage()
-    monkeypatch.setenv("HERMES_SESSION_KEY", "foreign-key")
-    monkeypatch.setenv("HERMES_SESSION_THREAD_ID", "foreign-thread")
-    monkeypatch.setenv("HERMES_SESSION_CHAT_ID", "foreign-chat")
-    monkeypatch.setenv("HERMES_SESSION_USER_ID", "foreign-user")
+    monkeypatch.setenv("NEWROZ_SESSION_KEY", "foreign-key")
+    monkeypatch.setenv("NEWROZ_SESSION_THREAD_ID", "foreign-thread")
+    monkeypatch.setenv("NEWROZ_SESSION_CHAT_ID", "foreign-chat")
+    monkeypatch.setenv("NEWROZ_SESSION_USER_ID", "foreign-user")
 
     env = _make_run_env({})
 
     for var in (
-        "HERMES_SESSION_KEY",
-        "HERMES_SESSION_THREAD_ID",
-        "HERMES_SESSION_CHAT_ID",
-        "HERMES_SESSION_USER_ID",
+        "NEWROZ_SESSION_KEY",
+        "NEWROZ_SESSION_THREAD_ID",
+        "NEWROZ_SESSION_CHAT_ID",
+        "NEWROZ_SESSION_USER_ID",
     ):
         assert var not in env, f"{var} leaked from a foreign global: {env.get(var)!r}"
 
@@ -134,18 +134,18 @@ def test_engaged_strips_all_session_vars_when_unset(monkeypatch):
 def test_unengaged_process_preserves_os_environ_fallback(monkeypatch):
     """A process that never engaged the session-context system keeps the fallback.
 
-    Pure single-process CLI/one-shot sets HERMES_SESSION_* directly in os.environ
+    Pure single-process CLI/one-shot sets NEWROZ_SESSION_* directly in os.environ
     and relies on the subprocess inheriting them; there is no concurrency to leak
     across, so the strip must NOT apply.
     """
     # _isolate_session_context already forced engaged=False.
-    monkeypatch.setenv("HERMES_SESSION_KEY", "cli-session-key")
-    monkeypatch.setenv("HERMES_SESSION_ID", "cli-session-id")
+    monkeypatch.setenv("NEWROZ_SESSION_KEY", "cli-session-key")
+    monkeypatch.setenv("NEWROZ_SESSION_ID", "cli-session-id")
 
     env = _make_run_env({})
 
-    assert env.get("HERMES_SESSION_KEY") == "cli-session-key"
-    assert env.get("HERMES_SESSION_ID") == "cli-session-id"
+    assert env.get("NEWROZ_SESSION_KEY") == "cli-session-key"
+    assert env.get("NEWROZ_SESSION_ID") == "cli-session-id"
 
 
 def test_engaged_explicit_empty_contextvar_clears(monkeypatch):
@@ -156,7 +156,7 @@ def test_engaged_explicit_empty_contextvar_clears(monkeypatch):
     empty value (which overrides the foreign global), NOT the foreign global —
     an empty key is safe (whoami reads "" → no thread).
     """
-    monkeypatch.setenv("HERMES_SESSION_KEY", "foreign-after-clear")
+    monkeypatch.setenv("NEWROZ_SESSION_KEY", "foreign-after-clear")
 
     tokens = set_session_vars(session_key="real-key", platform="discord", chat_id="c")
     clear_session_vars(tokens)  # sets vars to "" (explicitly cleared); stays engaged
@@ -165,8 +165,8 @@ def test_engaged_explicit_empty_contextvar_clears(monkeypatch):
 
     # Explicit-empty wins over the foreign global: either stripped or "" — never
     # the foreign value. Both outcomes are safe for the consumer.
-    assert env.get("HERMES_SESSION_KEY", "") == "", (
-        f"Foreign key survived an explicit clear: {env.get('HERMES_SESSION_KEY')!r}"
+    assert env.get("NEWROZ_SESSION_KEY", "") == "", (
+        f"Foreign key survived an explicit clear: {env.get('NEWROZ_SESSION_KEY')!r}"
     )
 
 
@@ -174,10 +174,10 @@ def test_explicit_empty_thread_id_overrides_stale_value(monkeypatch):
     """A bound-but-empty thread id must override a stale inherited value.
 
     This is the complementary case (the #38507 scenario): a top-level post with
-    no thread id binds HERMES_SESSION_THREAD_ID="" and that empty value must win
+    no thread id binds NEWROZ_SESSION_THREAD_ID="" and that empty value must win
     over an older non-empty value left in os.environ.
     """
-    monkeypatch.setenv("HERMES_SESSION_THREAD_ID", "stale-thread-from-prior-turn")
+    monkeypatch.setenv("NEWROZ_SESSION_THREAD_ID", "stale-thread-from-prior-turn")
 
     tokens = set_session_vars(
         session_key="mm:chan",
@@ -190,11 +190,11 @@ def test_explicit_empty_thread_id_overrides_stale_value(monkeypatch):
     finally:
         clear_session_vars(tokens)
 
-    assert env.get("HERMES_SESSION_THREAD_ID") == "", (
+    assert env.get("NEWROZ_SESSION_THREAD_ID") == "", (
         "Bound-empty thread id did not override the stale value: "
-        f"{env.get('HERMES_SESSION_THREAD_ID')!r}"
+        f"{env.get('NEWROZ_SESSION_THREAD_ID')!r}"
     )
-    assert env.get("HERMES_SESSION_KEY") == "mm:chan"
+    assert env.get("NEWROZ_SESSION_KEY") == "mm:chan"
 
 
 # --------------------------------------------------------------------------- #
@@ -211,23 +211,23 @@ def test_sanitize_subprocess_env_strips_foreign_session_key_when_engaged(monkeyp
     _engage()
     stale_base = {
         "PATH": "/usr/bin:/bin",
-        "HERMES_SESSION_KEY": "agent:main:discord:thread:FOREIGN_BG:FOREIGN_BG",
-        "HERMES_SESSION_THREAD_ID": "FOREIGN_BG",
+        "NEWROZ_SESSION_KEY": "agent:main:discord:thread:FOREIGN_BG:FOREIGN_BG",
+        "NEWROZ_SESSION_THREAD_ID": "FOREIGN_BG",
     }
 
     sanitized = _sanitize_subprocess_env(stale_base)
 
-    assert "HERMES_SESSION_KEY" not in sanitized, (
-        f"Background subprocess inherited foreign key: {sanitized.get('HERMES_SESSION_KEY')!r}"
+    assert "NEWROZ_SESSION_KEY" not in sanitized, (
+        f"Background subprocess inherited foreign key: {sanitized.get('NEWROZ_SESSION_KEY')!r}"
     )
-    assert "HERMES_SESSION_THREAD_ID" not in sanitized
+    assert "NEWROZ_SESSION_THREAD_ID" not in sanitized
 
 
 def test_sanitize_subprocess_env_set_contextvar_wins_when_engaged():
     """Background path: a SET ContextVar overrides the foreign global base."""
     stale_base = {
         "PATH": "/usr/bin:/bin",
-        "HERMES_SESSION_KEY": "agent:main:discord:thread:FOREIGN_BG:FOREIGN_BG",
+        "NEWROZ_SESSION_KEY": "agent:main:discord:thread:FOREIGN_BG:FOREIGN_BG",
     }
     tokens = set_session_vars(
         session_key="agent:main:discord:group:REAL_BG:222",
@@ -239,49 +239,49 @@ def test_sanitize_subprocess_env_set_contextvar_wins_when_engaged():
     finally:
         clear_session_vars(tokens)
 
-    assert sanitized.get("HERMES_SESSION_KEY") == "agent:main:discord:group:REAL_BG:222"
+    assert sanitized.get("NEWROZ_SESSION_KEY") == "agent:main:discord:group:REAL_BG:222"
 
 
 def test_sanitize_subprocess_env_unengaged_preserves_fallback(monkeypatch):
     """Background path in an unengaged process keeps the inherited value."""
     stale_base = {
         "PATH": "/usr/bin:/bin",
-        "HERMES_SESSION_KEY": "cli-bg-key",
+        "NEWROZ_SESSION_KEY": "cli-bg-key",
     }
 
     sanitized = _sanitize_subprocess_env(stale_base)
 
-    assert sanitized.get("HERMES_SESSION_KEY") == "cli-bg-key"
+    assert sanitized.get("NEWROZ_SESSION_KEY") == "cli-bg-key"
 
 
 # --------------------------------------------------------------------------- #
-# Non-terminal spawn surface (hermes_subprocess_env) — sibling path
+# Non-terminal spawn surface (newroz_subprocess_env) — sibling path
 # --------------------------------------------------------------------------- #
 
-def test_hermes_subprocess_env_strips_foreign_session_key_when_engaged(monkeypatch):
-    """hermes_subprocess_env (browser/ACP/CLI/TUI-host spawns) must not leak a
+def test_newroz_subprocess_env_strips_foreign_session_key_when_engaged(monkeypatch):
+    """newroz_subprocess_env (browser/ACP/CLI/TUI-host spawns) must not leak a
     foreign session key either. cli.exec spawns via this helper WITHOUT re-binding
     the session identity, so an UNSET ContextVar under an engaged host must strip
     the inherited global rather than hand the child another session's identity.
     """
     _engage()
     monkeypatch.setenv(
-        "HERMES_SESSION_KEY",
+        "NEWROZ_SESSION_KEY",
         "agent:main:discord:thread:FOREIGN_CONCURRENT:FOREIGN_CONCURRENT",
     )
 
-    env = hermes_subprocess_env()
+    env = newroz_subprocess_env()
 
-    assert "HERMES_SESSION_KEY" not in env, (
+    assert "NEWROZ_SESSION_KEY" not in env, (
         "Foreign concurrent session key leaked into non-terminal spawn env: "
-        f"{env.get('HERMES_SESSION_KEY')!r}"
+        f"{env.get('NEWROZ_SESSION_KEY')!r}"
     )
 
 
-def test_hermes_subprocess_env_bound_contextvar_wins(monkeypatch):
+def test_newroz_subprocess_env_bound_contextvar_wins(monkeypatch):
     """A caller that binds the session identity keeps it through this helper."""
     monkeypatch.setenv(
-        "HERMES_SESSION_KEY",
+        "NEWROZ_SESSION_KEY",
         "agent:main:discord:thread:FOREIGN:FOREIGN",
     )
     tokens = set_session_vars(
@@ -290,15 +290,15 @@ def test_hermes_subprocess_env_bound_contextvar_wins(monkeypatch):
         chat_id="MINE",
     )
     try:
-        env = hermes_subprocess_env()
-        assert env.get("HERMES_SESSION_KEY") == "agent:main:discord:group:MINE:111"
+        env = newroz_subprocess_env()
+        assert env.get("NEWROZ_SESSION_KEY") == "agent:main:discord:group:MINE:111"
     finally:
         clear_session_vars(tokens)
 
 
-def test_hermes_subprocess_env_unengaged_preserves_fallback(monkeypatch):
+def test_newroz_subprocess_env_unengaged_preserves_fallback(monkeypatch):
     """A pure single-process CLI (never engaged) keeps the inherited fallback."""
-    monkeypatch.setenv("HERMES_SESSION_KEY", "cli-fallback-key")
+    monkeypatch.setenv("NEWROZ_SESSION_KEY", "cli-fallback-key")
     # not engaged (autouse fixture leaves _session_context_engaged False)
-    env = hermes_subprocess_env()
-    assert env.get("HERMES_SESSION_KEY") == "cli-fallback-key"
+    env = newroz_subprocess_env()
+    assert env.get("NEWROZ_SESSION_KEY") == "cli-fallback-key"

@@ -1,4 +1,4 @@
-"""Tests for the multi-board kanban layer (``hermes kanban boards …``).
+"""Tests for the multi-board kanban layer (``newroz kanban boards …``).
 
 Covers the pieces added when boards became a first-class concept:
 
@@ -6,11 +6,11 @@ Covers the pieces added when boards became a first-class concept:
 * Path resolution for ``default`` (legacy ``<root>/kanban.db``) vs
   named boards (``<root>/kanban/boards/<slug>/kanban.db``).
 * Current-board persistence via ``<root>/kanban/current`` and
-  ``HERMES_KANBAN_BOARD`` env var.
+  ``NEWROZ_KANBAN_BOARD`` env var.
 * ``connect(board=)`` isolation — writes on one board don't leak.
 * ``create_board`` / ``list_boards`` / ``remove_board`` round trip.
-* CLI surface: ``hermes kanban boards list/create/switch/rm``.
-* ``_default_spawn`` injects ``HERMES_KANBAN_BOARD`` into worker env.
+* CLI surface: ``newroz kanban boards list/create/switch/rm``.
+* ``_default_spawn`` injects ``NEWROZ_KANBAN_BOARD`` into worker env.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ _WORKTREE = Path(__file__).resolve().parents[2]
 if str(_WORKTREE) not in sys.path:
     sys.path.insert(0, str(_WORKTREE))
 
-from hermes_cli import kanban_db as kb
+from newroz_cli import kanban_db as kb
 
 
 # ---------------------------------------------------------------------------
@@ -37,26 +37,26 @@ from hermes_cli import kanban_db as kb
 
 @pytest.fixture
 def fresh_home(tmp_path, monkeypatch):
-    """Isolated HERMES_HOME with no prior kanban state.
+    """Isolated NEWROZ_HOME with no prior kanban state.
 
     The autouse hermetic conftest already nukes credentials + TZ; this
-    fixture layers a per-test HERMES_HOME plus a path-init cache reset
+    fixture layers a per-test NEWROZ_HOME plus a path-init cache reset
     so each test sees a truly empty board set.
     """
-    home = tmp_path / "hermes_home"
+    home = tmp_path / "newroz_home"
     home.mkdir()
-    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("NEWROZ_HOME", str(home))
     for var in (
-        "HERMES_KANBAN_DB",
-        "HERMES_KANBAN_WORKSPACES_ROOT",
-        "HERMES_KANBAN_HOME",
-        "HERMES_KANBAN_BOARD",
+        "NEWROZ_KANBAN_DB",
+        "NEWROZ_KANBAN_WORKSPACES_ROOT",
+        "NEWROZ_KANBAN_HOME",
+        "NEWROZ_KANBAN_BOARD",
     ):
         monkeypatch.delenv(var, raising=False)
-    # Also reset hermes_constants cache so get_default_hermes_root() re-reads.
+    # Also reset newroz_constants cache so get_default_newroz_root() re-reads.
     try:
-        import hermes_constants
-        hermes_constants._cached_default_hermes_root = None  # type: ignore[attr-defined]
+        import newroz_constants
+        newroz_constants._cached_default_newroz_root = None  # type: ignore[attr-defined]
     except Exception:
         pass
     # Kanban module-level init cache must not leak between tests.
@@ -70,7 +70,7 @@ def fresh_home(tmp_path, monkeypatch):
 
 class TestSlugValidation:
     @pytest.mark.parametrize("good", [
-        "default", "atm10-server", "hermes-agent", "proj_1", "a",
+        "default", "atm10-server", "newroz-agent", "proj_1", "a",
         "very-long-but-still-ok-slug-with-hyphens-and-numbers-1234",
     ])
     def test_accepts_valid(self, good):
@@ -127,15 +127,15 @@ class TestPathResolution:
         )
 
     def test_env_var_db_override_still_wins(self, fresh_home, tmp_path, monkeypatch):
-        """``HERMES_KANBAN_DB`` pins the file regardless of board= arg."""
+        """``NEWROZ_KANBAN_DB`` pins the file regardless of board= arg."""
         forced = tmp_path / "custom.db"
-        monkeypatch.setenv("HERMES_KANBAN_DB", str(forced))
+        monkeypatch.setenv("NEWROZ_KANBAN_DB", str(forced))
         assert kb.kanban_db_path() == forced
         assert kb.kanban_db_path(board="ignored") == forced
 
     def test_env_var_workspaces_override(self, fresh_home, tmp_path, monkeypatch):
         forced = tmp_path / "ws"
-        monkeypatch.setenv("HERMES_KANBAN_WORKSPACES_ROOT", str(forced))
+        monkeypatch.setenv("NEWROZ_KANBAN_WORKSPACES_ROOT", str(forced))
         assert kb.workspaces_root(board="any") == forced
 
 
@@ -152,7 +152,7 @@ class TestCurrentBoard:
         # trusts env-var validity, but the resolution chain doesn't require
         # the board to exist; we just test that env trumps).
         kb.create_board("envboard")
-        monkeypatch.setenv("HERMES_KANBAN_BOARD", "envboard")
+        monkeypatch.setenv("NEWROZ_KANBAN_BOARD", "envboard")
         assert kb.get_current_board() == "envboard"
 
     def test_file_pointer_honoured(self, fresh_home):
@@ -180,17 +180,17 @@ class TestCurrentBoard:
         kb.create_board("a")
         kb.create_board("b")
         kb.set_current_board("a")
-        monkeypatch.setenv("HERMES_KANBAN_BOARD", "b")
+        monkeypatch.setenv("NEWROZ_KANBAN_BOARD", "b")
         assert kb.get_current_board() == "b"
 
     def test_stale_env_falls_through_to_file_pointer(self, fresh_home, monkeypatch):
         kb.create_board("persisted")
         kb.set_current_board("persisted")
-        monkeypatch.setenv("HERMES_KANBAN_BOARD", "missing-board")
+        monkeypatch.setenv("NEWROZ_KANBAN_BOARD", "missing-board")
         assert kb.get_current_board() == "persisted"
 
     def test_invalid_env_falls_through(self, fresh_home, monkeypatch):
-        monkeypatch.setenv("HERMES_KANBAN_BOARD", "!!bad!!")
+        monkeypatch.setenv("NEWROZ_KANBAN_BOARD", "!!bad!!")
         # Should not crash — falls through to default.
         assert kb.get_current_board() == "default"
 
@@ -350,7 +350,7 @@ class TestConnectionIsolation:
         kb.create_board("persist")
         kb.create_board("envwin")
         kb.set_current_board("persist")
-        monkeypatch.setenv("HERMES_KANBAN_BOARD", "envwin")
+        monkeypatch.setenv("NEWROZ_KANBAN_BOARD", "envwin")
         with kb.connect() as conn:
             kb.create_task(conn, title="via-env", assignee="x")
         with kb.connect(board="envwin") as conn:
@@ -365,7 +365,7 @@ class TestConnectionIsolation:
         kb.remove_board("ephemeral")
         kb.create_board("persist")
         kb.set_current_board("persist")
-        monkeypatch.setenv("HERMES_KANBAN_BOARD", "ephemeral")
+        monkeypatch.setenv("NEWROZ_KANBAN_BOARD", "ephemeral")
 
         with kb.connect() as conn:
             kb.create_task(conn, title="via-fallback", assignee="x")
@@ -380,7 +380,7 @@ class TestConnectionIsolation:
 # ---------------------------------------------------------------------------
 
 class TestWorkerSpawnEnv:
-    """Ensure the dispatcher pins ``HERMES_KANBAN_BOARD`` / DB / workspaces on spawn.
+    """Ensure the dispatcher pins ``NEWROZ_KANBAN_BOARD`` / DB / workspaces on spawn.
 
     We monkey-patch ``subprocess.Popen`` to capture the child env without
     actually spawning anything.
@@ -421,13 +421,13 @@ class TestWorkerSpawnEnv:
         kb._default_spawn(task, str(fresh_home / "ws"), board="spawntest")
 
         env = captured["env"]
-        assert env["HERMES_KANBAN_BOARD"] == "spawntest"
-        assert env["HERMES_KANBAN_TASK"] == "t_abc"
+        assert env["NEWROZ_KANBAN_BOARD"] == "spawntest"
+        assert env["NEWROZ_KANBAN_TASK"] == "t_abc"
         # DB path should match the per-board DB, not the legacy default.
         expected_db = fresh_home / "kanban" / "boards" / "spawntest" / "kanban.db"
-        assert env["HERMES_KANBAN_DB"] == str(expected_db)
+        assert env["NEWROZ_KANBAN_DB"] == str(expected_db)
         expected_ws = fresh_home / "kanban" / "boards" / "spawntest" / "workspaces"
-        assert env["HERMES_KANBAN_WORKSPACES_ROOT"] == str(expected_ws)
+        assert env["NEWROZ_KANBAN_WORKSPACES_ROOT"] == str(expected_ws)
 
     def test_default_board_spawn_keeps_legacy_paths(self, fresh_home, monkeypatch):
         captured = {}
@@ -459,8 +459,8 @@ class TestWorkerSpawnEnv:
         )
         kb._default_spawn(task, str(fresh_home / "ws"), board=None)
         env = captured["env"]
-        assert env["HERMES_KANBAN_BOARD"] == "default"
-        assert env["HERMES_KANBAN_DB"] == str(fresh_home / "kanban.db")
+        assert env["NEWROZ_KANBAN_BOARD"] == "default"
+        assert env["NEWROZ_KANBAN_DB"] == str(fresh_home / "kanban.db")
 
 
 # ---------------------------------------------------------------------------
@@ -468,13 +468,13 @@ class TestWorkerSpawnEnv:
 # ---------------------------------------------------------------------------
 
 def _cli(args: list[str], env_extra: dict | None = None) -> subprocess.CompletedProcess:
-    """Run ``hermes kanban …`` with PYTHONPATH pinned to the worktree."""
+    """Run ``newroz kanban …`` with PYTHONPATH pinned to the worktree."""
     env = dict(os.environ)
     env["PYTHONPATH"] = str(_WORKTREE)
     if env_extra:
         env.update(env_extra)
     return subprocess.run(
-        [sys.executable, "-m", "hermes_cli.main", "kanban"] + args,
+        [sys.executable, "-m", "newroz_cli.main", "kanban"] + args,
         env=env,
         capture_output=True,
         text=True,
@@ -485,7 +485,7 @@ def _cli(args: list[str], env_extra: dict | None = None) -> subprocess.Completed
 
 class TestCLI:
     def test_boards_list_default_only(self, tmp_path):
-        env = {"HERMES_HOME": str(tmp_path)}
+        env = {"NEWROZ_HOME": str(tmp_path)}
         res = _cli(["boards", "list", "--json"], env_extra=env)
         assert res.returncode == 0, res.stderr
         data = json.loads(res.stdout)
@@ -494,7 +494,7 @@ class TestCLI:
         assert data[0]["is_current"] is True
 
     def test_boards_create_and_switch(self, tmp_path):
-        env = {"HERMES_HOME": str(tmp_path)}
+        env = {"NEWROZ_HOME": str(tmp_path)}
         r1 = _cli(
             ["boards", "create", "myproj", "--name", "My Project", "--switch"],
             env_extra=env,
@@ -509,7 +509,7 @@ class TestCLI:
         assert cur["slug"] == "myproj"
 
     def test_per_board_task_isolation_via_cli(self, tmp_path):
-        env = {"HERMES_HOME": str(tmp_path)}
+        env = {"NEWROZ_HOME": str(tmp_path)}
         assert _cli(["boards", "create", "projA"], env_extra=env).returncode == 0
         assert _cli(["boards", "create", "projB"], env_extra=env).returncode == 0
 
@@ -533,7 +533,7 @@ class TestCLI:
         assert titlesD == []
 
     def test_board_flag_rejects_unknown(self, tmp_path):
-        env = {"HERMES_HOME": str(tmp_path)}
+        env = {"NEWROZ_HOME": str(tmp_path)}
         r = _cli(["--board", "ghost", "list"], env_extra=env)
         # main.py's dispatcher doesn't propagate return codes today, so we
         # assert the user-visible signal: a stderr error message. Whether
@@ -541,14 +541,14 @@ class TestCLI:
         assert "does not exist" in r.stderr
 
     def test_board_flag_rejects_empty_board_dir(self, tmp_path):
-        env = {"HERMES_HOME": str(tmp_path)}
+        env = {"NEWROZ_HOME": str(tmp_path)}
         ghost = tmp_path / "kanban" / "boards" / "ghost"
         ghost.mkdir(parents=True)
         r = _cli(["--board", "ghost", "list"], env_extra=env)
         assert "does not exist" in r.stderr
 
     def test_boards_rm_archives(self, tmp_path):
-        env = {"HERMES_HOME": str(tmp_path)}
+        env = {"NEWROZ_HOME": str(tmp_path)}
         _cli(["boards", "create", "rmme"], env_extra=env)
         r = _cli(["boards", "rm", "rmme"], env_extra=env)
         assert r.returncode == 0, r.stderr

@@ -1,7 +1,7 @@
 """Tests for interrupted-install self-heal (the ``.update-incomplete`` marker).
 
 Covers the breadcrumb lifecycle and the launch-time recovery guard added so a
-``hermes update`` killed mid-install (Ctrl-C, terminal close, WSL OOM) gets
+``newroz update`` killed mid-install (Ctrl-C, terminal close, WSL OOM) gets
 finished automatically on the next launch instead of leaving a half-built venv.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import hermes_cli.main as m
+import newroz_cli.main as m
 
 
 def test_marker_round_trip(tmp_path, monkeypatch):
@@ -83,7 +83,7 @@ def test_recovery_runs_install_and_clears_marker(tmp_path, monkeypatch):
 
     monkeypatch.setattr(m.subprocess, "run", fake_run)
     monkeypatch.setattr(m, "_is_termux_env", lambda *a, **k: False)
-    monkeypatch.setattr("hermes_cli.managed_uv.ensure_uv", lambda: None)
+    monkeypatch.setattr("newroz_cli.managed_uv.ensure_uv", lambda: None)
     monkeypatch.setattr(
         m,
         "_install_python_dependencies_with_optional_fallback",
@@ -109,7 +109,7 @@ def test_recovery_keeps_marker_on_failure(tmp_path, monkeypatch):
 
     monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: R())
     monkeypatch.setattr(m, "_is_termux_env", lambda *a, **k: False)
-    monkeypatch.setattr("hermes_cli.managed_uv.ensure_uv", lambda: None)
+    monkeypatch.setattr("newroz_cli.managed_uv.ensure_uv", lambda: None)
 
     def boom(*a, **k):
         raise RuntimeError("install died")
@@ -131,7 +131,7 @@ def _stub_install_env(monkeypatch, m, seen):
 
     monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: R())
     monkeypatch.setattr(m, "_is_termux_env", lambda *a, **k: False)
-    monkeypatch.setattr("hermes_cli.managed_uv.ensure_uv", lambda: None)
+    monkeypatch.setattr("newroz_cli.managed_uv.ensure_uv", lambda: None)
     monkeypatch.setattr(
         m,
         "_install_python_dependencies_with_optional_fallback",
@@ -140,7 +140,7 @@ def _stub_install_env(monkeypatch, m, seen):
 
 
 def test_recovery_self_lock_guard_clears_marker_without_install(tmp_path, monkeypatch):
-    # Windows self-lock: hermes.exe is an ancestor of this Python process, so a
+    # Windows self-lock: newroz.exe is an ancestor of this Python process, so a
     # pip-install would fail trying to replace the running launcher (WinError 32
     # / 拒绝访问). Recovery must short-circuit — clear the marker, skip install,
     # break the loop (#45542 / #52378) — instead of retrying forever.
@@ -150,12 +150,12 @@ def test_recovery_self_lock_guard_clears_marker_without_install(tmp_path, monkey
 
     scripts_dir = tmp_path / "venv" / "Scripts"
     scripts_dir.mkdir(parents=True)
-    shim = scripts_dir / "hermes.exe"
+    shim = scripts_dir / "newroz.exe"
     shim.write_text("")
 
     monkeypatch.setattr(m, "_is_windows", lambda: True)
     monkeypatch.setattr(m, "_venv_scripts_dir", lambda: scripts_dir)
-    monkeypatch.setattr(m, "_hermes_exe_shims", lambda d: [shim])
+    monkeypatch.setattr(m, "_newroz_exe_shims", lambda d: [shim])
 
     class FakeProc:
         def __init__(self, exe_path):
@@ -185,7 +185,7 @@ def sys_executable_path():
 
 
 def test_recovery_self_lock_guard_inactive_when_not_ancestor(tmp_path, monkeypatch):
-    # Windows, but hermes.exe is NOT in the ancestry (launched via `hermes
+    # Windows, but newroz.exe is NOT in the ancestry (launched via `newroz
     # dashboard` from a separate cmd, say). The guard must fall through to the
     # normal install so a genuinely interrupted install still gets healed.
     monkeypatch.setattr(m, "PROJECT_ROOT", tmp_path)
@@ -194,12 +194,12 @@ def test_recovery_self_lock_guard_inactive_when_not_ancestor(tmp_path, monkeypat
 
     scripts_dir = tmp_path / "venv" / "Scripts"
     scripts_dir.mkdir(parents=True)
-    shim = scripts_dir / "hermes.exe"
+    shim = scripts_dir / "newroz.exe"
     shim.write_text("")
 
     monkeypatch.setattr(m, "_is_windows", lambda: True)
     monkeypatch.setattr(m, "_venv_scripts_dir", lambda: scripts_dir)
-    monkeypatch.setattr(m, "_hermes_exe_shims", lambda d: [shim])
+    monkeypatch.setattr(m, "_newroz_exe_shims", lambda d: [shim])
 
     class FakeProc:
         def __init__(self, exe_path):
@@ -209,7 +209,7 @@ def test_recovery_self_lock_guard_inactive_when_not_ancestor(tmp_path, monkeypat
             return self._exe
 
         def parents(self):
-            # Ancestry is plain pythons / cmd — no hermes.exe shim.
+            # Ancestry is plain pythons / cmd — no newroz.exe shim.
             return [FakeProc(str(tmp_path / "cmd.exe"))]
 
     monkeypatch.setattr("psutil.Process", lambda: FakeProc(sys_executable_path()))

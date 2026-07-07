@@ -1,4 +1,4 @@
-from hermes_cli.moa_config import (
+from newroz_cli.moa_config import (
     DEFAULT_MOA_AGGREGATOR,
     DEFAULT_MOA_PRESET_NAME,
     DEFAULT_MOA_REFERENCE_MODELS,
