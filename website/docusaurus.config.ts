@@ -122,7 +122,7 @@ const config: Config = {
       title: 'Newroz Agent',
       logo: {
         alt: 'Newroz Agent',
-        src: 'img/logo.png',
+        src: 'img/logo.svg',
       },
       items: [
         {
