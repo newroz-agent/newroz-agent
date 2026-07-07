@@ -3,14 +3,16 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Newroz Agent',
+  title: 'Newroz',
   tagline: 'The self-improving AI agent',
   favicon: 'img/favicon.ico',
 
-  url: 'https://newroz-agent.github.io',
-  baseUrl: '/docs/',
+  // Set the real domain in Vercel; see vercel.json / DEPLOY.md for every
+  // other place this URL is duplicated.
+  url: 'https://NEWROZ-DOMAIN.example',
+  baseUrl: '/',
 
-  organizationName: 'NousResearch',
+  organizationName: 'newroz-agent',
   projectName: 'newroz-agent',
 
   onBrokenLinks: 'warn',
@@ -56,7 +58,7 @@ const config: Config = {
         // reference/optional-skills-catalog) remain indexed.
         //
         // Note: ignoreFiles matches `route` (baseUrl stripped, no leading
-        // slash). With baseUrl '/docs/', `/docs/user-guide/skills/bundled/x`
+        // slash). With baseUrl '/', `/user-guide/skills/bundled/x`
         // becomes 'user-guide/skills/bundled/x'.
         ignoreFiles: [
           /^user-guide\/skills\/bundled\//,
@@ -70,8 +72,8 @@ const config: Config = {
     [
       '@docusaurus/plugin-client-redirects',
       {
-        // Static-host redirects for renamed doc pages (GitHub Pages can't
-        // do server-side redirects). Paths are relative to baseUrl (/docs/).
+        // Static-host redirects for renamed doc pages (the static host can't
+        // do server-side redirects). Paths are relative to baseUrl (/).
         redirects: [
           {
             // Renamed in #44470 (Automation Blueprints terminology rebrand)
@@ -96,7 +98,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/',  // Docs at the root of /docs/
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/newroz-agent/newroz-agent/edit/main/website/',
+          editUrl: 'https://github.com/newroz-agent/newroz-agent/tree/main/website/',
         },
         blog: false,
         theme: {
@@ -155,11 +157,6 @@ const config: Config = {
           label: 'GitHub',
           position: 'right',
         },
-        {
-          href: 'https://discord.gg/NousResearch',
-          label: 'Discord',
-          position: 'right',
-        },
       ],
     },
     footer: {
@@ -177,7 +174,6 @@ const config: Config = {
         {
           title: 'Community',
           items: [
-            { label: 'Discord', href: 'https://discord.gg/NousResearch' },
             { label: 'GitHub Issues', href: 'https://github.com/newroz-agent/newroz-agent/issues' },
             { label: 'Skills Hub', href: 'https://agentskills.io' },
           ],
@@ -187,11 +183,10 @@ const config: Config = {
           items: [
             { label: 'Desktop Download', href: 'https://newroz-agent.github.io/' },
             { label: 'GitHub', href: 'https://github.com/newroz-agent/newroz-agent' },
-            { label: 'Nous Research', href: 'https://nousresearch.com' },
           ],
         },
       ],
-      copyright: `Built by <a href="https://nousresearch.com">Nous Research</a> · MIT License · ${new Date().getFullYear()}`,
+      copyright: `Newroz · MIT License · ${new Date().getFullYear()} · Based on <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a> by Nous Research (MIT)`,
     },
     prism: {
       theme: prismThemes.github,

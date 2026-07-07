@@ -358,7 +358,7 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/newroz-agent.txt",
     "date": "2026-04-04",
     "category": "personal-assistant",
-    "headline": "Raspberry Pi 5 running Hermes 24/7",
+    "headline": "Raspberry Pi 5 running Newroz 24/7",
     "quote": "I built a Raspberry Pi 5 to run Newroz on 24/7. it's my first time diving into trying a real AI agent and so far I'm enjoying it. Much better than open claw. The thing is, since Newroz is learning so much about me and my workflows and custom skills, I'd love if I could use Newroz (with its knowledge and memory) on my Mac Studio which I work off of.",
     "size": "md"
   },
@@ -413,7 +413,7 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1503091259760316436-Claude-Newroz-MCP.txt",
     "date": "",
     "category": "personal-assistant",
-    "headline": "Claude for chat, Hermes 24/7 on a mini PC for real-world stuff",
+    "headline": "Claude for chat, Newroz 24/7 on a mini PC for real-world stuff",
     "quote": "Claude (Opus 4.7) handles my day-to-day chats: research, planning, working through problems. Newroz runs 24/7 on a mini PC and handles the real-world stuff: email, web browsing, form filling, calendar updates, cron jobs.",
     "size": "lg"
   },
