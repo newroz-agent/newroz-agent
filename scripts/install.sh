@@ -1603,7 +1603,7 @@ setup_path() {
     if [ "$USE_VENV" = true ]; then
         NEWROZ_BIN="$INSTALL_DIR/venv/bin/newroz"
     else
-        NEWROZ_BIN="$(which hermes 2>/dev/null || echo "")"
+        NEWROZ_BIN="$(which newroz 2>/dev/null || echo "")"
         if [ -z "$NEWROZ_BIN" ]; then
             log_warn "newroz not found on PATH after install"
             return 0

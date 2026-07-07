@@ -112,7 +112,7 @@ if [ -n "${NEWROZ_GID:-}" ] && validate_uid_gid "$NEWROZ_GID" && [ "$NEWROZ_GID"
     echo "[stage2] Changing newroz GID to $NEWROZ_GID"
     # -o allows non-unique GID (e.g. macOS GID 20 "staff" may already
     # exist as "dialout" in the Debian-based container image).
-    groupmod -o -g "$NEWROZ_GID" hermes 2>/dev/null || true
+    groupmod -o -g "$NEWROZ_GID" newroz 2>/dev/null || true
 fi
 
 # --- Docker socket group membership (docker-in-docker / DooD) ---
@@ -149,7 +149,7 @@ for sock in /var/run/docker.sock /run/docker.sock; do
     sock_gid=$(stat -c '%g' "$sock" 2>/dev/null) || continue
     [ -n "$sock_gid" ] || continue
     # Already a member? Nothing to do.
-    if id -G hermes 2>/dev/null | tr ' ' '\n' | grep -qx "$sock_gid"; then
+    if id -G newroz 2>/dev/null | tr ' ' '\n' | grep -qx "$sock_gid"; then
         echo "[stage2] newroz already in group $sock_gid for $sock"
         break
     fi
@@ -163,7 +163,7 @@ for sock in /var/run/docker.sock /run/docker.sock; do
         fi
         echo "[stage2] Created group $sock_group (GID $sock_gid) for Docker socket"
     fi
-    if usermod -aG "$sock_group" hermes 2>/dev/null; then
+    if usermod -aG "$sock_group" newroz 2>/dev/null; then
         echo "[stage2] Added newroz to group $sock_group (GID $sock_gid) for $sock"
     else
         echo "[stage2] Warning: usermod -aG $sock_group newroz failed; docker backend may fail with EACCES"
