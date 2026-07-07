@@ -164,11 +164,11 @@ def test_source_tags_the_authorize_link(fake_as):
     assert "source=" not in untagged
 
 
-def test_client_id_defaults_to_newroz_agent(monkeypatch):
+def test_client_id_defaults_to_hermes_agent(monkeypatch):
     # One client for every surface; the env var overrides for unusual deployments.
     monkeypatch.delenv("HONCHO_OAUTH_CLIENT_ID", raising=False)
     common = {"environment": "production", "base_url": "https://api.honcho.dev"}
-    assert oauth_flow.resolve_endpoints(**common).client_id == "newroz-agent"
+    assert oauth_flow.resolve_endpoints(**common).client_id == "hermes-agent"
     monkeypatch.setenv("HONCHO_OAUTH_CLIENT_ID", "custom-id")
     assert oauth_flow.resolve_endpoints(**common).client_id == "custom-id"
 
@@ -189,7 +189,7 @@ def test_grant_persists_default_client_id(tmp_path, fake_as, monkeypatch):
         timeout=10,
     )
     saved = json.loads(config_path.read_text())
-    assert saved["hosts"]["newroz"]["oauth"]["clientId"] == "newroz-agent"
+    assert saved["hosts"]["newroz"]["oauth"]["clientId"] == "hermes-agent"
 
 
 def test_config_path_rides_the_authorize_link(fake_as):
@@ -270,7 +270,7 @@ def test_launcher_runs_flow_in_background_and_reports_connected(monkeypatch, res
 
     st = oauth_flow.start_loopback_flow_background(config_path=Path("/t/honcho.json"), host="newroz")
     assert st["state"] == "pending"  # returns immediately, before the flow finishes
-    assert _wait_until(lambda: seen.get("source") == "newroz-desktop")  # default source tag
+    assert _wait_until(lambda: seen.get("source") == "hermes-desktop")  # default source tag
     assert seen["host"] == "newroz"
     gate.set()
     assert _wait_until(lambda: oauth_flow.get_flow_status()["state"] == "connected")

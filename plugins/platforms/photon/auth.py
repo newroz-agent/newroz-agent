@@ -72,7 +72,7 @@ DEFAULT_DASHBOARD_HOST = "https://app.photon.codes"
 DEFAULT_SPECTRUM_HOST = "https://spectrum.photon.codes"
 
 # Default name of the project Newroz provisions for the operator.
-DEFAULT_PROJECT_NAME = "Newroz Agent"
+DEFAULT_PROJECT_NAME = "Hermes Agent"
 
 # Polling defaults per RFC 8628.  Photon overrides via `interval` /
 # `expires_in` in the device-code response — those win.

@@ -119,7 +119,7 @@ def test_nous_adapter_get_credential_uses_runtime_resolver(tmp_path, monkeypatch
     _write_auth_store(tmp_path, {
         "access_token": "access-tok",
         "refresh_token": "refresh-tok",
-        "client_id": "newroz-cli",
+        "client_id": "hermes-cli",
         "portal_base_url": "https://portal.nousresearch.com",
         "inference_base_url": "https://inference-api.nousresearch.com/v1",
     })
@@ -149,7 +149,7 @@ def test_nous_adapter_retry_credential_force_refreshes_on_jwt_401(tmp_path, monk
     _write_auth_store(tmp_path, {
         "access_token": "jwt-access",
         "refresh_token": "refresh-tok",
-        "client_id": "newroz-cli",
+        "client_id": "hermes-cli",
         "portal_base_url": "https://portal.nousresearch.com",
         "inference_base_url": "https://inference-api.nousresearch.com/v1",
         "agent_key": "jwt-access",

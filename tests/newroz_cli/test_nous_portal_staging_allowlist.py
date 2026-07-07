@@ -92,7 +92,7 @@ class TestResolveAccessTokenEnvOverrideWins:
                             "portal_base_url": stored_portal_url,
                             "access_token": "expired-access",
                             "refresh_token": "staging-refresh",
-                            "client_id": "newroz-cli-vps",
+                            "client_id": "hermes-cli-vps",
                             "expires_at": "2000-01-01T00:00:00+00:00",
                         }
                     },

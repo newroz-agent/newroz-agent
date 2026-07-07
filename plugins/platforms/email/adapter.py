@@ -139,7 +139,7 @@ def _send_imap_id(imap: "imaplib.IMAP4") -> None:
             _newroz_version = "0"
         imap.xatom(
             "ID",
-            f'("name" "newroz-agent" "version" "{_newroz_version}" '
+            f'("name" "hermes-agent" "version" "{_newroz_version}" '
             '"vendor" "NousResearch" '
             '"support-email" "noreply@nousresearch.com")',
         )

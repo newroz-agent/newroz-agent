@@ -8,8 +8,8 @@ Nous can attribute usage to Newroz Agent and bucket it by client release.
 Tag shape (sent in OpenAI-compatible ``extra_body['tags']``):
 
     [
-        "product=newroz-agent",
-        "client=newroz-client-v<__version__>",
+        "product=hermes-agent",
+        "client=hermes-client-v<__version__>",
     ]
 
 The version is sourced live from ``newroz_cli.__version__`` so it auto-aligns
@@ -50,9 +50,9 @@ def _newroz_version() -> str:
 def newroz_client_tag() -> str:
     """Return the ``client=...`` tag for Nous Portal requests.
 
-    Format: ``client=newroz-client-v<MAJOR>.<MINOR>.<PATCH>``.
+    Format: ``client=hermes-client-v<MAJOR>.<MINOR>.<PATCH>``.
     """
-    return f"client=newroz-client-v{_newroz_version()}"
+    return f"client=hermes-client-v{_newroz_version()}"
 
 
 def nous_portal_tags() -> List[str]:
@@ -61,4 +61,4 @@ def nous_portal_tags() -> List[str]:
     Always returns a fresh list so callers can mutate it freely
     (e.g. ``merged_extra.setdefault("tags", []).extend(nous_portal_tags())``).
     """
-    return ["product=newroz-agent", newroz_client_tag()]
+    return ["product=hermes-agent", newroz_client_tag()]

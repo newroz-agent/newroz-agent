@@ -284,7 +284,7 @@ def _routermint_headers() -> dict:
     from newroz_cli import __version__ as _NEWROZ_VERSION
 
     return {
-        "User-Agent": f"NewrozAgent/{_NEWROZ_VERSION}",
+        "User-Agent": f"HermesAgent/{_NEWROZ_VERSION}",
     }
 
 

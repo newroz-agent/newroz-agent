@@ -74,7 +74,7 @@ AUTH_LOCK_TIMEOUT_SECONDS = 15.0
 # Nous Portal defaults
 DEFAULT_NOUS_PORTAL_URL = "https://portal.nousresearch.com"
 DEFAULT_NOUS_INFERENCE_URL = "https://inference-api.nousresearch.com/v1"
-DEFAULT_NOUS_CLIENT_ID = "newroz-cli"
+DEFAULT_NOUS_CLIENT_ID = "hermes-cli"
 NOUS_INFERENCE_INVOKE_SCOPE = "inference:invoke"
 NOUS_BILLING_MANAGE_SCOPE = "billing:manage"
 DEFAULT_NOUS_SCOPE = NOUS_INFERENCE_INVOKE_SCOPE
@@ -105,7 +105,7 @@ try:  # Version tag for the Codex token-endpoint User-Agent; fall back if unavai
     from newroz_cli import __version__ as _NEWROZ_CLI_VERSION
 except Exception:  # pragma: no cover - version import should always succeed
     _NEWROZ_CLI_VERSION = "unknown"
-CODEX_OAUTH_USER_AGENT = f"newroz-cli/{_NEWROZ_CLI_VERSION}"
+CODEX_OAUTH_USER_AGENT = f"hermes-cli/{_NEWROZ_CLI_VERSION}"
 CODEX_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 XAI_OAUTH_ISSUER = "https://auth.x.ai"
 XAI_OAUTH_DISCOVERY_URL = f"{XAI_OAUTH_ISSUER}/.well-known/openid-configuration"
@@ -5352,7 +5352,7 @@ def refresh_nous_oauth_from_state(
     return refresh_nous_oauth_pure(
         state.get("access_token", ""),
         state.get("refresh_token", ""),
-        state.get("client_id", "newroz-cli"),
+        state.get("client_id", "hermes-cli"),
         state.get("portal_base_url", DEFAULT_NOUS_PORTAL_URL),
         state.get("inference_base_url", DEFAULT_NOUS_INFERENCE_URL),
         token_type=state.get("token_type", "Bearer"),

@@ -53,7 +53,7 @@ def build_login_parser(subparsers, *, cmd_login: Callable) -> None:
         help="Inference API base URL (default: production inference API)",
     )
     login_parser.add_argument(
-        "--client-id", default=None, help="OAuth client id to use (default: newroz-cli)"
+        "--client-id", default=None, help="OAuth client id to use (default: hermes-cli)"
     )
     login_parser.add_argument("--scope", default=None, help="OAuth scope to request")
     login_parser.add_argument(

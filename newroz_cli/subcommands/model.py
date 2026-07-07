@@ -35,7 +35,7 @@ def build_model_parser(subparsers, *, cmd_model: Callable) -> None:
     model_parser.add_argument(
         "--client-id",
         default=None,
-        help="OAuth client id to use for Nous login (default: newroz-cli)",
+        help="OAuth client id to use for Nous login (default: hermes-cli)",
     )
     model_parser.add_argument(
         "--scope", default=None, help="OAuth scope to request for Nous login"

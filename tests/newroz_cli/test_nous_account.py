@@ -31,7 +31,7 @@ def _state(token: str) -> dict[str, Any]:
     return {
         "access_token": token,
         "portal_base_url": "https://portal.example.test",
-        "client_id": "newroz-cli",
+        "client_id": "hermes-cli",
     }
 
 
@@ -85,7 +85,7 @@ def test_valid_jwt_with_paid_access_true(monkeypatch):
         {
             "sub": "user_123",
             "org_id": "org_123",
-            "client_id": "newroz-cli",
+            "client_id": "hermes-cli",
             "product_id": "nous-newroz-agent",
             "nous_client": "newroz-agent",
             "exp": int(time.time()) + 900,
@@ -325,7 +325,7 @@ def test_pool_oauth_entry_uses_jwt_snapshot(monkeypatch):
         {
             "sub": "user_123",
             "org_id": "org_123",
-            "client_id": "newroz-cli",
+            "client_id": "hermes-cli",
             "exp": int(time.time()) + 900,
             "paid_access": True,
         }

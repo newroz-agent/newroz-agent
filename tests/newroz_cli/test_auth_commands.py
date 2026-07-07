@@ -187,7 +187,7 @@ def test_auth_add_nous_oauth_persists_pool_entry(tmp_path, monkeypatch):
         lambda **kwargs: {
             "portal_base_url": "https://portal.example.com",
             "inference_base_url": "https://inference.example.com/v1",
-            "client_id": "newroz-cli",
+            "client_id": "hermes-cli",
             "scope": "inference:invoke",
             "token_type": "Bearer",
             "access_token": token,
@@ -308,7 +308,7 @@ def test_auth_add_nous_oauth_honors_custom_label(tmp_path, monkeypatch):
         lambda **kwargs: {
             "portal_base_url": "https://portal.example.com",
             "inference_base_url": "https://inference.example.com/v1",
-            "client_id": "newroz-cli",
+            "client_id": "hermes-cli",
             "scope": "inference:invoke",
             "token_type": "Bearer",
             "access_token": token,

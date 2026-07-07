@@ -239,7 +239,7 @@ class ModalEnvironment(BaseEnvironment):
         self._worker.start()
 
         async def _create_sandbox(image_spec: Any):
-            app = await _modal.App.lookup.aio("newroz-agent", create_if_missing=True)
+            app = await _modal.App.lookup.aio("hermes-agent", create_if_missing=True)
             create_kwargs = dict(sandbox_kwargs)
             if cred_mounts:
                 existing_mounts = list(create_kwargs.pop("mounts", []))
