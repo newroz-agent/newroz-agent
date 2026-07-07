@@ -21,7 +21,7 @@ Modify, debug, or extend the s6-overlay supervision tree inside the Newroz Agent
 | License | MIT |
 | Platforms | linux |
 | Tags | `docker`, `s6`, `supervision`, `gateway`, `profiles` |
-| Related skills | [`newroz-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent), `newroz-agent-dev` |
+| Related skills | [`newroz-agent`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent), `newroz-agent-dev` |
 
 ## Reference: full SKILL.md
 

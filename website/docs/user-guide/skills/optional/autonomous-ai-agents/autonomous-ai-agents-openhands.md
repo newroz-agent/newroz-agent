@@ -21,7 +21,7 @@ Delegate coding to OpenHands CLI (model-agnostic, LiteLLM).
 | License | MIT |
 | Platforms | linux, macos |
 | Tags | `Coding-Agent`, `OpenHands`, `Model-Agnostic`, `LiteLLM` |
-| Related skills | [`claude-code`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code), [`codex`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex), [`opencode`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-opencode), [`newroz-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
+| Related skills | [`claude-code`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code), [`codex`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex), [`opencode`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-opencode), [`newroz-agent`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
 
 ## Reference: full SKILL.md
 

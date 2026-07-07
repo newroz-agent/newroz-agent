@@ -21,7 +21,7 @@ Migrate a user's OpenClaw customization footprint into Newroz Agent. Imports New
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `Migration`, `OpenClaw`, `Newroz`, `Memory`, `Persona`, `Import` |
-| Related skills | [`newroz-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
+| Related skills | [`newroz-agent`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
 
 ## Reference: full SKILL.md
 

@@ -21,7 +21,7 @@ Operate the Antigravity CLI (agy): plugins, auth, sandbox.
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `Coding-Agent`, `Antigravity`, `CLI`, `Auth`, `Plugins`, `Sandbox` |
-| Related skills | [`grok`](/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-grok), [`codex`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex), [`claude-code`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code), [`newroz-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
+| Related skills | [`grok`](/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-grok), [`codex`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex), [`claude-code`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code), [`newroz-agent`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
 
 ## Reference: full SKILL.md
 

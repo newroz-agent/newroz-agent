@@ -20,7 +20,7 @@ Use when a Newroz Kanban worker wants to run Codex CLI as an isolated implementa
 | Author | Newroz Agent |
 | License | MIT |
 | Tags | `kanban`, `codex`, `worktrees`, `autonomous-agents`, `prediction-market-bot` |
-| Related skills | [`codex`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex), [`newroz-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
+| Related skills | [`codex`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex), [`newroz-agent`](/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-newroz-agent) |
 
 ## Reference: full SKILL.md
 
