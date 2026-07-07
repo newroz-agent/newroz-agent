@@ -620,7 +620,7 @@ def _capture_response(cap: CaptureResult, max_elements: int = _DEFAULT_MAX_ELEME
             return json.dumps(payload)
 
         # Prefer the explicit MIME type cua-driver attaches to its image
-        # parts (Surface 7 of NousResearch/hermes-agent#47072 — trycua/cua#1961
+        # parts (Surface 7 of newroz-agent/newroz-agent#47072 — trycua/cua#1961
         # made `mimeType` part of every MCP image-part response). Fall back
         # to base64-prefix sniffing for older cua-driver builds that didn't
         # carry the field. JPEG base64 starts with /9j/; PNG with iVBOR.

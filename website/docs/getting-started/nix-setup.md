@@ -41,17 +41,17 @@ No clone needed. Nix fetches, builds, and runs everything:
 
 ```bash
 # Run the desktop app
-nix run github:NousResearch/hermes-agent#desktop
+nix run github:newroz-agent/newroz-agent#desktop
 
 # Or install persistently
-nix profile install github:NousResearch/hermes-agent#desktop
+nix profile install github:newroz-agent/newroz-agent#desktop
 
 # run the tui
-nix run github:NousResearch/hermes-agent -- setup
-nix run github:NousResearch/hermes-agent -- --tui
+nix run github:newroz-agent/newroz-agent -- setup
+nix run github:newroz-agent/newroz-agent -- --tui
 
 # or install it in your profile
-nix profile install github:NousResearch/hermes-agent
+nix profile install github:newroz-agent/newroz-agent
 newroz setup
 newroz --tui
 ```
@@ -69,7 +69,7 @@ The `default` package adds ~700 MB to the closure. If you only need messaging pl
 <summary><strong>Running from a local clone</strong></summary>
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/newroz-agent/newroz-agent.git
 cd newroz-agent
 nix develop
 newroz setup
@@ -94,7 +94,7 @@ This module requires NixOS. For non-NixOS systems (macOS, other Linux distros), 
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    newroz-agent.url = "github:NousResearch/hermes-agent";
+    newroz-agent.url = "github:newroz-agent/newroz-agent";
   };
 
   outputs = { nixpkgs, newroz-agent, ... }: {
@@ -733,7 +733,7 @@ External flakes can override the package directly:
 
 ```nix
 {
-  inputs.newroz-agent.url = "github:NousResearch/hermes-agent";
+  inputs.newroz-agent.url = "github:newroz-agent/newroz-agent";
   outputs = { newroz-agent, nixpkgs, ... }: {
     nixpkgs.overlays = [ newroz-agent.overlays.default ];
     # Then:

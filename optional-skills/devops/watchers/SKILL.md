@@ -66,7 +66,7 @@ Watch a GitHub repo (set `GITHUB_TOKEN` in `${NEWROZ_HOME:-~/.newroz}/.env` to a
 
 ```bash
 python $NEWROZ_HOME/skills/devops/watchers/scripts/watch_github.py \
-  --name newroz-issues --repo NousResearch/hermes-agent --scope issues
+  --name newroz-issues --repo newroz-agent/newroz-agent --scope issues
 ```
 
 Poll an arbitrary JSON API:

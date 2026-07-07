@@ -51,7 +51,7 @@ That does not stop Newroz from working well as a phone-native CLI agent — it j
 Newroz now ships a Termux-aware installer path:
 
 ```bash
-curl -fsSL https://newroz-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://newroz-agent.github.io/install.sh | bash
 ```
 
 On Termux, the installer automatically:
@@ -87,7 +87,7 @@ Why these packages?
 ### 2. Clone Newroz
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/newroz-agent/newroz-agent.git
 cd newroz-agent
 ```
 

@@ -35,11 +35,11 @@ Newroz Agent 提供了一个 Nix flake，支持三个层级的集成：
 
 ```bash
 # 直接运行（首次使用时构建，之后使用缓存）
-nix run github:NousResearch/hermes-agent -- setup
-nix run github:NousResearch/hermes-agent -- chat
+nix run github:newroz-agent/newroz-agent -- setup
+nix run github:newroz-agent/newroz-agent -- chat
 
 # 或持久化安装
-nix profile install github:NousResearch/hermes-agent
+nix profile install github:newroz-agent/newroz-agent
 newroz setup
 newroz chat
 ```
@@ -50,7 +50,7 @@ newroz chat
 <summary><strong>从本地克隆构建</strong></summary>
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/newroz-agent/newroz-agent.git
 cd newroz-agent
 nix build
 ./result/bin/newroz setup
@@ -75,7 +75,7 @@ nix build
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    newroz-agent.url = "github:NousResearch/hermes-agent";
+    newroz-agent.url = "github:newroz-agent/newroz-agent";
   };
 
   outputs = { nixpkgs, newroz-agent, ... }: {
@@ -685,7 +685,7 @@ services.newroz-agent = {
 
 ```nix
 {
-  inputs.newroz-agent.url = "github:NousResearch/hermes-agent";
+  inputs.newroz-agent.url = "github:newroz-agent/newroz-agent";
   outputs = { newroz-agent, nixpkgs, ... }: {
     nixpkgs.overlays = [ newroz-agent.overlays.default ];
     # 然后：

@@ -155,7 +155,7 @@ You no longer need to wrap `newroz update` in `screen` or `tmux` to survive a te
 newroz version
 ```
 
-Compare against the latest release at the [GitHub releases page](https://github.com/NousResearch/hermes-agent/releases).
+Compare against the latest release at the [GitHub releases page](https://github.com/newroz-agent/newroz-agent/releases).
 
 ### Updating from Messaging Platforms
 

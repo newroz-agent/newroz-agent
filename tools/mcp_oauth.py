@@ -587,7 +587,7 @@ async def _redirect_handler(authorization_url: str) -> None:
             f"         ssh -N -L {_oauth_port}:127.0.0.1:{_oauth_port} <user>@<this-host>\n"
             f"       then open the URL above and let it redirect normally.\n"
             f"\n"
-            f"  See: https://newroz-agent.nousresearch.com/docs/guides/oauth-over-ssh\n",
+            f"  See: https://newroz-agent.github.io/docs/guides/oauth-over-ssh\n",
             file=sys.stderr,
         )
 

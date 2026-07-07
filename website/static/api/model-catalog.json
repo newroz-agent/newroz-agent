@@ -3,7 +3,7 @@
   "updated_at": "2026-07-01T20:08:52Z",
   "metadata": {
     "source": "newroz-agent repo",
-    "docs": "https://newroz-agent.nousresearch.com/docs/reference/model-catalog"
+    "docs": "https://newroz-agent.github.io/docs/reference/model-catalog"
   },
   "providers": {
     "openrouter": {

@@ -70,7 +70,7 @@ newroz memory setup        # select "honcho" — runs the Honcho-specific post-s
 
 The legacy `newroz honcho setup` command still works (it now redirects to `newroz memory setup`), but is only registered after Honcho is selected as the active memory provider.
 
-**Config:** `$NEWROZ_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$NEWROZ_HOME/honcho.json` > `~/.newroz/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/newroz).
+**Config:** `$NEWROZ_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$NEWROZ_HOME/honcho.json` > `~/.newroz/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/newroz-agent/newroz-agent/blob/main/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/newroz).
 
 <details>
 <summary>Full config reference</summary>
@@ -272,7 +272,7 @@ Off-gateway these keys do nothing. `newroz memory setup` only prompts for them w
 
 </details>
 
-See the [config reference](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/newroz).
+See the [config reference](https://github.com/newroz-agent/newroz-agent/blob/main/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/newroz).
 
 
 ---
@@ -412,7 +412,7 @@ The setup wizard installs dependencies automatically and only installs what's ne
 | `retain_assistant_prefix` | `Assistant` | Label used before assistant turns in auto-retained transcripts |
 | `recall_tags` | — | Tags to filter on recall |
 
-See [plugin README](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/hindsight/README.md) for the full configuration reference.
+See [plugin README](https://github.com/newroz-agent/newroz-agent/blob/main/plugins/memory/hindsight/README.md) for the full configuration reference.
 
 ---
 

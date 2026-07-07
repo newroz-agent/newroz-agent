@@ -6,7 +6,7 @@ Usage (via cron with --no-agent):
     newroz cron create newroz-issues \\
       --schedule "*/5 * * * *" --no-agent \\
       --script "$NEWROZ_HOME/skills/devops/watchers/scripts/watch_github.py" \\
-      --script-args "--name newroz-issues --repo NousResearch/hermes-agent --scope issues"
+      --script-args "--name newroz-issues --repo newroz-agent/newroz-agent --scope issues"
 
 Set GITHUB_TOKEN (or GH_TOKEN) in the Newroz .env file
 (``${NEWROZ_HOME:-~/.newroz}/.env``) to avoid the 60 req/hr

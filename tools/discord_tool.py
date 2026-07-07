@@ -83,7 +83,7 @@ def _discord_request(
         headers={
             "Authorization": f"Bot {token}",
             "Content-Type": "application/json",
-            "User-Agent": "Newroz-Agent (https://github.com/NousResearch/hermes-agent)",
+            "User-Agent": "Newroz-Agent (https://github.com/newroz-agent/newroz-agent)",
         },
     )
 

@@ -1,6 +1,6 @@
 """Tests for NEWROZ_HOME credential-file read blocking in file_safety.
 
-Regression for https://github.com/NousResearch/hermes-agent/issues/17656 —
+Regression for https://github.com/newroz-agent/newroz-agent/issues/17656 —
 ``read_file`` was previously only sandboxed against ``NEWROZ_HOME`` itself,
 which left ``auth.json`` and ``.anthropic_oauth.json`` (plaintext provider
 keys + OAuth tokens) readable by the agent. A prompt-injection reaching

@@ -148,7 +148,7 @@ def _resolve_mcp_invocation(
 ) -> Tuple[str, List[str]]:
     """Return ``(command, args)`` that spawn cua-driver's stdio MCP server.
 
-    Surface 8 of NousResearch/hermes-agent#47072: instead of hardcoding
+    Surface 8 of newroz-agent/newroz-agent#47072: instead of hardcoding
     ``["mcp"]`` we ask the driver itself via ``cua-driver manifest``
     (trycua/cua#1961). The manifest carries a stable ``mcp_invocation``
     pointer with both ``command`` and ``args``, so a future cua-driver
@@ -367,7 +367,7 @@ def _parse_elements_from_tree(markdown: str) -> List[UIElement]:
 
 
 def _parse_elements_from_structured(raw_elements: List[Dict[str, Any]]) -> List[UIElement]:
-    """Surface 2 of NousResearch/hermes-agent#47072: read the canonical
+    """Surface 2 of newroz-agent/newroz-agent#47072: read the canonical
     ``structuredContent.elements`` array cua-driver-rs emits on every
     ``get_window_state`` response (trycua/cua#1961).
 
@@ -565,7 +565,7 @@ class _CuaDriverSession:
         self._session = None
         self._lock = threading.Lock()
         self._started = False
-        # Surface 4 of NousResearch/hermes-agent#47072: per-tool
+        # Surface 4 of newroz-agent/newroz-agent#47072: per-tool
         # capability-token sets, populated from `tools/list` at session
         # init. Keys are tool names (e.g. "click", "get_window_state");
         # values are sets of capability strings (e.g.
@@ -1034,7 +1034,7 @@ def _extract_tool_result(mcp_result: Any) -> Dict[str, Any]:
 
     `image_mime_types` is the explicit `mimeType` cua-driver emits on every
     image part as of trycua/cua#1961 (Surface 7 of
-    NousResearch/hermes-agent#47072). Each entry corresponds index-for-index
+    newroz-agent/newroz-agent#47072). Each entry corresponds index-for-index
     with `images`; an empty string entry signals the part carried no
     mimeType (older cua-driver build), and the caller should fall back to
     base64-prefix sniffing.
@@ -1158,7 +1158,7 @@ class CuaDriverBackend(ComputerUseBackend):
         self._active_pid: Optional[int] = None
         self._active_window_id: Optional[int] = None
         self._last_app: Optional[str] = None  # last app name targeted via capture/focus_app
-        # Surface 6 of NousResearch/hermes-agent#47072: per-snapshot
+        # Surface 6 of newroz-agent/newroz-agent#47072: per-snapshot
         # `element_index -> element_token` map populated on capture().
         # Action tools (click/scroll/set_value/...) attach the matching
         # token alongside `element_index` so cua-driver detects "stale"
@@ -1251,7 +1251,7 @@ class CuaDriverBackend(ComputerUseBackend):
         `get_window_state` (ax/som) or `screenshot` (vision).
         """
         # Step 1: enumerate on-screen windows to find target pid/window_id.
-        # Surface 3 of NousResearch/hermes-agent#47072: read the canonical
+        # Surface 3 of newroz-agent/newroz-agent#47072: read the canonical
         # `structuredContent.windows` array directly. Pre-fix the wrapper
         # also kept a text-line regex (`_WINDOW_LINE_RE`) as a fallback for
         # cua-driver builds that predated structuredContent; the supersede
@@ -1512,7 +1512,7 @@ class CuaDriverBackend(ComputerUseBackend):
             # Parse element count from summary e.g. "✅ AppName — 42 elements, turn 3..."
             m = re.search(r'(\d+)\s+elements?', summary)
 
-            # Surface 2 of NousResearch/hermes-agent#47072: prefer the
+            # Surface 2 of newroz-agent/newroz-agent#47072: prefer the
             # canonical structuredContent.elements array (trycua/cua#1961).
             # Falls back to markdown regex parsing for cua-driver builds
             # that didn't carry the structured shape — those bounds come
@@ -1586,7 +1586,7 @@ class CuaDriverBackend(ComputerUseBackend):
 
         # Choose tool by click_count only — single-vs-double — and pass the
         # button through to `click`'s `button` enum (Surface 5 of
-        # NousResearch/hermes-agent#47072). cua-driver-rs gained an explicit
+        # newroz-agent/newroz-agent#47072). cua-driver-rs gained an explicit
         # `button: "left"|"right"|"middle"` arg on `click` in trycua/cua#1961
         # which rejects unknown buttons; before that, `middle` was silently
         # mapped to a left-click via name-routing through `right_click`.

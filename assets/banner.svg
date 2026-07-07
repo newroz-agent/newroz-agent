@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#160908"/>
+      <stop offset="100%" stop-color="#0B0605"/>
+    </linearGradient>
+    <radialGradient id="bglow" cx="34%" cy="55%" r="45%">
+      <stop offset="0%" stop-color="#F59E1B" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="#E2452B" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#E2452B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bouter" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7A1F1F"/>
+      <stop offset="45%" stop-color="#C93222"/>
+      <stop offset="100%" stop-color="#F59E1B"/>
+    </linearGradient>
+    <linearGradient id="binner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F59E1B"/>
+      <stop offset="100%" stop-color="#FFD966"/>
+    </linearGradient>
+    <linearGradient id="wordmark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE9A8"/>
+      <stop offset="100%" stop-color="#F59E1B"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="360" fill="url(#bg)"/>
+  <circle cx="430" cy="200" r="260" fill="url(#bglow)">
+    <animate attributeName="opacity" values="0.85;1;0.9;1;0.85" dur="2.6s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- flame group, positioned left of wordmark -->
+  <g transform="translate(310 60) scale(1.05)">
+    <circle cx="94" cy="150" r="3.2" fill="#C93222" opacity="0">
+      <animate attributeName="cy" values="150;58" dur="2.6s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="cx" values="94;88;96;90" dur="2.6s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.15;0.6;1" dur="2.6s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3.2;2.2;1.2" dur="2.6s" begin="0s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="122" cy="140" r="3.6" fill="#FFD966" opacity="0">
+      <animate attributeName="cy" values="140;42" dur="3s" begin="0.9s" repeatCount="indefinite"/>
+      <animate attributeName="cx" values="122;128;118;124" dur="3s" begin="0.9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.6;1" dur="3s" begin="0.9s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3.6;2.4;1.2" dur="3s" begin="0.9s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="148" cy="152" r="3" fill="#3BA55D" opacity="0">
+      <animate attributeName="cy" values="152;64" dur="2.8s" begin="1.7s" repeatCount="indefinite"/>
+      <animate attributeName="cx" values="148;154;146;150" dur="2.8s" begin="1.7s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.85;0.85;0" keyTimes="0;0.15;0.6;1" dur="2.8s" begin="1.7s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3;2;1" dur="2.8s" begin="1.7s" repeatCount="indefinite"/>
+    </circle>
+
+    <path fill="url(#bouter)" d="M120 30 C104 58 78 86 74 122 C70 154 88 182 120 194 C152 182 170 154 166 122 C162 86 136 58 120 30 Z">
+      <animate attributeName="d" dur="1.7s" repeatCount="indefinite" calcMode="spline"
+        keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"
+        values="M120 30 C104 58 78 86 74 122 C70 154 88 182 120 194 C152 182 170 154 166 122 C162 86 136 58 120 30 Z;
+                M113 33 C100 62 76 88 73 124 C70 156 88 182 120 194 C152 182 171 152 167 120 C160 84 129 60 113 33 Z;
+                M127 32 C113 60 79 87 75 123 C71 155 89 183 120 194 C151 183 169 153 165 121 C160 86 139 58 127 32 Z;
+                M120 30 C104 58 78 86 74 122 C70 154 88 182 120 194 C152 182 170 154 166 122 C162 86 136 58 120 30 Z"/>
+    </path>
+    <path fill="url(#binner)" d="M120 86 C112 104 98 116 96 136 C94 156 106 170 120 176 C134 170 146 156 144 136 C142 116 128 104 120 86 Z">
+      <animate attributeName="d" dur="1.1s" repeatCount="indefinite" calcMode="spline"
+        keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"
+        values="M120 86 C112 104 98 116 96 136 C94 156 106 170 120 176 C134 170 146 156 144 136 C142 116 128 104 120 86 Z;
+                M115 89 C108 106 97 118 95 138 C93 156 106 171 120 176 C134 171 147 154 145 134 C142 114 125 106 115 89 Z;
+                M125 88 C119 105 99 117 96 137 C94 155 107 170 120 176 C133 170 145 155 144 135 C141 115 133 104 125 88 Z;
+                M120 86 C112 104 98 116 96 136 C94 156 106 170 120 176 C134 170 146 156 144 136 C142 116 128 104 120 86 Z"/>
+    </path>
+    <ellipse cx="120" cy="152" rx="14" ry="20" fill="#FFF3C4">
+      <animate attributeName="ry" values="20;23;19;22;20" dur="1.3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.95;1;0.9;1;0.95" dur="1.3s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- wordmark -->
+  <text x="560" y="196" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="96" font-weight="800" letter-spacing="14" fill="url(#wordmark)">NEWROZ</text>
+  <rect x="565" y="222" width="150" height="3" fill="#C93222"/>
+  <rect x="715" y="222" width="150" height="3" fill="#FFD966"/>
+  <rect x="865" y="222" width="150" height="3" fill="#3BA55D"/>
+  <text x="565" y="262" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="400" letter-spacing="6" fill="#C9A98F">AI AGENT</text>
+</svg>

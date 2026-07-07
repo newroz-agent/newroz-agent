@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   newroz:
     tags: [newroz, setup, configuration, multi-agent, spawning, cli, gateway, development]
-    homepage: https://github.com/NousResearch/hermes-agent
+    homepage: https://github.com/newroz-agent/newroz-agent
     related_skills: [claude-code, codex, opencode]
 ---
 
@@ -30,7 +30,7 @@ People use Newroz for software development, research, system administration, dat
 
 **This skill helps you work with Newroz Agent effectively** — setting it up, configuring features, spawning additional agent instances, troubleshooting issues, finding the right commands and settings, and understanding how the system works when you need to extend or contribute to it.
 
-**Docs:** https://newroz-agent.nousresearch.com/docs/
+**Docs:** https://newroz-agent.github.io/docs/
 
 ## Scope & Verification
 
@@ -39,14 +39,14 @@ This skill is a concise operating guide, not the complete source of truth for ev
 Good verification targets:
 
 - CLI commands: `newroz --help`, `newroz <command> --help`, and `newroz_cli/main.py`
-- User documentation: https://newroz-agent.nousresearch.com/docs/
-- Source tree: https://github.com/NousResearch/hermes-agent
+- User documentation: https://newroz-agent.github.io/docs/
+- Source tree: https://github.com/newroz-agent/newroz-agent
 
 ## Quick Start
 
 ```bash
 # Install (shell installer — sets up uv, Python, the venv, and the launcher)
-curl -fsSL https://newroz-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://newroz-agent.github.io/install.sh | bash
 
 # Or via PyPI (ships the TUI bundle + shell launcher)
 pip install newroz-agent       # or: uv pip install newroz-agent
@@ -170,7 +170,7 @@ newroz gateway setup        Configure platforms
 
 Supported platforms (20+): Telegram, Discord, Slack, WhatsApp (Baileys bridge + official Business Cloud API), iMessage (Photon — `newroz photon setup`, the BlueBubbles successor with no Mac relay), Signal, Email, SMS, Matrix, Mattermost, Microsoft Teams, LINE, SimpleX, ntfy, Google Chat, Home Assistant, DingTalk, Feishu, WeCom, Weixin (WeChat), Raft (agent network), API Server, Webhooks. Open WebUI connects via the API Server adapter. Most adapters ship under `plugins/platforms/`, so new ones drop in without touching core.
 
-Platform docs: https://newroz-agent.nousresearch.com/docs/user-guide/messaging/
+Platform docs: https://newroz-agent.github.io/docs/user-guide/messaging/
 
 ### Sessions
 
@@ -264,7 +264,7 @@ For the full, authoritative command list run `newroz --help` (and `newroz <comma
 
 Type these during an interactive chat session. New commands land fairly
 often; if something below looks stale, run `/help` in-session for the
-authoritative list or see the [live slash commands reference](https://newroz-agent.nousresearch.com/docs/reference/slash-commands).
+authoritative list or see the [live slash commands reference](https://newroz-agent.github.io/docs/reference/slash-commands).
 The registry of record is `newroz_cli/commands.py` — every consumer
 (autocomplete, Telegram menu, Slack mapping, `/help`) derives from it.
 
@@ -398,7 +398,7 @@ Edit with `newroz config edit` or `newroz config set section.key value`.
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 | `curator` | `enabled`, `consolidate` (false — opt-in aux-model skill consolidation), `interval_hours`, `stale_after_days` |
 
-Full config reference: https://newroz-agent.nousresearch.com/docs/user-guide/configuration
+Full config reference: https://newroz-agent.github.io/docs/user-guide/configuration
 
 ### Providers
 
@@ -428,7 +428,7 @@ Full config reference: https://newroz-agent.nousresearch.com/docs/user-guide/con
 | Custom endpoint | Config | `model.base_url` + `model.api_key` in config.yaml |
 | GitHub Copilot ACP | External | `COPILOT_CLI_PATH` or Copilot CLI |
 
-Full provider docs: https://newroz-agent.nousresearch.com/docs/integrations/providers
+Full provider docs: https://newroz-agent.github.io/docs/integrations/providers
 
 ### Toolsets
 
@@ -740,7 +740,7 @@ the `cronjob` tool, the `newroz cron` CLI (`list`, `add`, `edit`,
   header/footer instead of being mirrored into the target gateway
   session (keeps role alternation intact).
 
-User docs: https://newroz-agent.nousresearch.com/docs/user-guide/features/cron
+User docs: https://newroz-agent.github.io/docs/user-guide/features/cron
 
 ### Curator (skill lifecycle)
 
@@ -766,7 +766,7 @@ so nothing is lost.
 
 Config: `curator.*` (`enabled`, `interval_hours`, `min_idle_hours`,
 `stale_after_days`, `archive_after_days`, `backup.*`).
-User docs: https://newroz-agent.nousresearch.com/docs/user-guide/features/curator
+User docs: https://newroz-agent.github.io/docs/user-guide/features/curator
 
 ### Kanban (multi-agent work queue)
 
@@ -795,7 +795,7 @@ sessions still have zero `kanban_*` schema footprint unless configured.
   `NEWROZ_KANBAN_BOARD` pinned in env); tenant is a soft namespace
   within a board for workspace-path + memory-key isolation.
 
-User docs: https://newroz-agent.nousresearch.com/docs/user-guide/features/kanban
+User docs: https://newroz-agent.github.io/docs/user-guide/features/kanban
 
 ---
 
@@ -948,18 +948,18 @@ newroz config set auxiliary.vision.model <model_name>
 
 | Looking for... | Location |
 |----------------|----------|
-| Config options | `newroz config edit` or [Configuration docs](https://newroz-agent.nousresearch.com/docs/user-guide/configuration) |
-| Available tools | `newroz tools list` or [Tools reference](https://newroz-agent.nousresearch.com/docs/reference/tools-reference) |
-| Slash commands | `/help` in session or [Slash commands reference](https://newroz-agent.nousresearch.com/docs/reference/slash-commands) |
-| Skills catalog | `newroz skills browse` or [Skills catalog](https://newroz-agent.nousresearch.com/docs/reference/skills-catalog) |
-| Provider setup | `newroz model` or [Providers guide](https://newroz-agent.nousresearch.com/docs/integrations/providers) |
-| Platform setup | `newroz gateway setup` or [Messaging docs](https://newroz-agent.nousresearch.com/docs/user-guide/messaging/) |
-| MCP servers | `newroz mcp list` or [MCP guide](https://newroz-agent.nousresearch.com/docs/user-guide/features/mcp) |
-| Profiles | `newroz profile list` or [Profiles docs](https://newroz-agent.nousresearch.com/docs/user-guide/profiles) |
-| Cron jobs | `newroz cron list` or [Cron docs](https://newroz-agent.nousresearch.com/docs/user-guide/features/cron) |
-| Memory | `newroz memory status` or [Memory docs](https://newroz-agent.nousresearch.com/docs/user-guide/features/memory) |
-| Env variables | `newroz config env-path` or [Env vars reference](https://newroz-agent.nousresearch.com/docs/reference/environment-variables) |
-| CLI commands | `newroz --help` or [CLI reference](https://newroz-agent.nousresearch.com/docs/reference/cli-commands) |
+| Config options | `newroz config edit` or [Configuration docs](https://newroz-agent.github.io/docs/user-guide/configuration) |
+| Available tools | `newroz tools list` or [Tools reference](https://newroz-agent.github.io/docs/reference/tools-reference) |
+| Slash commands | `/help` in session or [Slash commands reference](https://newroz-agent.github.io/docs/reference/slash-commands) |
+| Skills catalog | `newroz skills browse` or [Skills catalog](https://newroz-agent.github.io/docs/reference/skills-catalog) |
+| Provider setup | `newroz model` or [Providers guide](https://newroz-agent.github.io/docs/integrations/providers) |
+| Platform setup | `newroz gateway setup` or [Messaging docs](https://newroz-agent.github.io/docs/user-guide/messaging/) |
+| MCP servers | `newroz mcp list` or [MCP guide](https://newroz-agent.github.io/docs/user-guide/features/mcp) |
+| Profiles | `newroz profile list` or [Profiles docs](https://newroz-agent.github.io/docs/user-guide/profiles) |
+| Cron jobs | `newroz cron list` or [Cron docs](https://newroz-agent.github.io/docs/user-guide/features/cron) |
+| Memory | `newroz memory status` or [Memory docs](https://newroz-agent.github.io/docs/user-guide/features/memory) |
+| Env variables | `newroz config env-path` or [Env vars reference](https://newroz-agent.github.io/docs/reference/environment-variables) |
+| CLI commands | `newroz --help` or [CLI reference](https://newroz-agent.github.io/docs/reference/cli-commands) |
 | Gateway logs | `~/.newroz/logs/gateway.log` |
 | Session files | `newroz sessions browse` (reads state.db) |
 | Source code | `~/.newroz/newroz-agent/` |
@@ -968,7 +968,7 @@ newroz config set auxiliary.vision.model <model_name>
 
 ## Contributor Quick Reference
 
-For occasional contributors and PR authors. Full developer docs: https://newroz-agent.nousresearch.com/docs/developer-guide/
+For occasional contributors and PR authors. Full developer docs: https://newroz-agent.github.io/docs/developer-guide/
 
 ### Project Layout
 

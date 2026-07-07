@@ -160,7 +160,7 @@ stdenv.mkDerivation {
 
   meta = with lib; {
     description = "Native Electron desktop shell for Newroz Agent";
-    homepage = "https://github.com/NousResearch/hermes-agent";
+    homepage = "https://github.com/newroz-agent/newroz-agent";
     license = licenses.mit;
     platforms = platforms.unix;
     mainProgram = "newroz-desktop";

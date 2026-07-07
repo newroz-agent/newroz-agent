@@ -13,7 +13,7 @@ When the manifest is unreachable (offline, network blocked, hosting failure), Ne
 ## Live manifest URL
 
 ```
-https://newroz-agent.nousresearch.com/docs/api/model-catalog.json
+https://newroz-agent.github.io/docs/api/model-catalog.json
 ```
 
 Published on every merge to `main` via the existing `deploy-site.yml` GitHub Pages pipeline. The source of truth lives in the repo at `website/static/api/model-catalog.json`.
@@ -68,7 +68,7 @@ Cache location: `~/.newroz/cache/model_catalog.json`.
 ```yaml
 model_catalog:
   enabled: true
-  url: https://newroz-agent.nousresearch.com/docs/api/model-catalog.json
+  url: https://newroz-agent.github.io/docs/api/model-catalog.json
   ttl_hours: 1
   providers: {}
 ```

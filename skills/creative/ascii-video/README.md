@@ -2,7 +2,7 @@
 
 Renders any content as colored ASCII character video. Audio, video, images, text, or pure math in, MP4/GIF/PNG sequence out. Full RGB color per character cell, 1080p 24fps default. No GPU.
 
-Built for [Newroz Agent](https://github.com/NousResearch/hermes-agent). Usable in any coding agent. Canonical source lives here; synced to [`NousResearch/hermes-agent/skills/creative/ascii-video`](https://github.com/NousResearch/hermes-agent/tree/main/skills/creative/ascii-video) via PR.
+Built for [Newroz Agent](https://github.com/newroz-agent/newroz-agent). Usable in any coding agent. Canonical source lives here; synced to [`newroz-agent/newroz-agent/skills/creative/ascii-video`](https://github.com/newroz-agent/newroz-agent/tree/main/skills/creative/ascii-video) via PR.
 
 ## What this is
 

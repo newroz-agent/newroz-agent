@@ -81,7 +81,7 @@ python $NEWROZ_HOME/skills/devops/watchers/scripts/watch_rss.py \
 
 ```bash
 python $NEWROZ_HOME/skills/devops/watchers/scripts/watch_github.py \
-  --name newroz-issues --repo NousResearch/hermes-agent --scope issues
+  --name newroz-issues --repo newroz-agent/newroz-agent --scope issues
 ```
 
 轮询任意 JSON API：

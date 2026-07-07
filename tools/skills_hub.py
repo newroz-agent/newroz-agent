@@ -3053,7 +3053,7 @@ class OptionalSkillSource(SkillSource):
     (search / install / inspect) and labelled "official" with "builtin" trust.
     """
 
-    OFFICIAL_REPO = "NousResearch/hermes-agent"
+    OFFICIAL_REPO = "newroz-agent/newroz-agent"
 
     def __init__(self):
         from newroz_constants import get_optional_skills_dir
@@ -3654,7 +3654,7 @@ def check_for_skill_updates(
 # Newroz centralized index source
 # ---------------------------------------------------------------------------
 
-NEWROZ_INDEX_URL = "https://newroz-agent.nousresearch.com/docs/api/skills-index.json"
+NEWROZ_INDEX_URL = "https://newroz-agent.github.io/docs/api/skills-index.json"
 NEWROZ_INDEX_TTL = 6 * 3600  # 6 hours
 
 
