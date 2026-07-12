@@ -2136,8 +2136,71 @@ def categorize_commit(subject: str) -> str:
     return "other"
 
 
+# ---------------------------------------------------------------------------
+# Display-time rebrand of commit subjects.
+#
+# Commit messages are contributors' own words and git history is immutable — we
+# NEVER rewrite them. But the pre-fork subjects talk about `hermes serve`,
+# `HERMES_CRON_TIMEOUT`, the "Hermes console", etc., and shipping those verbatim
+# in user-facing release notes points readers at commands and env vars that no
+# longer exist. So the rename happens at render time only: the commit keeps its
+# original words, the notes show the current names.
+#
+# A blanket Hermes->Newroz would make several subjects LIE, so two guards:
+#
+#   1. `rebrand:` commits are skipped whole. They are *about* the old names, so
+#      renaming inverts their meaning — "revert external service identifiers to
+#      hermes-*" would render as "...to newroz-*", the exact opposite of what
+#      that commit did.
+#   2. Protected tokens are masked before the substitution and restored after.
+#      These are real-world identifiers, not our branding: the Hermes-3/Hermes-4
+#      model names, NousResearch/... paths (the upstream org and its HF repos),
+#      the hermes-cli / hermes-agent external service + package identifiers we
+#      deliberately kept, and NOUS_PORTAL_* env vars for the real Nous Portal.
+#
+# "Nous" / "Nous Research" is deliberately NOT rewritten anywhere: it names a
+# real external org and its services (Nous Portal, the `nous` provider), and
+# renaming it in a subject would state something false.
+_PROTECTED_SUBJECT_TOKENS = re.compile(
+    r"""(
+        Hermes-[0-9]\S*              # model families: Hermes-3, Hermes-4-405B
+      | NousResearch/\S*             # upstream org paths / HF repos / branches
+      | hermes-cli(?:-vps)?          # OAuth client_id (external service)
+      | hermes-agent(?:\[bot\])?     # upstream repo/package + bot identity
+      | hermes-\*                    # the literal glob in the rebrand commits
+      | (?:HERMES|NOUS)_PORTAL\S*    # Portal env vars (real external service)
+    )""",
+    re.VERBOSE,
+)
+
+
+def _rebrand_subject_for_display(subject: str) -> str:
+    """Render pre-fork commit subjects with current product names.
+
+    Display-only: the underlying commit is never modified. See the block
+    comment above for what is protected and why.
+    """
+    # `rebrand:` commits describe the old names on purpose — leave them alone.
+    if re.match(r"^\s*rebrand\b", subject, re.IGNORECASE):
+        return subject
+
+    masked: list[str] = []
+
+    def _mask(m: re.Match) -> str:
+        masked.append(m.group(0))
+        return f"\x00{len(masked) - 1}\x00"
+
+    out = _PROTECTED_SUBJECT_TOKENS.sub(_mask, subject)
+
+    # Case-aware: HERMES_FOO -> NEWROZ_FOO, Hermes -> Newroz, hermes -> newroz.
+    out = out.replace("HERMES", "NEWROZ").replace("Hermes", "Newroz").replace("hermes", "newroz")
+
+    return re.sub(r"\x00(\d+)\x00", lambda m: masked[int(m.group(1))], out)
+
+
 def clean_subject(subject: str) -> str:
     """Clean up a commit subject for display."""
+    subject = _rebrand_subject_for_display(subject)
     # Remove conventional commit prefix
     cleaned = re.sub(r"^(feat|fix|docs|chore|refactor|test|perf|ci|build|improve|add|update|cleanup|hotfix|breaking|enhance|optimize|bugfix|bug|feature|tests|deps|bump)[\s:(!]+\s*", "", subject, flags=re.IGNORECASE)
     # Remove trailing issue refs that are redundant with PR links
@@ -2156,10 +2219,29 @@ def parse_coauthors(body: str) -> list:
     """
     if not body:
         return []
-    # AI/bot emails to ignore in co-author trailers
+    # AI/bot emails to ignore in co-author trailers.
+    #
+    # These are MATCH KEYS against trailers already written into git history —
+    # historical data, not branding. The rebrand's identifier sweep renamed
+    # `hermes@nousresearch.com` to `newroz@nousresearch.com` here, which silently
+    # broke the filter: no commit carries the new address, so the agent's own
+    # co-author trailers stopped being recognised and it started showing up in
+    # the contributors list as a person ("Hermes Agent (1 commit)"). The old
+    # addresses must stay verbatim to keep matching the commits that exist.
+    # `newroz@…` is kept for trailers written post-rename.
     _ignored_emails = {"noreply@anthropic.com", "noreply@github.com",
-                       "cursoragent@cursor.com", "newroz@nousresearch.com"}
-    _ignored_names = re.compile(r"^(Claude|Copilot|Cursor Agent|GitHub Actions?|dependabot|renovate)", re.IGNORECASE)
+                       "cursoragent@cursor.com",
+                       # The agent itself, across every address it has committed under.
+                       "newroz@nousresearch.com", "hermes@nousresearch.com",
+                       "agent@nousresearch.com", "noreply@nousresearch.com",
+                       "hermes@nousresearch.ai", "hermes@noushq.ai",
+                       "agent@hermes.ai", "agent@hermes.local",
+                       "hermes-agent[bot]@users.noreply.github.com"}
+    # NB: deliberately NOT ignored — teknium@nousresearch.com and
+    # 127238744+teknium1@users.noreply.github.com are a real person (whose
+    # GitHub display name happens to be "Hermes Agent"); AUTHOR_MAP resolves the
+    # latter to @teknium1. Filtering them would erase a human contributor.
+    _ignored_names = re.compile(r"^(Claude|Copilot|Cursor Agent|GitHub Actions?|dependabot|renovate|hermes-agent\[bot\])", re.IGNORECASE)
     pattern = re.compile(r"Co-authored-by:\s*(.+?)\s*<([^>]+)>", re.IGNORECASE)
     results = []
     for m in pattern.finditer(body):
