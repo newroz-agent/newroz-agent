@@ -64,17 +64,32 @@ class ReadOnlySourceEggInfo(_egg_info):
         super().finalize_options()
 
 
-def _data_file_tree(root_name: str) -> list[tuple[str, list[str]]]:
+def _data_file_tree(root_name: str, pattern: str = "*") -> list[tuple[str, list[str]]]:
     root = REPO_ROOT / root_name
     grouped: defaultdict[str, list[str]] = defaultdict(list)
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob(pattern)):
         if not path.is_file():
+            continue
+        if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
             continue
         rel_path = path.relative_to(REPO_ROOT)
         grouped[str(rel_path.parent)].append(str(rel_path))
     return sorted(grouped.items())
 
 
+# EVERY data_files entry must be declared here, not in pyproject.toml.
+# `[tool.setuptools.data-files]` in pyproject silently OVERRIDES this kwarg
+# rather than merging with it: when locales/ and optional-mcps/ were declared
+# there, setuptools dropped skills/ and optional-skills/ from the wheel
+# entirely. The sdist still carried them (MANIFEST.in grafts them), so the
+# breakage only showed up for `pip install newroz-agent`, which takes the
+# wheel — bundled skills silently vanished, and get_bundled_skills_dir()
+# (newroz_constants.py) fell through its `<sysconfig data>/skills` branch to
+# an empty ~/.newroz/skills.
+#
+# These are bare data directories with no __init__.py, so they are neither
+# packages (packages.find) nor package-data (which attaches to a package);
+# data_files is the only mechanism that ships them to a sealed install.
 setup(
     cmdclass={
         "build": ReadOnlySourceBuild,
@@ -83,5 +98,7 @@ setup(
     data_files=[
         *_data_file_tree("skills"),
         *_data_file_tree("optional-skills"),
+        *_data_file_tree("locales", "*.yaml"),
+        *_data_file_tree("optional-mcps", "manifest.yaml"),
     ]
 )

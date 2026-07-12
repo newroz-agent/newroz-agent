@@ -241,30 +241,55 @@ def test_locked_starlette_is_not_vulnerable_to_cve_2026_48710():
         )
 
 
-def test_locale_catalogs_ship_in_both_wheel_and_sdist():
-    """Regression test for #27632 / #35374 / #23943.
+def test_pyproject_declares_no_data_files_table():
+    """A [tool.setuptools.data-files] table silently breaks the wheel.
 
-    locales/ is a bare data directory (no __init__.py), so it is invisible to
-    packages.find and to package-data (which attaches to a package). It must be
-    declared as setuptools data-files (wheel) AND grafted in MANIFEST.in
-    (sdist). Without both, sealed installs drop the catalogs and gateway/CLI
-    commands surface raw i18n keys like `gateway.reset.header_default`.
+    setuptools does not merge that table with the ``data_files=`` kwarg in
+    setup.py — it REPLACES it. Declaring locales/ and optional-mcps/ there is
+    what dropped skills/ and optional-skills/ out of the wheel entirely, so
+    `pip install newroz-agent` shipped no bundled skills at all. The sdist kept
+    them (MANIFEST.in grafts them), which is why it stayed invisible.
+
+    All four data trees are declared in setup.py instead. Re-adding this table
+    would silently un-ship whichever trees it omits, so fail loudly here.
     """
     data = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    data_files = data["tool"]["setuptools"].get("data-files", {})
-    assert data_files.get("locales") == ["locales/*.yaml"], (
-        "pyproject [tool.setuptools.data-files] must declare "
-        'locales = ["locales/*.yaml"] so the wheel ships i18n catalogs'
+    assert "data-files" not in data["tool"]["setuptools"], (
+        "pyproject must NOT declare [tool.setuptools.data-files]: it overrides "
+        "(does not merge with) setup.py's data_files=, which silently drops "
+        "skills/ and optional-skills/ from the wheel. Declare data trees in "
+        "setup.py's data_files= kwarg instead."
     )
 
+
+def test_bare_data_dirs_ship_in_both_wheel_and_sdist():
+    """Regression test for #27632 / #35374 / #23943 and the wheel-skills drop.
+
+    skills/, optional-skills/, locales/ and optional-mcps/ are bare data
+    directories (no __init__.py), so they are invisible to packages.find and to
+    package-data (which attaches to a package). Each must be declared in
+    setup.py's data_files= (wheel) AND grafted in MANIFEST.in (sdist). Without
+    both, sealed installs drop them: i18n commands surface raw keys like
+    `gateway.reset.header_default`, and get_bundled_skills_dir() falls through
+    its `<sysconfig data>/skills` branch to an empty ~/.newroz/skills.
+    """
+    setup_py = (REPO_ROOT / "setup.py").read_text(encoding="utf-8")
     manifest = (REPO_ROOT / "MANIFEST.in").read_text(encoding="utf-8")
-    assert "graft locales" in manifest, (
-        "MANIFEST.in must `graft locales` so the sdist ships i18n catalogs"
-    )
 
-    # Every on-disk catalog has the .yaml extension the globs above match.
-    on_disk = list((REPO_ROOT / "locales").glob("*.yaml"))
-    assert on_disk, "expected locales/*.yaml catalogs on disk"
+    for tree in ("skills", "optional-skills", "locales", "optional-mcps"):
+        assert f'_data_file_tree("{tree}"' in setup_py, (
+            f"setup.py data_files= must declare the {tree}/ tree so the wheel "
+            f"ships it"
+        )
+        assert f"graft {tree}" in manifest, (
+            f"MANIFEST.in must `graft {tree}` so the sdist ships it"
+        )
+        assert (REPO_ROOT / tree).is_dir(), f"expected {tree}/ on disk"
+
+    # Every on-disk catalog has the .yaml extension the setup.py glob matches.
+    assert list((REPO_ROOT / "locales").glob("*.yaml")), (
+        "expected locales/*.yaml catalogs on disk"
+    )
 
 
 # ---------------------------------------------------------------------------
