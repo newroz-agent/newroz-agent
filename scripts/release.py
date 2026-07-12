@@ -2551,14 +2551,22 @@ def main():
             return
         print(f"  ✓ Created tag {tag_name}")
 
-        # Push
+        # Push. The tag reaching origin is what fires .github/workflows/
+        # upload_to_pypi.yml (`on: push: tags: v20*`), which is the ONLY thing
+        # that publishes to PyPI. If the push fails we must stop: carrying on to
+        # cut a GitHub Release for a tag that never reached origin produces a
+        # release that looks successful, announces a version to users, and ships
+        # absolutely nothing to PyPI.
         push_result = git_result("push", "origin", "HEAD", "--tags")
-        if push_result.returncode == 0:
-            print("  ✓ Pushed to origin")
-        else:
+        if push_result.returncode != 0:
             print(f"  ✗ Failed to push to origin: {push_result.stderr.strip()}")
-            print("    Continue manually after fixing access:")
-            print("    git push origin HEAD --tags")
+            print("    The tag exists locally but NOT on origin, so the PyPI")
+            print("    publish workflow has not been triggered and nothing has")
+            print("    been released. Fix access, then push it yourself:")
+            print(f"      git push origin HEAD {tag_name}")
+            print("    Re-running this script would try to re-create the tag.")
+            return
+        print("  ✓ Pushed to origin (tag push triggers the PyPI publish workflow)")
 
         # Build semver-named Python artifacts so downstream packagers
         # (e.g. Homebrew) can target them without relying on CalVer tag names.

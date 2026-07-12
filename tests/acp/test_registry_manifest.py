@@ -33,8 +33,11 @@ def test_agent_json_matches_official_registry_required_fields():
     assert data["name"] == "Newroz Agent"
     assert data["description"]
     assert data["repository"] == "https://github.com/newroz-agent/newroz-agent"
-    assert data["website"].startswith("https://newroz-agent.github.io/")
-    assert data["authors"] == ["Nous Research"]
+    assert data["website"].startswith("https://newroz-agent.vercel.app/")
+    # Authorship of THIS package (the fork), which is what the registry lists.
+    # Distinct from the upstream commit attribution in git history and the
+    # LICENSE, both of which still credit Nous Research for the Hermes work.
+    assert data["authors"] == ["Lawand"]
     assert data["license"] == "MIT"
     assert set(data["distribution"]) <= ALLOWED_DISTRIBUTIONS
 

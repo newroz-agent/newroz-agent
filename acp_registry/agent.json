@@ -4,8 +4,8 @@
   "version": "0.18.1",
   "description": "Self-improving open-source AI agent with ACP editor integration, persistent memory, skills, and rich tool support.",
   "repository": "https://github.com/newroz-agent/newroz-agent",
-  "website": "https://newroz-agent.github.io/docs/user-guide/features/acp",
-  "authors": ["Nous Research"],
+  "website": "https://newroz-agent.vercel.app/user-guide/features/acp",
+  "authors": ["Lawand"],
   "license": "MIT",
   "distribution": {
     "uvx": {

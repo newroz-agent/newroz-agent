@@ -3,13 +3,15 @@ name: Publish to PyPI
 # Triggered by CalVer tag pushes from scripts/release.py (e.g. v2026.5.15)
 # Can also be triggered manually from the Actions tab as an escape hatch.
 #
-# CAVEAT — the `push: tags:` trigger below only fires for tags pushed over git
-# (`git push --tags`). A tag created through the GitHub Releases API (which is
-# what `gh release create` does when the tag does not exist remotely) arrives as
-# a `release` event, NOT a tag `push`, so this workflow does not run and the
-# release silently ships nothing to PyPI. If that happens, publish the existing
-# tag with the workflow_dispatch escape hatch below (Actions -> Publish to PyPI
-# -> Run workflow -> confirm_tag: vYYYY.M.D) rather than re-cutting the tag.
+# HISTORY — v2026.7.13 was tagged and pushed correctly by scripts/release.py, yet
+# this workflow never ran and the release shipped nothing to PyPI. The cause was
+# not the trigger: GitHub had never REGISTERED this workflow (the Actions API
+# 404'd on it, and it was absent from the workflow list), and an unregistered
+# workflow has no triggers to fire. Touching this file in a push to the default
+# branch forced GitHub to index it. If a tag push ever appears to do nothing
+# again, check `gh workflow list` FIRST — if this workflow is missing from it,
+# that is the bug, not the tag. The workflow_dispatch input below stays as an
+# escape hatch for publishing a tag that already exists.
 on:
   push:
     tags:
