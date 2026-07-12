@@ -11,6 +11,9 @@ src/data/skills.json
 src/data/skills-meta.json
 static/llms.txt
 static/llms-full.txt
+# Copied from scripts/ by prebuild.mjs — scripts/ is the source of truth.
+static/install.sh
+static/install.ps1
 
 # Misc
 .DS_Store
@@ -22,3 +25,5 @@ static/llms-full.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.vercel
+.env*

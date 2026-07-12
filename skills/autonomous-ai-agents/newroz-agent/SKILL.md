@@ -46,7 +46,7 @@ Good verification targets:
 
 ```bash
 # Install (shell installer — sets up uv, Python, the venv, and the launcher)
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 
 # Or via PyPI (ships the TUI bundle + shell launcher)
 pip install newroz-agent       # or: uv pip install newroz-agent

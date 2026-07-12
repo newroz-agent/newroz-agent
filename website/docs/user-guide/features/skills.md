@@ -24,7 +24,7 @@ By default every profile is seeded with the bundled skill catalog, and each `new
 **At install time** (applies to the default `~/.newroz` profile):
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash -s -- --no-skills
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash -s -- --no-skills
 ```
 
 **At profile-create time** (named profiles):

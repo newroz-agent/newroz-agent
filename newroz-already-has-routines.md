@@ -127,7 +127,7 @@ A nightly backlog triage on Sonnet costs roughly $0.02-0.05. A monitoring check 
 Newroz Agent is open source and free. The automation infrastructure — cron scheduler, webhook platform, skill system, multi-platform delivery — is built in.
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 newroz setup
 ```
 

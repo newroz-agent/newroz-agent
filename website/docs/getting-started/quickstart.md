@@ -55,14 +55,14 @@ For a command-line only install without Newroz Desktop, run:
 
 #### Linux / macOS / WSL2 / Android (Termux)
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 ```
 
 #### Windows (native)
 
 Run in powershell:
 ```powershell
-iex (irm https://newroz-agent.github.io/install.ps1) 
+iex (irm https://newroz-agent.vercel.app/install.ps1) 
 ```
 
 :::tip Android / Termux

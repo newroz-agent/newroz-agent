@@ -27,38 +27,73 @@ has `python3`; if the deps are missing the prebuild degrades gracefully
 broken-link **warnings** for pre-existing zh-Hans translation drift only —
 `onBrokenLinks` is intentionally `warn`, so these do not fail the deploy.
 
+## Serving `install.sh` / `install.ps1`
+
+The documented install one-liner is:
+
+```sh
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
+```
+
+For that to work the site must serve the installers from its **root**.
+`website/scripts/prebuild.mjs` copies `scripts/install.sh` and
+`scripts/install.ps1` into `website/static/` on every `npm run build` and
+`npm run start`, so they end up at `build/install.sh` and `build/install.ps1`.
+
+`scripts/` is the single source of truth. The copies in `static/` are
+generated and **gitignored** — do not commit them, and do not edit them: a
+second copy of a 3000-line installer drifts silently the moment someone
+patches only one of them. The prebuild step fails the build outright if the
+source scripts are missing, because shipping a site whose documented install
+command 404s is worse than a failed deploy.
+
 ## Setting the final domain — checklist
 
-Once you pick the real domain, update every place the URL is duplicated.
+Current deploy target is `https://newroz-agent.vercel.app`. Once you point a
+custom domain at the project, update every place the URL is duplicated.
 Docusaurus derives the absolute `og:image` / `twitter:image` URLs from the
 site `url`, so **fixing `url` automatically fixes the social-preview image
 URLs** — there is no separate og:image string to edit.
 
 ### A. The docs site's own domain (what Vercel serves) — REQUIRED
 
-- `website/docusaurus.config.ts` → `url: 'https://NEWROZ-DOMAIN.example'`
-  Set this to the exact Vercel domain (scheme + host, no trailing slash).
+- `website/docusaurus.config.ts` → `url: 'https://newroz-agent.vercel.app'`
+  Set this to the exact domain (scheme + host, no trailing slash).
   This one field drives canonical URLs, sitemap, and og/twitter image URLs.
 
-### B. Cross-references to the docs domain (still hard-coded to the old
-`newroz-agent.github.io/docs`) — update if the docs move off that host
+### B. Cross-references to the docs domain — update if the docs move host
 
 Inside `website/`:
 - `website/scripts/prebuild.mjs` → `UNIFIED_INDEX_URL`
-  (`https://newroz-agent.github.io/docs/api/skills-index.json`) — the live
+  (`https://newroz-agent.vercel.app/api/skills-index.json`) — the live
   skills-index it pulls at build time.
 - `website/scripts/generate-llms-txt.py` → `SITE_BASE` and the canonical /
   llms.txt / llms-full.txt URLs it writes into the generated files
   (lines ~12–13, 34, 251–252).
 - `website/static/api/model-catalog.json` → `docs` URL.
 
-### C. The marketing / download site + install host — SEPARATE domain
+### C. The install one-liner — now served from the docs site
 
-These point at the download/marketing site and the `install.sh` / `install.ps1`
-host, which is a **different** property from the docs site. Only change these
-if that property also moves:
-- `website/docusaurus.config.ts` navbar **Download** and **Home** items, and
-  the footer **Desktop Download** item (`https://newroz-agent.github.io/`).
+The installer URLs were swept from the old `newroz-agent.github.io` host to
+`https://newroz-agent.vercel.app/install.{sh,ps1}`, so the install host and
+the docs site are now the **same** property. When the custom domain lands,
+sweep them together:
+
+```sh
+# Preview, then replace:
+grep -rn "newroz-agent.vercel.app/install\." \
+  --exclude-dir={node_modules,.git,.venv,build} .
+```
+
+These live in: the 4 `README.*.md` files, `CONTRIBUTING.md`,
+`website/docs/**`, `website/i18n/**`, `scripts/install.{sh,ps1,cmd}`
+(their own header comments), `newroz_cli/main.py`, `newroz_cli/uninstall.py`,
+and `skills/autonomous-ai-agents/newroz-agent/SKILL.md`.
+
+The navbar **Download** / **Home** items and the footer **Desktop Download**
+item in `website/docusaurus.config.ts` still point at
+`https://newroz-agent.github.io/` — that is the marketing/download property
+and is a separate decision.
 
 ### D. Repo docs outside `website/` (not touched by this rebrand) — update
 when convenient

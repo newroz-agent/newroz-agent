@@ -52,7 +52,7 @@ Newroz 的差异化特性：
 
 ```bash
 # 安装
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 
 # 交互式聊天（默认）
 newroz

@@ -35,7 +35,7 @@ Usa cualquier modelo que quieras — [Nous Portal](https://portal.nousresearch.c
 ### Linux, macOS, WSL2, Termux
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 ```
 
 ### Windows (nativo, PowerShell)
@@ -45,7 +45,7 @@ curl -fsSL https://newroz-agent.github.io/install.sh | bash
 Ejecuta esto en PowerShell:
 
 ```powershell
-iex (irm https://newroz-agent.github.io/install.ps1)
+iex (irm https://newroz-agent.vercel.app/install.ps1)
 ```
 
 El instalador se encarga de todo: uv, Python 3.11, Node.js, ripgrep, ffmpeg, **y un Git Bash portátil** (MinGit, descomprimido en `%LOCALAPPDATA%\newroz\git` — no requiere administrador, completamente aislado de cualquier instalación de Git del sistema). Newroz usa este Git Bash incluido para ejecutar comandos de shell.

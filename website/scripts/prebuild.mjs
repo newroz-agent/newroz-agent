@@ -23,19 +23,20 @@
 // deploys get real data.
 
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync, existsSync, statSync } from "node:fs";
+import { copyFileSync, mkdirSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const websiteDir = resolve(scriptDir, "..");
+const repoRoot = resolve(websiteDir, "..");
 const extractScript = join(scriptDir, "extract-skills.py");
 const llmsScript = join(scriptDir, "generate-llms-txt.py");
 const cronBlueprintsScript = join(scriptDir, "extract-automation-blueprints.py");
 const outputFile = join(websiteDir, "static", "api", "skills.json");
 const unifiedIndexFile = join(websiteDir, "static", "api", "skills-index.json");
 const UNIFIED_INDEX_URL =
-  "https://newroz-agent.github.io/docs/api/skills-index.json";
+  "https://newroz-agent.vercel.app/api/skills-index.json";
 const UNIFIED_INDEX_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
 
 function writeEmptyFallback(reason) {
@@ -119,7 +120,32 @@ async function ensureUnifiedIndex() {
   }
 }
 
-// 0) Pull unified index if we don't have a fresh one.
+// The install one-liner (`curl -fsSL <site>/install.sh | bash`) is documented in
+// the READMEs, the docs, and the installers' own header comments, so the site
+// must serve these two files from its root. Copy them out of scripts/ at build
+// time rather than committing duplicates into static/ — a second copy of a
+// 3000-line installer drifts silently the moment someone patches only one of
+// them. Both copies are gitignored for the same reason.
+function copyInstallers() {
+  const targetDir = join(websiteDir, "static");
+  mkdirSync(targetDir, { recursive: true });
+  for (const name of ["install.sh", "install.ps1"]) {
+    const src = join(repoRoot, "scripts", name);
+    if (!existsSync(src)) {
+      // Fatal: shipping a site whose documented install command 404s is worse
+      // than failing the build.
+      console.error(`[prebuild] FATAL: ${src} not found; cannot publish ${name}`);
+      process.exit(1);
+    }
+    copyFileSync(src, join(targetDir, name));
+    console.log(`[prebuild] copied scripts/${name} -> static/${name}`);
+  }
+}
+
+// 0) Publish the installers to the site root.
+copyInstallers();
+
+// 0b) Pull unified index if we don't have a fresh one.
 await ensureUnifiedIndex();
 
 // 1) skills.json — required for the Skills Hub page.

@@ -8,7 +8,7 @@ REM Usage:
 REM   curl -fsSL https://raw.githubusercontent.com/newroz-agent/newroz-agent/main/scripts/install.cmd -o install.cmd && install.cmd && del install.cmd
 REM
 REM Or if you're already in PowerShell, use the direct command instead:
-REM   iex (irm https://newroz-agent.github.io/install.ps1)
+REM   iex (irm https://newroz-agent.vercel.app/install.ps1)
 REM ============================================================================
 
 echo.
@@ -16,12 +16,12 @@ echo  Newroz Agent Installer
 echo  Launching PowerShell installer...
 echo.
 
-powershell -ExecutionPolicy ByPass -NoProfile -Command "iex (irm https://newroz-agent.github.io/install.ps1)"
+powershell -ExecutionPolicy ByPass -NoProfile -Command "iex (irm https://newroz-agent.vercel.app/install.ps1)"
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo  Installation failed. Please try running PowerShell directly:
-    echo    powershell -ExecutionPolicy ByPass -c "iex (irm https://newroz-agent.github.io/install.ps1)"
+    echo    powershell -ExecutionPolicy ByPass -c "iex (irm https://newroz-agent.vercel.app/install.ps1)"
     echo.
     pause
     exit /b 1

@@ -6,7 +6,7 @@
 # Uses uv for desktop/server installs and Python's stdlib venv + pip on Termux.
 #
 # Usage:
-#   curl -fsSL https://newroz-agent.github.io/install.sh | bash
+#   curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 #
 # Or with options:
 #   curl -fsSL ... | bash -s -- --no-venv --skip-setup
@@ -527,7 +527,7 @@ detect_os() {
             OS="windows"
             DISTRO="windows"
             log_error "Windows detected. Please use the PowerShell installer:"
-            log_info "  iex (irm https://newroz-agent.github.io/install.ps1)"
+            log_info "  iex (irm https://newroz-agent.vercel.app/install.ps1)"
             exit 1
             ;;
         *)
@@ -2574,7 +2574,7 @@ postinstall_mode() {
         ensure_browser
     fi
 
-    NEWROZ_CMD="$(command -v hermes 2>/dev/null || echo "")"
+    NEWROZ_CMD="$(command -v newroz 2>/dev/null || echo "")"
     if [ -n "$NEWROZ_CMD" ]; then
         log_info "Running newroz setup..."
         "$NEWROZ_CMD" setup

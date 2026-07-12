@@ -36,7 +36,7 @@
 <div dir="ltr">
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 ```
 
 </div>
@@ -50,7 +50,7 @@ curl -fsSL https://newroz-agent.github.io/install.sh | bash
 <div dir="ltr">
 
 ```powershell
-iex (irm https://newroz-agent.github.io/install.ps1)
+iex (irm https://newroz-agent.vercel.app/install.ps1)
 ```
 
 </div>

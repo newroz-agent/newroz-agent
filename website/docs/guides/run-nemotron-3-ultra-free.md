@@ -49,16 +49,16 @@ Prefer the terminal?
 On macOS/Linux/WSL2/Android, run
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 ```
 
 On Windows, run
 
 ```powershell
-iex (irm https://newroz-agent.github.io/install.ps1)
+iex (irm https://newroz-agent.vercel.app/install.ps1)
 ```
 
-Prefer to review first? Download [`install.sh`](https://newroz-agent.github.io/install.sh), inspect it, then run it.
+Prefer to review first? Download [`install.sh`](https://newroz-agent.vercel.app/install.sh), inspect it, then run it.
 
 After it finishes, reload your shell:
 

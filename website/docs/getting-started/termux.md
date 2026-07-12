@@ -51,7 +51,7 @@ That does not stop Newroz from working well as a phone-native CLI agent — it j
 Newroz now ships a Termux-aware installer path:
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 ```
 
 On Termux, the installer automatically:

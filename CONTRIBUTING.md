@@ -124,7 +124,7 @@ development environment on the same layout the CLI, updater, lazy dependency
 installer, gateway, and docs assume.
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 cd "${NEWROZ_HOME:-$HOME/.newroz}/newroz-agent"
 
 # Add dev/test extras on top of the standard install.

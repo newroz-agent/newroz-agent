@@ -9462,7 +9462,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 return
             print("✗ Not a git repository. Please reinstall:")
             print(
-                "  curl -fsSL https://newroz-agent.github.io/install.sh | bash"
+                "  curl -fsSL https://newroz-agent.vercel.app/install.sh | bash"
             )
             sys.exit(1)
 

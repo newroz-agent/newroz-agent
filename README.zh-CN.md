@@ -30,7 +30,7 @@
 ## 快速安装
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 ```
 
 支持 Linux、macOS、WSL2 和 Android (Termux)。安装程序会自动处理平台特定的配置。
@@ -39,7 +39,7 @@ curl -fsSL https://newroz-agent.github.io/install.sh | bash
 >
 > **Windows：** 在 PowerShell 中运行：
 > ```powershell
-> iex (irm https://newroz-agent.github.io/install.ps1)
+> iex (irm https://newroz-agent.vercel.app/install.ps1)
 > ```
 > 安装完成后，可能需要重启终端，然后运行 `newroz` 开始对话。
 
@@ -171,7 +171,7 @@ newroz claw migrate --overwrite  # 覆盖已有冲突
 `newroz update`、托管 venv、lazy dependencies、gateway 和 docs tooling 使用的布局。
 
 ```bash
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 cd "${NEWROZ_HOME:-$HOME/.newroz}/newroz-agent"
 uv pip install -e ".[all,dev]"
 scripts/run_tests.sh

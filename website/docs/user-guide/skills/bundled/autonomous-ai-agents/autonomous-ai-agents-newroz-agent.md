@@ -52,7 +52,7 @@ People use Newroz for software development, research, system administration, dat
 
 ```bash
 # Install
-curl -fsSL https://newroz-agent.github.io/install.sh | bash
+curl -fsSL https://newroz-agent.vercel.app/install.sh | bash
 
 # Interactive chat (default)
 newroz

@@ -7,9 +7,10 @@ const config: Config = {
   tagline: 'The self-improving AI agent',
   favicon: 'img/favicon.ico',
 
-  // Set the real domain in Vercel; see vercel.json / DEPLOY.md for every
-  // other place this URL is duplicated.
-  url: 'https://NEWROZ-DOMAIN.example',
+  // Current deploy target. Swap to the custom domain when it's live — see
+  // DEPLOY.md for every other place this URL is duplicated (the install
+  // one-liner in the READMEs and docs is the big one).
+  url: 'https://newroz-agent.vercel.app',
   baseUrl: '/',
 
   organizationName: 'newroz-agent',
