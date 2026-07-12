@@ -12,6 +12,7 @@ from agent.image_routing import (
     _coerce_mode,
     _explicit_aux_vision_override,
     _lookup_supports_vision,
+    _should_probe_ollama_vision,
     _supports_vision_override,
     build_native_content_parts,
     decide_image_input_mode,
@@ -311,6 +312,40 @@ class TestLookupSupportsVisionOverride:
         # Caller didn't pass cfg at all — old call sites must still work.
         with patch("agent.models_dev.get_model_capabilities", return_value=None):
             assert _lookup_supports_vision("openrouter", "x", None) is None
+
+
+# ─── _should_probe_ollama_vision (remote base URLs skip the network probe) ──
+
+
+class TestShouldProbeOllamaVision:
+    def test_provider_ollama_short_circuits_without_probing(self):
+        # provider == "ollama" is trusted outright; no network call needed.
+        with patch("agent.model_metadata.detect_local_server_type") as probe:
+            assert _should_probe_ollama_vision("ollama", "") is True
+            probe.assert_not_called()
+
+    def test_empty_base_url_returns_false_without_probing(self):
+        with patch("agent.model_metadata.detect_local_server_type") as probe:
+            assert _should_probe_ollama_vision("custom", "") is False
+            probe.assert_not_called()
+
+    def test_remote_base_url_skips_probe(self):
+        # A hosted gateway (Cloudflare, OpenRouter, etc.) can never be a
+        # local Ollama server — probing it wastes a request and, worse,
+        # can stall a turn on a slow/unreachable third-party host.
+        remote = "https://gateway.ai.cloudflare.com/v1/acct/newroz/openai"
+        with patch("agent.model_metadata.detect_local_server_type") as probe:
+            assert _should_probe_ollama_vision("cloudflare", remote) is False
+            probe.assert_not_called()
+
+    def test_local_base_url_still_probes(self):
+        with patch("agent.model_metadata.detect_local_server_type", return_value="ollama") as probe:
+            assert _should_probe_ollama_vision("custom", "http://localhost:11434/v1") is True
+            probe.assert_called_once()
+
+    def test_probe_exception_is_swallowed(self):
+        with patch("agent.model_metadata.detect_local_server_type", side_effect=Exception("boom")):
+            assert _should_probe_ollama_vision("custom", "http://localhost:11434/v1") is False
 
 
 # ─── decide_image_input_mode with auto + override ────────────────────────────

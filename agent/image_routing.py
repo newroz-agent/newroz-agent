@@ -319,15 +319,26 @@ def _resolve_inference_base_url(
 
 
 def _should_probe_ollama_vision(provider: str, base_url: str) -> bool:
-    """True when the active provider likely fronts a local Ollama server."""
+    """True when the active provider likely fronts a local Ollama server.
+
+    Only ever probes the network for base URLs that resolve to a local/
+    trusted-mesh address (loopback, RFC-1918, Tailscale CGNAT, etc. — see
+    :func:`agent.model_metadata.is_local_endpoint`). Remote base URLs (a
+    Cloudflare AI Gateway, OpenRouter, any hosted custom endpoint) can never
+    be an Ollama server, so skipping the probe there avoids firing several
+    blind HTTP requests at a third-party host on every turn for users who
+    have no local server at all.
+    """
     p = (provider or "").strip().lower()
     if p == "ollama":
         return True
     if not base_url:
         return False
     try:
-        from agent.model_metadata import detect_local_server_type
+        from agent.model_metadata import detect_local_server_type, is_local_endpoint
 
+        if not is_local_endpoint(base_url):
+            return False
         return detect_local_server_type(base_url) == "ollama"
     except Exception:
         return False
