@@ -21,7 +21,7 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
       </Typography>
 
       <a
-        href="https://nousresearch.com"
+        href="https://newroz-agent.vercel.app"
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
