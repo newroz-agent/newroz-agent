@@ -33,6 +33,8 @@ class CLIAgentSetupMixin:
         from newroz_cli.runtime_provider import (
             resolve_runtime_provider,
             format_runtime_provider_error,
+            format_missing_model_error,
+            resolved_model_is_empty,
         )
 
         _primary_exc = None
@@ -73,6 +75,19 @@ class CLIAgentSetupMixin:
         if runtime is None:
             message = format_runtime_provider_error(_primary_exc) if _primary_exc else "Provider resolution failed."
             ChatConsole().print(f"[bold red]{message}[/]")
+            return False
+
+        # A provider resolved, but no model was ever chosen — see
+        # format_missing_model_error() for why this is easy to hit on a fresh
+        # install and what the raw failure looks like without this guard.
+        #
+        # ACP providers (Claude Code, Codex, Copilot ACP) drive an external agent
+        # binary that picks its own model, so an empty model is legitimate there.
+        if resolved_model_is_empty(self.model) and not runtime.get("command"):
+            _message = format_missing_model_error(
+                runtime.get("provider") or self.requested_provider
+            )
+            ChatConsole().print(f"\n[bold yellow]{_escape(_message)}[/]\n")
             return False
 
         api_key = runtime.get("api_key")

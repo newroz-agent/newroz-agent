@@ -2056,3 +2056,32 @@ def format_runtime_provider_error(error: Exception) -> str:
     if isinstance(error, AuthError):
         return format_auth_error(error)
     return str(error)
+
+
+def resolved_model_is_empty(model: object) -> bool:
+    """True when no model was ever chosen, so a request would be unroutable."""
+    return not str(model or "").strip()
+
+
+def format_missing_model_error(provider: object = None) -> str:
+    """Guidance for 'credentials found, but no model selected'.
+
+    Without this the request goes out with an empty ``model`` field and the
+    provider rejects it with something cryptic and unactionable — OpenRouter
+    answers ``HTTP 400: No models provided``, which tells a new user nothing
+    about what to fix.
+
+    The gap is easy to fall into on a fresh install: ``model.default`` starts as
+    "" (see DEFAULT_CONFIG in cli.py), so any config.yaml with a ``model:`` block
+    that has no ``default:`` key lands here — including the config produced by
+    following our own non-interactive setup hint, which tells people to run
+    ``newroz config set model.provider ...`` first.
+    """
+    label = str(provider or "").strip() or "your provider"
+    return (
+        f"No model selected. Credentials for {label} were found, but no model is "
+        f"set, so there is nothing to send the request to.\n\n"
+        f"  newroz model                          pick a provider and model interactively\n"
+        f"  newroz config set model.default <id>  set one directly (e.g. z-ai/glm-5.2)\n\n"
+        f"Docs: https://newroz-agent.vercel.app/getting-started/quickstart"
+    )

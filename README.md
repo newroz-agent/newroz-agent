@@ -56,12 +56,44 @@ If you already have Git installed, the installer detects it and uses that instea
 >
 > **Windows:** Native Windows is fully supported — the PowerShell one-liner above installs everything. If you'd rather use WSL2, the Linux command works there too. Native Windows install lives under `%LOCALAPPDATA%\newroz`; WSL2 installs under `~/.newroz` as on Linux.
 
-After installation:
+### With pip / pipx (any platform)
+
+Newroz is on PyPI. `pipx` is recommended over plain `pip` — Newroz pins its
+dependencies exactly, so an isolated environment avoids conflicting with
+anything else you have installed:
+
+```bash
+pipx install newroz-agent      # or: uv tool install newroz-agent
+```
+
+## Set a model before your first run
+
+**Newroz needs a provider and a model before it can answer anything.** Install
+does not configure one, so do this first — otherwise your first message has
+nowhere to go:
 
 ```bash
 source ~/.bashrc    # reload shell (or: source ~/.zshrc)
-newroz              # start chatting!
+newroz model        # pick a provider and model, and paste your API key
+newroz              # now start chatting!
 ```
+
+`newroz model` walks you through it interactively. If you'd rather do it by
+hand, set a key and a model — **both are required**:
+
+```bash
+echo 'OPENROUTER_API_KEY=sk-or-...' >> ~/.newroz/.env   # 1. the key
+newroz config set model.default z-ai/glm-5.2            # 2. the model
+```
+
+> Setting a provider **without** a model (`newroz config set model.provider ...`
+> on its own) leaves Newroz with nothing to route requests to. Newroz will tell
+> you so and point you back here rather than failing with a raw HTTP error.
+
+Not sure which model? Any [OpenRouter](https://openrouter.ai/models) model id
+works, and `newroz model` lists what your key can reach. You can also point
+Newroz at a local server (Ollama, llama.cpp, vLLM) — see the
+[quickstart](https://newroz-agent.vercel.app/getting-started/quickstart).
 
 ### Troubleshooting
 

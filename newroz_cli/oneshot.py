@@ -203,6 +203,42 @@ def run_oneshot(
         )
         return 2
 
+    # No model anywhere (arg, env, or config) — the request would go out with an
+    # empty `model` field and come back as a cryptic HTTP 400. Check here, before
+    # the stderr redirect below, so the guidance actually reaches the terminal.
+    # Mirrors the same guard on the interactive path (_ensure_runtime_credentials).
+    from newroz_cli.runtime_provider import (
+        format_missing_model_error,
+        resolved_model_is_empty,
+    )
+
+    if resolved_model_is_empty((model or "").strip() or env_model_early):
+        from newroz_cli.auth import AuthError, resolve_provider
+        from newroz_cli.config import load_config
+
+        _model_cfg = load_config().get("model") or {}
+        if isinstance(_model_cfg, str):
+            _cfg_model = _model_cfg
+            _cfg_provider = provider
+        else:
+            _cfg_model = _model_cfg.get("default") or _model_cfg.get("model") or ""
+            _cfg_provider = provider or _model_cfg.get("provider")
+
+        if resolved_model_is_empty(_cfg_model):
+            # Only claim "credentials found, but no model" when a provider really
+            # does resolve. With no keys and no config at all, nothing is
+            # configured *yet* — that is a different (and already well-handled)
+            # story, so fall through and let the auth layer say
+            # "No inference provider configured. Run 'newroz model' ...".
+            # Asserting credentials exist here would be flatly untrue.
+            try:
+                _resolved = resolve_provider(_cfg_provider or "auto")
+            except AuthError:
+                _resolved = None
+            if _resolved:
+                sys.stderr.write(f"{format_missing_model_error(_resolved)}\n")
+                return 2
+
     explicit_toolsets, toolsets_error = _validate_explicit_toolsets(toolsets)
     if toolsets_error:
         sys.stderr.write(toolsets_error)
