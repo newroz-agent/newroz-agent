@@ -2281,11 +2281,22 @@ def get_commits(since_tag=None):
     else:
         range_spec = "HEAD"
 
-    # Format: hash<US>author_name<US>author_email<US>subject\0body
-    # Using %x1f (unit separator) to avoid conflict with | in author names
+    # Format: hash<US>author_name<US>author_email<US>subject<US>body<RS>
+    #
+    # Fields are separated by %x1f (unit separator) and each record is TERMINATED
+    # by %x1e (record separator). Both are control characters that cannot occur in
+    # a commit message, so neither a `|` in an author name nor a blank line in a
+    # body can break the parse.
+    #
+    # The old format ended records with `%s\0%b\0` and split on "\0\0", which only
+    # works when the body is EMPTY (giving the required "\0\0"). A commit WITH a
+    # body produced "\0<body>\0\n", so no "\0\0" separator existed and that commit
+    # silently absorbed every following commit until the next body-less one. On a
+    # range where every commit had a body, the whole log collapsed into a single
+    # entry: 5 commits rendered as 1, and the rest vanished from the release notes.
     log = git(
         "log", range_spec,
-        "--format=%H%x1f%an%x1f%ae%x1f%s%x00%b%x00",
+        "--format=%H%x1f%an%x1f%ae%x1f%s%x1f%b%x1e",
         "--no-merges",
     )
 
@@ -2293,23 +2304,15 @@ def get_commits(since_tag=None):
         return []
 
     commits = []
-    # Split on double-null to get each commit entry, since body ends with \0
-    # and format ends with \0, each record ends with \0\0 between entries
-    for entry in log.split("\0\0"):
+    for entry in log.split("\x1e"):
         entry = entry.strip()
         if not entry:
             continue
-        # Split on first null to separate "hash<US>name<US>email<US>subject" from "body"
-        if "\0" in entry:
-            header, body = entry.split("\0", 1)
-            body = body.strip()
-        else:
-            header = entry
-            body = ""
-        parts = header.split("\x1f", 3)
-        if len(parts) != 4:
+        parts = entry.split("\x1f", 4)
+        if len(parts) < 4:
             continue
-        sha, name, email, subject = parts
+        sha, name, email, subject = parts[:4]
+        body = parts[4].strip() if len(parts) > 4 else ""
         coauthor_info = parse_coauthors(body)
         coauthors = [resolve_author(ca["name"], ca["email"]) for ca in coauthor_info]
         commits.append({
