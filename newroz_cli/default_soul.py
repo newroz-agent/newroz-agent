@@ -1,7 +1,7 @@
 """Default SOUL.md template seeded into NEWROZ_HOME on first run."""
 
 DEFAULT_SOUL_MD = (
-    "You are Newroz Agent, an intelligent AI assistant created by Nous Research. "
+    "You are Newroz Agent, an intelligent AI assistant. "
     "You are helpful, knowledgeable, and direct. You assist users with a wide "
     "range of tasks including answering questions, writing and editing code, "
     "analyzing information, creative work, and executing actions via your tools. "
@@ -10,16 +10,23 @@ DEFAULT_SOUL_MD = (
     "Be targeted and efficient in your exploration and investigations."
 )
 
-# Legacy SOUL.md boilerplate that older installers (install.sh / install.ps1 /
-# docker/SOUL.md) seeded before they were switched to write DEFAULT_SOUL_MD.
-# These templates contain no persona text -- they are pure comment scaffolding,
-# so a SOUL.md whose content matches one of these was demonstrably never
-# customized by the user and is safe to upgrade to DEFAULT_SOUL_MD in place.
+# Legacy SOUL.md content that older installers (install.sh / install.ps1 /
+# docker/SOUL.md) seeded before they were switched to write the current
+# DEFAULT_SOUL_MD. A SOUL.md whose content matches one of these was written by
+# an installer and demonstrably never edited by the user, so it is safe to
+# upgrade to DEFAULT_SOUL_MD in place.
+#
+# Two kinds live here:
+#   1. Comment-only scaffolding, which carries no persona text at all.
+#   2. A superseded machine-seeded default (the pre-rebrand identity line).
+#      This one IS persona text, but it is verbatim what an installer wrote --
+#      matching it byte-for-byte proves the user never touched the file.
 #
 # Match on normalized content (stripped, line-endings unified) so trailing
-# newlines or CRLF from Windows installers don't defeat the comparison. NEVER
-# add anything here that a user might have intentionally written -- the whole
-# safety guarantee is that these strings carry zero user intent.
+# newlines or CRLF from Windows installers don't defeat the comparison.
+# Matching is EXACT: a user who changed even one character keeps their file.
+# NEVER add anything here that an installer did not itself write -- the whole
+# safety guarantee is that every string here carries zero *user* intent.
 _LEGACY_TEMPLATE_SOULS = (
     (
         "# Newroz Agent Persona\n"
@@ -52,6 +59,20 @@ _LEGACY_TEMPLATE_SOULS = (
         "This file is loaded fresh each message -- no restart needed.\n"
         "Delete the contents (or this file) to use the default personality.\n"
         "-->"
+    ),
+    # The pre-rebrand default identity, seeded verbatim by install.sh,
+    # install.ps1, and docker/SOUL.md. Superseded by DEFAULT_SOUL_MD above,
+    # which drops the incorrect upstream attribution. An exact match means the
+    # installer wrote it and the user never edited it.
+    (
+        "You are Newroz Agent, an intelligent AI assistant created by Nous "
+        "Research. You are helpful, knowledgeable, and direct. You assist users "
+        "with a wide range of tasks including answering questions, writing and "
+        "editing code, analyzing information, creative work, and executing "
+        "actions via your tools. You communicate clearly, admit uncertainty when "
+        "appropriate, and prioritize being genuinely useful over being verbose "
+        "unless otherwise directed below. Be targeted and efficient in your "
+        "exploration and investigations."
     ),
 )
 
