@@ -22,6 +22,25 @@ authors = [{ name = "Lawand" }]
 maintainers = [{ name = "Lawand" }]
 license = "MIT"
 license-files = ["LICENSE"]
+keywords = ["ai", "agent", "llm", "cli", "autonomous-agent", "skills", "assistant"]
+# Trove classifiers must come from the official list (pypi.org/classifiers);
+# an unrecognised string is rejected by PyPI at upload time, not at build time.
+# `License :: ...` is deliberately absent: PEP 639 forbids pairing a license
+# classifier with the SPDX `license = "MIT"` expression above, and setuptools
+# errors out if both are present.
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Environment :: Console",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Utilities",
+]
 dependencies = [
   # Core — every direct dep is exact-pinned to ==X.Y.Z (no ranges).
   # Rationale: ranges allow PyPI to ship a fresh version of a transitive
@@ -140,6 +159,12 @@ dependencies = [
   # / pywin32 tree) ships only where it's actually used.
   "concurrent-log-handler==0.9.29; sys_platform == 'win32'",
 ]
+
+[project.urls]
+Homepage = "https://newroz-agent.vercel.app"
+Documentation = "https://newroz-agent.vercel.app"
+Repository = "https://github.com/newroz-agent/newroz-agent"
+Issues = "https://github.com/newroz-agent/newroz-agent/issues"
 
 [project.optional-dependencies]
 # Native Anthropic provider — only needed when provider=anthropic (not via

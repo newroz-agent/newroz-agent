@@ -144,3 +144,9 @@ apps/desktop/demo/
 # PR body is the archive. See the newroz-agent-dev skill's
 # pr-infographic-workflow reference (storage rule + lapse #8 / #COMMIT-1).
 infographic/
+
+# Python build artifacts (python -m build). Never commit these — the wheel
+# and sdist are rebuilt on every release and are what gets uploaded to PyPI.
+dist/
+build/
+*.egg-info/
