@@ -45,6 +45,7 @@ ACP_REGISTRY_MANIFEST = REPO_ROOT / "acp_registry" / "agent.json"
 
 # Auto-extracted from noreply emails + manual overrides
 AUTHOR_MAP = {
+    "lawandabdulmajid@gmail.com": "newroz-agent",  # project maintainer (see RELEASER_ALIASES)
     "taylorhp@gmail.com": "hwrdprkns",  # PR #36896 salvage (secrets: 1Password op:// secret source + shared _cache substrate, adapted onto the SecretSource interface)
     "ishengeqi@163.com": "isheng-eqi",  # PR #59428 salvage (cron: reject past one-shot timestamps in update_job fallback + resume_job; #59395). Also PR #59446 salvage (cron: advance one-shot next_run_at before dispatch so concurrent gateway+desktop schedulers can't double-execute; #59229).
     "derek2000139@qq.com": "derek2000139",  # PR #57838 salvage (desktop/windows: pre-write update marker before quit dwell so the renderer's waitForUpdateToFinish gate parks instead of respawning a backend that re-locks venv .pyd files mid-update)
@@ -2136,6 +2137,27 @@ def categorize_commit(subject: str) -> str:
     return "other"
 
 
+# The person cutting the release is not thanked in their own release notes —
+# "Thank you to everyone who contributed" reads oddly when it thanks the author
+# of the announcement. Upstream excluded @teknium1 here for exactly that reason;
+# post-fork the releaser is @newroz-agent, so the exclusion moves with the role.
+# teknium1 is now thanked like any other contributor.
+RELEASER_ALIASES = {"@newroz-agent", "newroz-agent"}
+
+
+def _is_revert_of_merge(subject: str) -> bool:
+    """True for `Revert "Merge pull request #123 from org/branch"` commits.
+
+    These carry no signal for a reader — the feature they revert was itself
+    never in a release, so the notes would announce the undoing of something
+    that was never announced. They also drag raw upstream branch refs
+    (NousResearch/feat/...) into user-facing notes. Dropped from the changelog
+    entirely rather than rewritten: renaming the org in a branch ref would
+    assert the branch lived in a repo it never lived in.
+    """
+    return bool(re.match(r'^\s*Revert\s+"?\s*Merge pull request\b', subject, re.IGNORECASE))
+
+
 # ---------------------------------------------------------------------------
 # Display-time rebrand of commit subjects.
 #
@@ -2333,15 +2355,16 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/n
     # Group commits by category
     categories = defaultdict(list)
     all_authors = set()
-    teknium_aliases = {"@teknium1"}
 
     for commit in commits:
+        if _is_revert_of_merge(commit["subject"]):
+            continue
         categories[commit["category"]].append(commit)
         author = commit["github_author"]
-        if author not in teknium_aliases:
+        if author not in RELEASER_ALIASES:
             all_authors.add(author)
         for coauthor in commit.get("coauthors", []):
-            if coauthor not in teknium_aliases:
+            if coauthor not in RELEASER_ALIASES:
                 all_authors.add(coauthor)
 
     # Category display order and emoji
@@ -2376,7 +2399,7 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/n
             else:
                 parts.append(f"([`{commit['short_sha']}`]({repo_url}/commit/{commit['sha']}))")
 
-            if author not in teknium_aliases:
+            if author not in RELEASER_ALIASES:
                 parts.append(f"— {author}")
 
             lines.append(" ".join(parts))
@@ -2388,11 +2411,13 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/n
         # Sort contributors by commit count
         author_counts = defaultdict(int)
         for commit in commits:
+            if _is_revert_of_merge(commit["subject"]):
+                continue
             author = commit["github_author"]
-            if author not in teknium_aliases:
+            if author not in RELEASER_ALIASES:
                 author_counts[author] += 1
             for coauthor in commit.get("coauthors", []):
-                if coauthor not in teknium_aliases:
+                if coauthor not in RELEASER_ALIASES:
                     author_counts[coauthor] += 1
 
         sorted_authors = sorted(author_counts.items(), key=lambda x: -x[1])
