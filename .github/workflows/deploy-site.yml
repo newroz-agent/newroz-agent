@@ -33,17 +33,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-vercel:
-    # Triggered automatically on release publish (production cuts) and
-    # manually via `gh workflow run deploy-site.yml` when an out-of-band
-    # main commit needs to ship live before the next release tag — e.g.
-    # a skills-index PR that doesn't touch website/** paths and so
-    # doesn't auto-deploy via the deploy-docs path.
-    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Vercel Deploy
-        run: curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+  # NOTE: there is deliberately no Vercel job here any more.
+  #
+  # This used to be a `curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"` step,
+  # but the VERCEL_DEPLOY_HOOK secret was never set on this repo, so it expanded
+  # to `curl -X POST ""` and failed on every run since 2026-07-08 — which is why
+  # the live site sat five days stale, still serving pre-rebrand content and
+  # 404ing on /install.sh.
+  #
+  # The Vercel project is now connected to this GitHub repo directly
+  # (`vercel git connect`), so Vercel builds and deploys every push to main by
+  # itself. No secret, no hook, nothing to expire.
+  #
+  # It also fixes a second bug this job could never have covered: the `push`
+  # trigger above filters on website/**, but the installers the site serves live
+  # in scripts/. Editing scripts/install.sh therefore never redeployed the site.
+  # Vercel's own integration ignores those path filters and rebuilds regardless.
 
   deploy-docs:
     if: github.repository == 'newroz-agent/newroz-agent'

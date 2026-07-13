@@ -150,3 +150,5 @@ infographic/
 dist/
 build/
 *.egg-info/
+.vercel
+.env*

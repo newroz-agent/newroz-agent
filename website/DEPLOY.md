@@ -7,16 +7,45 @@ serves from a domain **root** (e.g. `https://newroz.dev/`) rather than a
 ## One-time Vercel setup
 
 1. Vercel → **New Project** → import `newroz-agent/newroz-agent`.
-2. **Root Directory:** `website`
-3. **Framework Preset:** Docusaurus (auto-detected; pinned in `vercel.json`).
-4. **Build Command:** `npm run build` (from `vercel.json`)
-5. **Output Directory:** `build` (from `vercel.json`)
-6. **Install Command:** `npm install` (from `vercel.json`)
-7. Deploy, then add your custom domain under **Project → Settings → Domains**.
+2. **Root Directory:** `.` — the repo root, **not** `website/`.
+3. Everything else comes from **`vercel.json` at the repo root**. Leave the UI
+   fields alone.
+4. Deploy, then add your custom domain under **Project → Settings → Domains**.
 
-`vercel.json` (in this directory) already pins the build/output/install
-commands and enables `cleanUrls`, so the Vercel UI fields above are just
-confirmations.
+### Why the Root Directory is the repo root, and why that matters
+
+> **Do not "fix" this by setting Root Directory to `website/`.** That was the
+> original setting, and it is what broke the site.
+
+Two hard constraints:
+
+- **Vercel reads `vercel.json` from the Root Directory and nowhere else.** With
+  the root set to `website/`, a `website/vercel.json` works — but with the root
+  at `.`, it is silently ignored. That file used to exist here and did nothing
+  at all; it has been deleted, and the real config now lives at the repo root.
+- **`scripts/prebuild.mjs` copies `scripts/install.{sh,ps1}` from the repo root**
+  into the site so the documented one-liner
+  (`curl -fsSL <site>/install.sh | bash`) resolves. Those files live *outside*
+  `website/`, so a `website/`-rooted build cannot reach them.
+
+Because the repo root's `package.json` is an npm-workspaces manifest with no
+`build` script (and a bare `npm install` there would drag in the web/tui/desktop
+workspaces the docs site does not need), the root `vercel.json` scopes both
+commands with `--prefix website`. `npm run build` still fires the `prebuild`
+lifecycle hook, which is what performs the installer copy.
+
+### Deploys are automatic
+
+The Vercel project is connected to this GitHub repo (`vercel git connect`), so
+**every push to `main` builds and deploys by itself**.
+
+There is no longer a `VERCEL_DEPLOY_HOOK` secret or a CI job that pokes Vercel.
+That is deliberate: the hook secret was never actually set, so the workflow step
+expanded to `curl -X POST ""` and failed on every run — and the live site sat
+five days stale, serving pre-rebrand content and 404ing on `/install.sh`, with
+nothing but a red X in Actions to say so.
+
+To deploy by hand: `npx vercel --prod` from the repo root.
 
 ### Build note
 
