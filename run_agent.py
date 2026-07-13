@@ -5830,6 +5830,16 @@ def main(
     Toolset Examples:
         - "research": Web search, extract, crawl + vision tools
     """
+    # The `newroz-agent` console_script entry point calls this function
+    # directly (sys.exit(main())) — fire.Fire only wraps it in the
+    # `__main__` block below, so CLI flags never reach `main`'s
+    # parameters here. Without this check, `newroz-agent --version`
+    # silently ignored the flag and launched the demo conversation loop.
+    if sys.argv[1:] in (["--version"], ["-V"]):
+        from newroz_cli import __version__, __release_date__
+        print(f"Newroz Agent v{__version__} ({__release_date__})")
+        return
+
     print("🤖 AI Agent with Tool Calling")
     print("=" * 50)
     
