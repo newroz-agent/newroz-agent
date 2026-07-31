@@ -48,6 +48,28 @@ import httpx
 OUTPUT_PATH = os.path.join(REPO_ROOT, "website", "static", "api", "skills-index.json")
 INDEX_VERSION = 1
 
+# Health-check floors: catch silent breakage early. Every source listed below
+# has historically returned at least `floor` entries; a zero (or near-zero)
+# result almost certainly means a tap path moved, an API changed, or rate
+# limiting kicked in. Failing the build forces a human look before a broken
+# index reaches the live docs.
+EXPECTED_FLOORS = {
+    # skills.sh now uses the sitemap walker (~20k catalog as of May 2026).
+    # Anything under 10k means the sitemap shape changed or fetches failed
+    # — better to fail loudly than ship a regression to the 858-skill
+    # popular-queries era.
+    "skills.sh": 10000,
+    "lobehub": 100,
+    # ClawHub had 49,698+ skills as of May 2026 — anything under 20k means
+    # pagination broke or the API surface changed.  Fail loudly rather
+    # than ship a degenerate index (we shipped 200/50000 silently for
+    # weeks because the floor was 50).
+    "clawhub": 20000,
+    "official": 50,
+    "github": 30,        # collapsed across all GitHub taps
+    "browse-sh": 50,
+}
+
 
 def _meta_to_dict(meta: SkillMeta) -> dict:
     """Convert a SkillMeta to a serializable dict."""
@@ -295,6 +317,23 @@ def main():
             except Exception as e:
                 print(f"  Error: {e}", file=sys.stderr)
 
+    # ClawHub's cursor walk can still come back partial when a page fetch
+    # exhausts its retries mid-catalog. A partial walk is never cached (see
+    # ClawHubSource._load_catalog_index), so one fresh re-crawl is a real
+    # second chance instead of an instant replay of the same truncation —
+    # this was the top cause of intermittent CI failures on this workflow.
+    clawhub_count = sum(1 for s in all_skills if s["source"] == "clawhub")
+    if clawhub_count < EXPECTED_FLOORS["clawhub"]:
+        print(f"  clawhub returned {clawhub_count} "
+              f"(< floor {EXPECTED_FLOORS['clawhub']}); re-crawling once...",
+              flush=True)
+        retry_skills = crawl_source(
+            sources["clawhub"], "clawhub", SOURCE_LIMITS["clawhub"]
+        )
+        if len(retry_skills) > clawhub_count:
+            all_skills = [s for s in all_skills if s["source"] != "clawhub"]
+            all_skills.extend(retry_skills)
+
     # Batch resolve GitHub paths for skills.sh entries
     all_skills = batch_resolve_paths(all_skills, auth)
 
@@ -336,27 +375,6 @@ def main():
         extra = f" ({resolved} resolved)" if resolved else ""
         print(f"  {src}: {count}{extra}")
 
-    # Health check: catch silent breakage early. Every source listed below
-    # has historically returned at least `floor` entries; a zero (or near-
-    # zero) result almost certainly means a tap path moved, an API changed,
-    # or rate limiting kicked in.  Failing here forces a human look before
-    # the broken index reaches the live docs.
-    EXPECTED_FLOORS = {
-        # skills.sh now uses the sitemap walker (~20k catalog as of May 2026).
-        # Anything under 10k means the sitemap shape changed or fetches failed
-        # — better to fail loudly than ship a regression to the 858-skill
-        # popular-queries era.
-        "skills.sh": 10000,
-        "lobehub": 100,
-        # ClawHub had 49,698+ skills as of May 2026 — anything under 20k means
-        # pagination broke or the API surface changed.  Fail loudly rather
-        # than ship a degenerate index (we shipped 200/50000 silently for
-        # weeks because the floor was 50).
-        "clawhub": 20000,
-        "official": 50,
-        "github": 30,        # collapsed across all GitHub taps
-        "browse-sh": 50,
-    }
     health_errors = []
     for src, floor in EXPECTED_FLOORS.items():
         # 'skills-sh' and 'skills.sh' are the same source; both labels exist.
@@ -387,6 +405,14 @@ def main():
                 + ". This is the usual cause of an all-GitHub-tap collapse "
                 "(github / claude-marketplace / well-known dropping to zero "
                 "together). Re-run with a higher-quota GITHUB_TOKEN.",
+                file=sys.stderr,
+            )
+        if getattr(sources["clawhub"], "last_walk_incomplete", False):
+            print(
+                "\nClawHub's cursor walk ended on a page fetch that failed "
+                "even after retries — its count above reflects a truncated "
+                "walk (transient network/API trouble), not a real catalog "
+                "shrink. Re-running the workflow usually recovers.",
                 file=sys.stderr,
             )
         print(

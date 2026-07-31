@@ -3,6 +3,8 @@
 import unittest
 from unittest.mock import patch
 
+import httpx
+
 from tools.skills_hub import ClawHubSource, SkillMeta
 
 
@@ -545,6 +547,133 @@ class TestClawHubCatalogWalkBounded(unittest.TestCase):
         self.assertEqual(len(results), 10, "browse page should be exactly `limit` items")
         # Walk stopped near the bound, not at the 750-page cap.
         self.assertLess(page_calls["n"], 30)
+
+
+class TestClawHubCatalogWalkRetries(unittest.TestCase):
+    """A single transient page failure used to end the whole catalog walk
+    silently — the walk returned a few-thousand-entry slice of the 50k+
+    catalog, which intermittently tripped the skills-index deploy health
+    floor in CI. Pages must be retried, and a walk that still dies on a page
+    must never be cached as the complete catalog."""
+
+    def setUp(self):
+        self.src = ClawHubSource()
+        self._safe_patcher = patch("tools.skills_hub.is_safe_url", return_value=True)
+        self._policy_patcher = patch("tools.skills_hub.check_website_access", return_value=None)
+        self._safe_patcher.start()
+        self._policy_patcher.start()
+
+    def tearDown(self):
+        self._policy_patcher.stop()
+        self._safe_patcher.stop()
+
+    @patch("tools.skills_hub.time.sleep")
+    @patch("tools.skills_hub._write_index_cache")
+    @patch("tools.skills_hub._read_index_cache", return_value=None)
+    @patch("tools.skills_hub.httpx.get")
+    def test_transient_page_failure_is_retried_and_walk_completes(
+        self, mock_get, _mock_read_cache, mock_write_cache, _mock_sleep
+    ):
+        """A 503 (and a timeout) on a mid-walk page must be retried in place;
+        the walk then terminates naturally and caches the full catalog."""
+        calls = {"n": 0}
+
+        def side_effect(url, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return _MockResponse(
+                    status_code=200,
+                    json_data={
+                        "items": [{"slug": "first", "displayName": "First"}],
+                        "nextCursor": "cursor-2",
+                    },
+                )
+            if calls["n"] == 2:
+                return _MockResponse(status_code=503, json_data={})
+            if calls["n"] == 3:
+                raise httpx.ConnectTimeout("boom")
+            return _MockResponse(
+                status_code=200,
+                json_data={
+                    "items": [{"slug": "second", "displayName": "Second"}],
+                    # No nextCursor -> natural termination.
+                },
+            )
+
+        mock_get.side_effect = side_effect
+
+        results = self.src._load_catalog_index(max_items=0)
+
+        self.assertEqual({m.identifier for m in results}, {"first", "second"})
+        self.assertFalse(self.src.last_walk_incomplete)
+        # Complete walk -> cached.
+        mock_write_cache.assert_called_once()
+
+    @patch("tools.skills_hub.time.sleep")
+    @patch("tools.skills_hub._write_index_cache")
+    @patch("tools.skills_hub._read_index_cache", return_value=None)
+    @patch("tools.skills_hub.httpx.get")
+    def test_page_failing_after_all_retries_marks_walk_incomplete_and_skips_cache(
+        self, mock_get, _mock_read_cache, mock_write_cache, _mock_sleep
+    ):
+        """When a page keeps failing past the retry budget, the partial result
+        is returned to the caller but must NOT be cached as the full catalog,
+        and last_walk_incomplete must flag the truncation."""
+        calls = {"n": 0}
+
+        def side_effect(url, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return _MockResponse(
+                    status_code=200,
+                    json_data={
+                        "items": [{"slug": "first", "displayName": "First"}],
+                        "nextCursor": "cursor-2",
+                    },
+                )
+            raise httpx.ReadTimeout("still down")
+
+        mock_get.side_effect = side_effect
+
+        results = self.src._load_catalog_index(max_items=0)
+
+        self.assertEqual(len(results), 1)
+        self.assertTrue(self.src.last_walk_incomplete)
+        mock_write_cache.assert_not_called()
+        # Page 1 once + page 2 initial attempt + CATALOG_PAGE_RETRIES retries.
+        self.assertEqual(calls["n"], 2 + ClawHubSource.CATALOG_PAGE_RETRIES)
+
+    @patch("tools.skills_hub.time.sleep")
+    @patch("tools.skills_hub._write_index_cache")
+    @patch("tools.skills_hub._read_index_cache", return_value=None)
+    @patch("tools.skills_hub.httpx.get")
+    def test_non_retryable_status_gives_up_immediately(
+        self, mock_get, _mock_read_cache, mock_write_cache, mock_sleep
+    ):
+        """A 404 is not transient — no retries, no backoff sleeps, no cache."""
+        calls = {"n": 0}
+
+        def side_effect(url, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return _MockResponse(
+                    status_code=200,
+                    json_data={
+                        "items": [{"slug": "first", "displayName": "First"}],
+                        "nextCursor": "cursor-2",
+                    },
+                )
+            return _MockResponse(status_code=404, json_data={})
+
+        mock_get.side_effect = side_effect
+
+        results = self.src._load_catalog_index(max_items=0)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(calls["n"], 2, "404 must not be retried")
+        mock_sleep.assert_not_called()
+        mock_write_cache.assert_not_called()
+        self.assertTrue(self.src.last_walk_incomplete)
 
 
 if __name__ == "__main__":

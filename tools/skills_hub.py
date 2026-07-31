@@ -2074,6 +2074,14 @@ class ClawHubSource(SkillSource):
     # minutes. Bound it so a slow/large catalog cannot hang the caller.
     CATALOG_WALK_BUDGET_SECONDS = 12
 
+    # Per-page retry policy for the catalog walk. A single transient failure
+    # (timeout, 429, 5xx) used to end the whole walk silently, shipping a
+    # few-thousand-entry catalog instead of the full 50k+ — which is exactly
+    # what tripped the skills-index deploy health floor intermittently in CI.
+    CATALOG_PAGE_RETRIES = 3
+    CATALOG_RETRY_BACKOFF_SECONDS = 2.0
+    RETRYABLE_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+
     def source_id(self) -> str:
         return "clawhub"
 
@@ -2388,6 +2396,7 @@ class ClawHubSource(SkillSource):
         poison the full-catalog cache with an incomplete slice.
         """
         cache_key = "clawhub_catalog_v1"
+        self.last_walk_incomplete = False
         cached = _read_index_cache(cache_key)
         if cached is not None:
             return [SkillMeta(**s) for s in cached]
@@ -2412,6 +2421,10 @@ class ClawHubSource(SkillSource):
         )
         hit_deadline = False
         hit_max_items = False
+        # Set at the end of the walk; exposed so callers (the offline index
+        # builder) can distinguish a complete walk from one truncated by an
+        # exhausted-retries page fetch.
+        hit_error = False
 
         for _ in range(max_pages):
             if deadline is not None and time.monotonic() > deadline:
@@ -2421,12 +2434,9 @@ class ClawHubSource(SkillSource):
             if cursor:
                 params["cursor"] = cursor
 
-            try:
-                resp = httpx.get(f"{self.BASE_URL}/skills", params=params, timeout=30)
-                if resp.status_code != 200:
-                    break
-                data = resp.json()
-            except (httpx.HTTPError, json.JSONDecodeError):
+            data = self._fetch_catalog_page(params, deadline)
+            if data is None:
+                hit_error = True
                 break
 
             items = data.get("items", []) if isinstance(data, dict) else []
@@ -2462,12 +2472,38 @@ class ClawHubSource(SkillSource):
                 break
 
         # Only cache a walk that reached a natural stop (cursor exhausted or
-        # page cap). A walk truncated by the wall-clock budget OR by max_items
-        # is partial, so writing it would poison the shared full-catalog cache
-        # with incomplete data.
-        if not hit_deadline and not hit_max_items:
+        # page cap). A walk truncated by the wall-clock budget, by max_items,
+        # OR by a failed page fetch is partial, so writing it would poison the
+        # shared full-catalog cache with incomplete data.
+        self.last_walk_incomplete = hit_error
+        if not hit_deadline and not hit_max_items and not hit_error:
             _write_index_cache(cache_key, [_skill_meta_to_dict(s) for s in results])
         return results
+
+    def _fetch_catalog_page(
+        self, params: Dict[str, Any], deadline: Optional[float]
+    ) -> Optional[Any]:
+        """Fetch one catalog page, retrying transient failures with backoff.
+
+        Returns the parsed JSON payload, or None once retries are exhausted
+        (or a non-retryable status comes back, or the interactive wall-clock
+        deadline would be blown by the next backoff sleep).
+        """
+        for attempt in range(1 + self.CATALOG_PAGE_RETRIES):
+            try:
+                resp = httpx.get(f"{self.BASE_URL}/skills", params=params, timeout=30)
+                if resp.status_code == 200:
+                    return resp.json()
+                retryable = resp.status_code in self.RETRYABLE_STATUS_CODES
+            except (httpx.HTTPError, json.JSONDecodeError):
+                retryable = True
+            if not retryable or attempt == self.CATALOG_PAGE_RETRIES:
+                return None
+            delay = self.CATALOG_RETRY_BACKOFF_SECONDS * (2 ** attempt)
+            if deadline is not None and time.monotonic() + delay > deadline:
+                return None
+            time.sleep(delay)
+        return None
 
     def _get_json(self, url: str, timeout: int = 20) -> Optional[Any]:
         try:
